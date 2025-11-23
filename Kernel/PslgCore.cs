@@ -68,15 +68,31 @@ public struct HalfEdge
     public bool IsBoundary { get; set; }
 }
 
-public readonly struct PslgFace
+public sealed class PslgFace
 {
-    public int[] VertexIndices { get; }
-    public double SignedArea { get; }
+    // CCW outer boundary vertex indices.
+    public int[] OuterVertices { get; }
 
-    public PslgFace(int[] vertexIndices, double signedArea)
+    // Zero or more CCW hole cycles.
+    public IReadOnlyList<int[]> Holes { get; }
+
+    // Signed area in UV: outer area minus sum(holes).
+    public double SignedAreaUV { get; }
+
+    // Backward compatibility helpers for older tests/usage.
+    public int[] VertexIndices => OuterVertices;
+    public double SignedArea => SignedAreaUV;
+
+    public PslgFace(int[] outerVertices, double signedArea)
+        : this(outerVertices, Array.Empty<int[]>(), signedArea)
     {
-        VertexIndices = vertexIndices;
-        SignedArea = signedArea;
+    }
+
+    public PslgFace(int[] outerVertices, IReadOnlyList<int[]> holes, double signedArea)
+    {
+        OuterVertices = outerVertices;
+        Holes = holes;
+        SignedAreaUV = signedArea;
     }
 }
 
@@ -520,7 +536,7 @@ public static class PslgBuilder
         }
 
         var angles = new double[halfEdges.Count];
-        var outgoing = new List<int>[vertices.Count];
+        var outgoing = new List<(int edgeIndex, double angle)>[vertices.Count];
 
         for (int i = 0; i < halfEdges.Count; i++)
         {
@@ -531,11 +547,9 @@ public static class PslgBuilder
             double dy = to.Y - from.Y;
             angles[i] = Math.Atan2(dy, dx);
 
-            outgoing[he.From] ??= new List<int>();
-            outgoing[he.From].Add(i);
+            outgoing[he.From] ??= new List<(int edgeIndex, double angle)>();
+            outgoing[he.From].Add((i, angles[i]));
         }
-
-        const double fullTurn = 2 * Math.PI;
 
         for (int v = 0; v < outgoing.Length; v++)
         {
@@ -545,44 +559,41 @@ public static class PslgBuilder
                 continue;
             }
 
-            list.Sort((a, b) => angles[a].CompareTo(angles[b]));
+            list.Sort((a, b) => a.angle.CompareTo(b.angle));
         }
 
         for (int i = 0; i < halfEdges.Count; i++)
         {
             var he = halfEdges[i];
-            int atVertex = he.To;
-            var list = outgoing[atVertex];
+            int toVertex = he.To;
+            var list = outgoing[toVertex];
             if (list is null || list.Count == 0)
             {
-                continue;
+                throw new InvalidOperationException("Half-edge has no outgoing edges at its destination vertex.");
             }
 
-            double incomingAngle = Math.Atan2(
-                vertices[he.From].Y - vertices[atVertex].Y,
-                vertices[he.From].X - vertices[atVertex].X);
-
-            int chosen = list[0];
-            double bestDelta = double.MaxValue;
-
+            int twin = he.Twin;
+            int idxInList = -1;
             for (int k = 0; k < list.Count; k++)
             {
-                int candidate = list[k];
-                double delta = angles[candidate] - incomingAngle;
-                while (delta <= 0)
+                if (list[k].edgeIndex == twin)
                 {
-                    delta += fullTurn;
-                }
-
-                if (delta < bestDelta)
-                {
-                    bestDelta = delta;
-                    chosen = candidate;
+                    idxInList = k;
+                    break;
                 }
             }
 
+            if (idxInList < 0)
+            {
+                throw new InvalidOperationException("Twin half-edge not found in outgoing list.");
+            }
+
+            // Next edge follows the left face: CCW successor of the twin at the destination vertex.
+            int nextIdx = (idxInList + 1) % list.Count;
+            int nextEdge = list[nextIdx].edgeIndex;
+
             var temp = halfEdges[i];
-            temp.Next = chosen;
+            temp.Next = nextEdge;
             halfEdges[i] = temp;
         }
     }
@@ -596,7 +607,7 @@ public static class PslgBuilder
         if (vertices is null) throw new ArgumentNullException(nameof(vertices));
         if (halfEdges is null) throw new ArgumentNullException(nameof(halfEdges));
 
-        var faces = new List<PslgFace>();
+        var rawCycles = new List<RawCycle>();
         var visited = new bool[halfEdges.Count];
 
         for (int i = 0; i < halfEdges.Count; i++)
@@ -645,19 +656,24 @@ public static class PslgBuilder
 
             if (cycle.Count >= 3)
             {
-        var polyPoints = new List<RealPoint>(cycle.Count);
-        foreach (var vi in cycle)
-        {
-            var v = vertices[vi];
-            polyPoints.Add(new RealPoint(v.X, v.Y, 0.0));
-        }
+                var polyPoints = new List<RealPoint>(cycle.Count);
+                double cx = 0.0, cy = 0.0;
+                foreach (var vi in cycle)
+                {
+                    var v = vertices[vi];
+                    polyPoints.Add(new RealPoint(v.X, v.Y, 0.0));
+                    cx += v.X;
+                    cy += v.Y;
+                }
 
-        double area = new RealPolygon(polyPoints).SignedArea;
-                faces.Add(new PslgFace(cycle.ToArray(), area));
+                double area = new RealPolygon(polyPoints).SignedArea;
+                double inv = 1.0 / cycle.Count;
+                var sample = (X: cx * inv, Y: cy * inv);
+                rawCycles.Add(new RawCycle(cycle.ToArray(), area, sample));
             }
         }
 
-        return faces;
+        return BuildFacesWithHoles(rawCycles, vertices);
     }
 
     // Phase F: select bounded interior faces by removing the outer face
@@ -665,8 +681,21 @@ public static class PslgBuilder
     public static List<PslgFace> SelectInteriorFaces(
         IReadOnlyList<PslgFace> faces)
     {
-        // Classification-only wrapper: no area invariant enforced.
-        return SelectInteriorFaces(faces, double.NaN).InteriorFaces.ToList();
+        if (faces is null) throw new ArgumentNullException(nameof(faces));
+        if (faces.Count == 0) return new List<PslgFace>();
+
+        var filtered = new List<PslgFace>(faces.Count);
+        for (int i = 0; i < faces.Count; i++)
+        {
+            double areaAbs = Math.Abs(faces[i].SignedAreaUV);
+            if (areaAbs <= Tolerances.EpsArea)
+            {
+                continue;
+            }
+            filtered.Add(faces[i]);
+        }
+
+        return DeduplicateFaces(filtered);
     }
 
     internal static PslgFaceSelection SelectInteriorFaces(
@@ -679,10 +708,10 @@ public static class PslgBuilder
         if (faces.Count == 0) return new PslgFaceSelection(-1, Array.Empty<PslgFace>());
 
         int outerIndex = 0;
-        double outerAbs = Math.Abs(faces[0].SignedArea);
+        double outerAbs = Math.Abs(faces[0].SignedAreaUV);
         for (int i = 1; i < faces.Count; i++)
         {
-            double abs = Math.Abs(faces[i].SignedArea);
+            double abs = Math.Abs(faces[i].SignedAreaUV);
             if (abs > outerAbs)
             {
                 outerAbs = abs;
@@ -691,7 +720,7 @@ public static class PslgBuilder
         }
 
         var interiors = new List<PslgFace>(faces.Count - 1);
-        double sumInterior = 0.0;
+        var seenOuterKey = CanonicalFaceKey(faces[outerIndex].OuterVertices);
 
         for (int i = 0; i < faces.Count; i++)
         {
@@ -700,14 +729,28 @@ public static class PslgBuilder
                 continue;
             }
 
-            double areaAbs = Math.Abs(faces[i].SignedArea);
+            double areaAbs = Math.Abs(faces[i].SignedAreaUV);
             if (areaAbs <= Tolerances.EpsArea)
             {
                 continue;
             }
 
+            // Skip any duplicate of the outer boundary face.
+            var key = CanonicalFaceKey(faces[i].OuterVertices);
+            if (key == seenOuterKey)
+            {
+                continue;
+            }
+
             interiors.Add(faces[i]);
-            sumInterior += faces[i].SignedArea;
+        }
+
+        interiors = DeduplicateFaces(interiors);
+
+        double sumInterior = 0.0;
+        for (int i = 0; i < interiors.Count; i++)
+        {
+            sumInterior += interiors[i].SignedAreaUV;
         }
 
         if (!double.IsNaN(expectedTriangleArea))
@@ -729,52 +772,263 @@ public static class PslgBuilder
         return new PslgFaceSelection(outerIndex, interiors);
     }
 
+    private readonly struct RawCycle
+    {
+        public int[] Vertices { get; }
+        public double Area { get; }
+        public (double X, double Y) Sample { get; }
+
+        public RawCycle(int[] vertices, double area, (double X, double Y) sample)
+        {
+            Vertices = vertices;
+            Area = area;
+            Sample = sample;
+        }
+    }
+
+    private static List<PslgFace> BuildFacesWithHoles(
+        IReadOnlyList<RawCycle> cycles,
+        IReadOnlyList<PslgVertex> vertices)
+    {
+        if (cycles.Count == 0) return new List<PslgFace>();
+
+        // Normalize orientation to CCW and positive area.
+        var norm = new List<RawCycle>(cycles.Count);
+        foreach (var c in cycles)
+        {
+            var verts = c.Vertices.ToArray();
+            double area = c.Area;
+            if (area < 0)
+            {
+                Array.Reverse(verts);
+                area = -area;
+            }
+            norm.Add(new RawCycle(verts, area, c.Sample));
+        }
+
+        int n = norm.Count;
+        var parent = Enumerable.Repeat(-1, n).ToArray();
+        var depth = new int[n];
+
+        // Point-in-polygon helper.
+        bool Contains(RawCycle outer, (double X, double Y) p)
+        {
+            var pts = new List<RealPoint>(outer.Vertices.Length);
+            foreach (var vi in outer.Vertices)
+            {
+                var v = vertices[vi];
+                pts.Add(new RealPoint(v.X, v.Y, 0.0));
+            }
+            return RealPolygonPredicates.ContainsInclusive(new RealPolygon(pts), new RealPoint(p.X, p.Y, 0.0));
+        }
+
+        // Assign parent: smallest-area cycle that strictly contains the sample.
+        for (int i = 0; i < n; i++)
+        {
+            double bestArea = double.MaxValue;
+            int best = -1;
+            for (int j = 0; j < n; j++)
+            {
+                if (i == j) continue;
+                var outer = norm[j];
+                if (outer.Area <= norm[i].Area) continue;
+                if (!Contains(outer, norm[i].Sample)) continue;
+                if (outer.Area < bestArea)
+                {
+                    bestArea = outer.Area;
+                    best = j;
+                }
+            }
+            parent[i] = best;
+            if (best >= 0)
+            {
+                depth[i] = depth[best] + 1;
+            }
+        }
+
+        var children = new List<int>[n];
+        for (int i = 0; i < n; i++)
+        {
+            int p = parent[i];
+            if (p >= 0)
+            {
+                children[p] ??= new List<int>();
+                children[p].Add(i);
+            }
+        }
+
+        var faces = new List<PslgFace>();
+        for (int i = 0; i < n; i++)
+        {
+            var holes = new List<int[]>();
+            var holeKeys = new HashSet<string>();
+            if (children[i] != null)
+            {
+                foreach (var ch in children[i])
+                {
+                    if (depth[ch] == depth[i] + 1)
+                    {
+                        var key = CanonicalFaceKey(norm[ch].Vertices);
+                        if (holeKeys.Add(key))
+                        {
+                            holes.Add(norm[ch].Vertices);
+                        }
+                    }
+                }
+            }
+
+            double holeAreaSum = 0.0;
+            foreach (var h in holes)
+            {
+                holeAreaSum += CycleArea(vertices, h);
+            }
+
+            double signedArea = norm[i].Area - holeAreaSum;
+            if (Math.Abs(signedArea) <= Tolerances.EpsArea)
+            {
+                continue;
+            }
+
+            faces.Add(new PslgFace(norm[i].Vertices, holes, signedArea));
+        }
+
+        return DeduplicateFaces(faces);
+    }
+
+    private static double CycleArea(IReadOnlyList<PslgVertex> vertices, int[] cycle)
+    {
+        var pts = new List<RealPoint>(cycle.Length);
+        foreach (var vi in cycle)
+        {
+            var v = vertices[vi];
+            pts.Add(new RealPoint(v.X, v.Y, 0.0));
+        }
+        double area = new RealPolygon(pts).SignedArea;
+        return area < 0 ? -area : area;
+    }
+
+    private static List<PslgFace> DeduplicateFaces(IReadOnlyList<PslgFace> faces)
+    {
+        var unique = new List<PslgFace>(faces.Count);
+        var seen = new HashSet<string>();
+
+        for (int i = 0; i < faces.Count; i++)
+        {
+            var face = faces[i];
+            var key = CanonicalFaceKey(face.OuterVertices);
+            if (seen.Add(key))
+            {
+                unique.Add(face);
+            }
+        }
+
+        return unique;
+    }
+
+    private static string CanonicalFaceKey(int[] vertices)
+    {
+        if (vertices is null || vertices.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        int n = vertices.Length;
+        int bestStart = 0;
+
+        for (int start = 1; start < n; start++)
+        {
+            bool better = false;
+            for (int k = 0; k < n; k++)
+            {
+                int a = vertices[(start + k) % n];
+                int b = vertices[(bestStart + k) % n];
+                if (a == b)
+                {
+                    continue;
+                }
+
+                if (a < b)
+                {
+                    better = true;
+                }
+
+                break;
+            }
+
+            if (better)
+            {
+                bestStart = start;
+            }
+        }
+
+        var ordered = new int[n];
+        for (int i = 0; i < n; i++)
+        {
+            ordered[i] = vertices[(bestStart + i) % n];
+        }
+
+        return string.Join(",", ordered);
+    }
+
     // Phase G: ear-clipping triangulation of one simple polygonal face in
-    // parameter space. Returns triangles as triples of vertex indices into
-    // the global PSLG vertex list.
+    // parameter space. Supports optional holes by bridging them into a
+    // single simple polygon before ear clipping. Returns triangles as
+    // triples of vertex indices into the global PSLG vertex list.
     internal static List<(int A, int B, int C)> TriangulateFace(
         PslgFace face,
         IReadOnlyList<PslgVertex> vertices)
     {
         if (vertices is null) throw new ArgumentNullException(nameof(vertices));
-        if (face.VertexIndices is null || face.VertexIndices.Length < 3)
+        if (face.OuterVertices is null || face.OuterVertices.Length < 3)
         {
-            throw new ArgumentException("Face must have at least 3 vertices.", nameof(face));
+            throw new ArgumentException("Face must have an outer boundary with at least 3 vertices.", nameof(face));
         }
 
-        var polygon = new List<int>(face.VertexIndices);
-        if (polygon.Count < 3)
+        if (face.Holes.Count == 0)
+        {
+            return TriangulateSimple(face.OuterVertices, vertices, face.SignedAreaUV);
+        }
+
+        return TriangulateWithHoles(face, vertices);
+    }
+
+    private static List<(int A, int B, int C)> TriangulateSimple(
+        int[] polygon,
+        IReadOnlyList<PslgVertex> vertices,
+        double expectedArea)
+    {
+        var polyList = new List<int>(polygon);
+        if (polyList.Count < 3)
         {
             throw new InvalidOperationException("Face must have at least 3 vertices.");
         }
 
-        double targetSignedArea = face.SignedArea;
-        int orient = targetSignedArea < 0 ? -1 : 1;
-        if (orient == -1)
-        {
-            polygon.Reverse();
-            targetSignedArea = -targetSignedArea;
-        }
-
-        var triangles = new List<(int A, int B, int C)>(polygon.Count - 2);
-
-        var faceCoords = new List<RealPoint>(polygon.Count);
-        foreach (var idx in polygon)
+        // Ensure CCW orientation.
+        var faceCoords = new List<RealPoint>(polyList.Count);
+        foreach (var idx in polyList)
         {
             faceCoords.Add(new RealPoint(vertices[idx].X, vertices[idx].Y, 0.0));
         }
+        double targetSignedArea = new RealPolygon(faceCoords).SignedArea;
+        if (targetSignedArea < 0)
+        {
+            polyList.Reverse();
+            faceCoords.Reverse();
+            targetSignedArea = -targetSignedArea;
+        }
 
+        var triangles = new List<(int A, int B, int C)>(polyList.Count - 2);
 
-        while (polygon.Count > 3)
+        while (polyList.Count > 3)
         {
             bool earFound = false;
-            int n = polygon.Count;
+            int n = polyList.Count;
 
             for (int i = 0; i < n; i++)
             {
-                int prev = polygon[(i - 1 + n) % n];
-                int curr = polygon[i];
-                int next = polygon[(i + 1) % n];
+                int prev = polyList[(i - 1 + n) % n];
+                int curr = polyList[i];
+                int next = polyList[(i + 1) % n];
 
                 double area = new RealTriangle(
                     new RealPoint(vertices[prev].X, vertices[prev].Y, 0.0),
@@ -798,7 +1052,7 @@ public static class PslgBuilder
                                 new RealPoint(vertices[prev].X, vertices[prev].Y, 0.0),
                                 new RealPoint(vertices[curr].X, vertices[curr].Y, 0.0),
                                 new RealPoint(vertices[next].X, vertices[next].Y, 0.0)),
-                            new RealPoint(vertices[polygon[k]].X, vertices[polygon[k]].Y, 0.0)))
+                            new RealPoint(vertices[polyList[k]].X, vertices[polyList[k]].Y, 0.0)))
                     {
                         anyInside = true;
                         break;
@@ -811,7 +1065,7 @@ public static class PslgBuilder
                 }
 
                 triangles.Add((prev, curr, next));
-                polygon.RemoveAt(i);
+                polyList.RemoveAt(i);
                 earFound = true;
                 break;
             }
@@ -822,12 +1076,7 @@ public static class PslgBuilder
             }
         }
 
-        triangles.Add((polygon[0], polygon[1], polygon[2]));
-
-        if (triangles.Count != face.VertexIndices.Length - 2)
-        {
-            throw new InvalidOperationException("Ear clipping produced an unexpected triangle count.");
-        }
+        triangles.Add((polyList[0], polyList[1], polyList[2]));
 
         double sumArea = 0.0;
         foreach (var t in triangles)
@@ -854,12 +1103,10 @@ public static class PslgBuilder
             sumArea += area;
         }
 
-        double signedSum = orient * sumArea;
-        double absExpected = Math.Abs(face.SignedArea);
+        double absExpected = Math.Abs(expectedArea);
         double diffAbs = Math.Abs(sumArea - absExpected);
-        double diffSigned = Math.Abs(signedSum - face.SignedArea);
         double rel = Tolerances.BarycentricInsideEpsilon * absExpected;
-        if (diffAbs > Tolerances.EpsArea && diffAbs > rel && diffSigned > Tolerances.EpsArea && diffSigned > rel)
+        if (diffAbs > Tolerances.EpsArea && diffAbs > rel)
         {
             throw new InvalidOperationException("Ear clipping area check failed for face.");
         }
@@ -867,6 +1114,253 @@ public static class PslgBuilder
         return triangles;
     }
 
+    private static List<(int A, int B, int C)> TriangulateWithHoles(
+        PslgFace face,
+        IReadOnlyList<PslgVertex> vertices)
+    {
+        // Build visibility-tested bridges and stitch into a simple polygon.
+        var stitched = StitchHoles(face, vertices);
+        return TriangulateSimple(stitched.ToArray(), vertices, face.SignedAreaUV);
+    }
+
+    private static List<int> StitchHoles(PslgFace face, IReadOnlyList<PslgVertex> vertices)
+    {
+        var polygon = new List<int>(face.OuterVertices);
+
+        // Existing segments set for visibility tests.
+        var segments = new List<(int A, int B)>();
+        void AddCycleSegments(int[] cyc)
+        {
+            for (int i = 0; i < cyc.Length; i++)
+            {
+                int a = cyc[i];
+                int b = cyc[(i + 1) % cyc.Length];
+                segments.Add((a, b));
+            }
+        }
+
+        AddCycleSegments(face.OuterVertices);
+        foreach (var hole in face.Holes)
+        {
+            AddCycleSegments(hole);
+        }
+
+        var uniqueHoles = new List<int[]>(face.Holes.Count);
+        var holeKeys = new HashSet<string>();
+        foreach (var hcyc in face.Holes)
+        {
+            var key = CanonicalFaceKey(hcyc);
+            if (holeKeys.Add(key))
+            {
+                uniqueHoles.Add(hcyc);
+            }
+        }
+
+        foreach (var hole in uniqueHoles)
+        {
+            if (hole.Length < 3) continue;
+
+            // Pick hole vertex with smallest (x,y).
+            int hIndex = 0;
+            for (int i = 1; i < hole.Length; i++)
+            {
+                var vh = vertices[hole[i]];
+                var vbest = vertices[hole[hIndex]];
+                if (vh.X < vbest.X - Tolerances.EpsVertex ||
+                    (Math.Abs(vh.X - vbest.X) <= Tolerances.EpsVertex && vh.Y < vbest.Y))
+                {
+                    hIndex = i;
+                }
+            }
+            int hVertex = hole[hIndex];
+
+            int bestOuterIdx = -1;
+            double bestDist2 = double.MaxValue;
+            for (int i = 0; i < polygon.Count; i++)
+            {
+                int o = polygon[i];
+                if (IsBridgeVisible(vertices, segments, o, hVertex))
+                {
+                    double dx = vertices[o].X - vertices[hVertex].X;
+                    double dy = vertices[o].Y - vertices[hVertex].Y;
+                    double d2 = dx * dx + dy * dy;
+                    if (d2 < bestDist2)
+                    {
+                        bestDist2 = d2;
+                        bestOuterIdx = i;
+                    }
+                }
+            }
+
+            if (bestOuterIdx < 0)
+            {
+                throw new InvalidOperationException("Failed to find a visible bridge from hole to outer boundary.");
+            }
+
+            // Build stitched path:
+            // outer[0..bestOuterIdx], bridge to h, traverse hole CW from h back to h,
+            // bridge back to outer[bestOuterIdx], then continue outer.
+            var stitched = new List<int>(polygon.Count + hole.Length + 3);
+            for (int i = 0; i <= bestOuterIdx; i++)
+            {
+                stitched.Add(polygon[i]);
+            }
+
+            stitched.Add(hVertex); // enter hole
+
+            for (int k = 1; k < hole.Length; k++)
+            {
+                int idx = (hIndex - k + hole.Length) % hole.Length; // CW order
+                stitched.Add(hole[idx]);
+            }
+
+            stitched.Add(hVertex); // exit hole
+            stitched.Add(polygon[bestOuterIdx]); // bridge back to outer
+
+            for (int i = bestOuterIdx + 1; i < polygon.Count; i++)
+            {
+                stitched.Add(polygon[i]);
+            }
+
+            polygon = stitched;
+
+            // Rebuild segments with the new polygon cycle (outer edges plus hole perimeter and bridges).
+            segments.Clear();
+            AddCycleSegments(polygon.ToArray());
+        }
+
+        // Sanity checks: no immediate duplicates.
+        for (int i = polygon.Count - 1, j = 0; j < polygon.Count; i = j, j++)
+        {
+            if (polygon[i] == polygon[j])
+            {
+                throw new InvalidOperationException($"Stitched polygon has consecutive duplicate vertices at indices {i}->{j}: {polygon[i]}. Polygon: {string.Join("->", polygon)}");
+            }
+        }
+
+        // Self-intersection check.
+        if (HasSelfIntersection(polygon, vertices))
+        {
+            throw new InvalidOperationException($"Stitched polygon self-intersects. Polygon: {string.Join("->", polygon)}");
+        }
+
+        // Area check against expected ring area.
+        var polyPoints = new List<RealPoint>(polygon.Count);
+        foreach (var idx in polygon)
+        {
+            var v = vertices[idx];
+            polyPoints.Add(new RealPoint(v.X, v.Y, 0.0));
+        }
+        double area = new RealPolygon(polyPoints).SignedArea;
+        double absArea = Math.Abs(area);
+        double expected = Math.Abs(face.SignedAreaUV);
+        double diff = Math.Abs(absArea - expected);
+        double rel = Tolerances.BarycentricInsideEpsilon * expected;
+        if (diff > Tolerances.EpsArea && diff > rel)
+        {
+            throw new InvalidOperationException(
+                $"Stitched polygon area mismatch: stitched={absArea}, expected={expected}, poly={string.Join("->", polygon)}");
+        }
+
+        return polygon;
+    }
+
+    private static bool HasSelfIntersection(List<int> poly, IReadOnlyList<PslgVertex> vertices)
+    {
+        int n = poly.Count;
+        for (int i = 0; i < n; i++)
+        {
+            int a0 = poly[i];
+            int a1 = poly[(i + 1) % n];
+            var segA = new RealSegment(
+                new RealPoint(vertices[a0].X, vertices[a0].Y, 0.0),
+                new RealPoint(vertices[a1].X, vertices[a1].Y, 0.0));
+
+            for (int j = i + 2; j < n; j++)
+            {
+                int b0 = poly[j];
+                int b1 = poly[(j + 1) % n];
+
+                // Skip adjacent edges and edges sharing a vertex.
+                if (a0 == b0 || a0 == b1 || a1 == b0 || a1 == b1)
+                {
+                    continue;
+                }
+
+                // Skip the check for the last edge against the first edge adjacency.
+                if (i == 0 && j == n - 1)
+                {
+                    continue;
+                }
+
+                var segB = new RealSegment(
+                    new RealPoint(vertices[b0].X, vertices[b0].Y, 0.0),
+                    new RealPoint(vertices[b1].X, vertices[b1].Y, 0.0));
+
+                if (RealSegmentPredicates.TryIntersect(segA, segB, out var inter))
+                {
+                    if (!IsNearVertex(vertices, inter.X, inter.Y, a0, a1) &&
+                        !IsNearVertex(vertices, inter.X, inter.Y, b0, b1))
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsBridgeVisible(
+        IReadOnlyList<PslgVertex> vertices,
+        List<(int A, int B)> segments,
+        int va,
+        int vb)
+    {
+        var seg = new RealSegment(
+            new RealPoint(vertices[va].X, vertices[va].Y, 0.0),
+            new RealPoint(vertices[vb].X, vertices[vb].Y, 0.0));
+
+        for (int i = 0; i < segments.Count; i++)
+        {
+            var s = segments[i];
+
+            if (s.A == va || s.A == vb || s.B == va || s.B == vb)
+            {
+                continue;
+            }
+
+            var existing = new RealSegment(
+                new RealPoint(vertices[s.A].X, vertices[s.A].Y, 0.0),
+                new RealPoint(vertices[s.B].X, vertices[s.B].Y, 0.0));
+
+            if (RealSegmentPredicates.TryIntersect(seg, existing, out var inter))
+            {
+                // Allow touching very near an existing vertex; otherwise reject.
+                if (!IsNearVertex(vertices, inter.X, inter.Y, va, vb))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static bool IsNearVertex(
+        IReadOnlyList<PslgVertex> vertices,
+        double x,
+        double y,
+        int va,
+        int vb)
+    {
+        double eps2 = Tolerances.PslgVertexMergeEpsilonSquared;
+        var a = vertices[va];
+        var b = vertices[vb];
+        double da = (a.X - x) * (a.X - x) + (a.Y - y) * (a.Y - y);
+        double db = (b.X - x) * (b.X - x) + (b.Y - y) * (b.Y - y);
+        return da <= eps2 || db <= eps2;
+    }
     internal static IReadOnlyList<RealTriangle> TriangulateInteriorFaces(
         Triangle triangle,
         IReadOnlyList<PslgVertex> vertices,
@@ -876,7 +1370,6 @@ public static class PslgBuilder
         if (selection.InteriorFaces is null) throw new ArgumentNullException(nameof(selection));
 
         var patches = new List<RealTriangle>();
-        double totalArea = 0.0;
 
         RealPoint MapVertex(int idx)
         {
@@ -890,6 +1383,26 @@ public static class PslgBuilder
         foreach (var face in selection.InteriorFaces)
         {
             var tris = TriangulateFace(face, vertices);
+
+            double uvTriSum = 0.0;
+            foreach (var t in tris)
+            {
+                double areaUv = new RealTriangle(
+                    new RealPoint(vertices[t.A].X, vertices[t.A].Y, 0.0),
+                    new RealPoint(vertices[t.B].X, vertices[t.B].Y, 0.0),
+                    new RealPoint(vertices[t.C].X, vertices[t.C].Y, 0.0)).SignedArea;
+                uvTriSum += areaUv;
+            }
+
+            double uvExpected = Math.Abs(face.SignedAreaUV);
+            double uvDiff = Math.Abs(uvTriSum - uvExpected);
+            double uvRel = Tolerances.BarycentricInsideEpsilon * uvExpected;
+            if (uvDiff > Tolerances.EpsArea && uvDiff > uvRel)
+            {
+                throw new InvalidOperationException(
+                    $"Face triangulation area mismatch: faceArea={face.SignedAreaUV}, triSum={uvTriSum}, outer={string.Join(",", face.OuterVertices)}");
+            }
+
             foreach (var t in tris)
             {
                 var p0 = MapVertex(t.A);
@@ -903,22 +1416,8 @@ public static class PslgBuilder
                     throw new InvalidOperationException("Mapped triangle has non-positive area in world space.");
                 }
 
-                totalArea += area;
                 patches.Add(new RealTriangle(p0, p1, p2));
             }
-        }
-
-        double triArea = Math.Abs(new RealTriangle(
-            new RealPoint(triangle.P0),
-            new RealPoint(triangle.P1),
-            new RealPoint(triangle.P2)).SignedArea);
-
-        double diff = Math.Abs(totalArea - triArea);
-        double relTol = Tolerances.BarycentricInsideEpsilon * triArea;
-        if (diff > Tolerances.EpsArea && diff > relTol)
-        {
-            throw new InvalidOperationException(
-                $"Total patch area mismatch: expected {triArea}, got {totalArea}");
         }
 
         return patches;

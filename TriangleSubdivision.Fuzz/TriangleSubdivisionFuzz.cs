@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Geometry;
 using Geometry.Predicates;
 using Kernel;
-using KTS = Kernel.TriangleSubdivision;
 
 namespace Kernel.Fuzz;
 

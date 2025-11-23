@@ -153,8 +153,28 @@ public static class TriangleSubdivision
         if (points is null) throw new ArgumentNullException(nameof(points));
         if (segments is null) throw new ArgumentNullException(nameof(segments));
 
+        // Filter out degenerate segments (same start/end); if nothing remains
+        // we treat this as the trivial no-segment case.
+        var filteredSegments = new List<IntersectionSegment>(segments.Count);
+        for (int i = 0; i < segments.Count; i++)
+        {
+            var seg = segments[i];
+            if (seg.StartIndex < 0 || seg.StartIndex >= points.Count ||
+                seg.EndIndex < 0 || seg.EndIndex >= points.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(segments), "Segment indices must be valid point indices.");
+            }
+
+            if (seg.StartIndex == seg.EndIndex)
+            {
+                continue; // ignore degenerate segment
+            }
+
+            filteredSegments.Add(seg);
+        }
+
         // Phase A: trivial case only.
-        if (segments.Count == 0)
+        if (filteredSegments.Count == 0)
         {
             var patches = new List<RealTriangle>(capacity: 1)
             {
@@ -168,12 +188,12 @@ public static class TriangleSubdivision
         }
 
         // Fast-lane patterns (Phase B) or general PSLG lane.
-        var pattern = ClassifyPattern(points, segments);
+        var pattern = ClassifyPattern(points, filteredSegments);
 
         switch (pattern)
         {
             case PatternKind.SingleEdgeToEdge:
-                return SubdivideSingleEdgeToEdge(triangle, points, segments);
+                return SubdivideSingleEdgeToEdge(triangle, points, filteredSegments);
 
             case PatternKind.None:
                 // Should not occur here because segments.Count > 0, but keep
@@ -184,16 +204,14 @@ public static class TriangleSubdivision
             default:
                 // General PSLG-based subdivision path: build the PSLG core,
                 // derive faces, select interior faces, and triangulate.
-                PslgBuilder.Build(points, segments, out var pslgVertices, out var pslgEdges);
+                PslgBuilder.Build(points, filteredSegments, out var pslgVertices, out var pslgEdges);
                 PslgBuilder.BuildHalfEdges(pslgVertices, pslgEdges, out var halfEdges);
                 var faces = PslgBuilder.ExtractFaces(pslgVertices, halfEdges);
 
-                double triArea = Math.Abs(new RealTriangle(
-                    new RealPoint(triangle.P0),
-                    new RealPoint(triangle.P1),
-                    new RealPoint(triangle.P2)).SignedArea);
-
-                var selection = PslgBuilder.SelectInteriorFaces(faces, expectedTriangleArea: triArea);
+                // Use chart-space face classification only; world-space area
+                // conservation is checked by the caller/fuzz harness.
+                var interiorFaces = PslgBuilder.SelectInteriorFaces(faces);
+                var selection = new PslgFaceSelection(outerFaceIndex: -1, interiorFaces);
                 return PslgBuilder.TriangulateInteriorFaces(triangle, pslgVertices, selection);
         }
     }

@@ -39,7 +39,7 @@ public class TriangleSubdivisionTests
     }
 
     [Fact]
-    public void Subdivide_WithSegments_ThrowsForNow()
+    public void Subdivide_DegenerateSegment_IsIgnoredAndReturnsOriginalTriangle()
     {
         var v0 = new Point(0, 0, 0);
         var v1 = new Point(10, 0, 0);
@@ -60,8 +60,20 @@ public class TriangleSubdivisionTests
             new TriangleSubdivision.IntersectionSegment(0, 0)
         };
 
-        Assert.Throws<InvalidOperationException>(
-            () => TriangleSubdivision.Subdivide(in tri, points, segments));
+        var patches = TriangleSubdivision.Subdivide(in tri, points, segments);
+        var single = Assert.Single(patches);
+
+        Assert.Equal(tri.P0.X, single.P0.X);
+        Assert.Equal(tri.P0.Y, single.P0.Y);
+        Assert.Equal(tri.P0.Z, single.P0.Z);
+
+        Assert.Equal(tri.P1.X, single.P1.X);
+        Assert.Equal(tri.P1.Y, single.P1.Y);
+        Assert.Equal(tri.P1.Z, single.P1.Z);
+
+        Assert.Equal(tri.P2.X, single.P2.X);
+        Assert.Equal(tri.P2.Y, single.P2.Y);
+        Assert.Equal(tri.P2.Z, single.P2.Z);
     }
 
     [Fact]

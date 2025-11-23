@@ -383,29 +383,9 @@ public class PslgCoreTests
 
         var faces = PslgBuilder.ExtractFaces(vertices, halfEdges);
 
-        Assert.Equal(2, faces.Count); // interior + exterior
-
-        int outerIndex = 0;
-        double outerAbs = Math.Abs(faces[0].SignedArea);
-        for (int i = 1; i < faces.Count; i++)
-        {
-            double abs = Math.Abs(faces[i].SignedArea);
-            if (abs > outerAbs)
-            {
-                outerAbs = abs;
-                outerIndex = i;
-            }
-        }
-
-        var outer = faces[outerIndex];
-        var interiors = faces.Where((f, idx) => idx != outerIndex).ToList();
-
-        Assert.Single(interiors);
-        double interiorArea = Math.Abs(interiors[0].SignedArea);
-        Assert.InRange(interiorArea, 0.5 - 1e-6, 0.5 + 1e-6);
-
-        // Outer face should have the same magnitude.
-        Assert.InRange(Math.Abs(outer.SignedArea), 0.5 - 1e-6, 0.5 + 1e-6);
+        Assert.Single(faces);
+        double area = Math.Abs(faces[0].SignedAreaUV);
+        Assert.InRange(area, 0.5 - 1e-6, 0.5 + 1e-6);
     }
 
     [Fact]
@@ -432,25 +412,9 @@ public class PslgCoreTests
 
         var faces = PslgBuilder.ExtractFaces(vertices, halfEdges);
 
-        Assert.Equal(3, faces.Count); // 2 interior + 1 exterior
-
-        int outerIndex = 0;
-        double outerAbs = Math.Abs(faces[0].SignedArea);
-        for (int i = 1; i < faces.Count; i++)
-        {
-            double abs = Math.Abs(faces[i].SignedArea);
-            if (abs > outerAbs)
-            {
-                outerAbs = abs;
-                outerIndex = i;
-            }
-        }
-
-        var interiors = faces.Where((f, idx) => idx != outerIndex).ToList();
-
-        Assert.Equal(2, interiors.Count);
-        double interiorAreaSum = interiors.Sum(f => Math.Abs(f.SignedArea));
-        Assert.InRange(interiorAreaSum, 0.5 - 1e-6, 0.5 + 1e-6);
+        Assert.Equal(2, faces.Count); // two bounded regions
+        double areaSum = faces.Sum(f => Math.Abs(f.SignedAreaUV));
+        Assert.InRange(areaSum, 0.5 - 1e-6, 0.5 + 1e-6);
     }
 
     [Fact]
@@ -480,7 +444,7 @@ public class PslgCoreTests
         var interiors = PslgBuilder.SelectInteriorFaces(faces);
 
         Assert.Equal(2, interiors.Count);
-        double areaSum = interiors.Sum(f => Math.Abs(f.SignedArea));
+        double areaSum = interiors.Sum(f => Math.Abs(f.SignedAreaUV));
         Assert.InRange(areaSum, 0.5 - 1e-6, 0.5 + 1e-6);
     }
 
@@ -526,11 +490,10 @@ public class PslgCoreTests
         PslgBuilder.BuildHalfEdges(vertices, edges, out var halfEdges);
         var faces = PslgBuilder.ExtractFaces(vertices, halfEdges);
 
-        var selection = PslgBuilder.SelectInteriorFaces(faces, expectedTriangleArea: 0.5);
+        var selectionList = PslgBuilder.SelectInteriorFaces(faces);
 
-        Assert.Equal(2, selection.InteriorFaces.Count);
-        Assert.InRange(selection.InteriorFaces.Sum(f => Math.Abs(f.SignedArea)), 0.5 - 1e-6, 0.5 + 1e-6);
-        Assert.InRange(Math.Abs(selection.OuterFaceIndex), 0, faces.Count - 1);
+        Assert.Equal(2, selectionList.Count);
+        Assert.InRange(selectionList.Sum(f => Math.Abs(f.SignedAreaUV)), 0.5 - 1e-6, 0.5 + 1e-6);
     }
 
     [Fact]
@@ -662,7 +625,8 @@ public class PslgCoreTests
         PslgBuilder.Build(points, segments, out var vertices, out var edges);
         PslgBuilder.BuildHalfEdges(vertices, edges, out var halfEdges);
         var faces = PslgBuilder.ExtractFaces(vertices, halfEdges);
-        var selection = PslgBuilder.SelectInteriorFaces(faces, expectedTriangleArea: 0.5);
+        var selectionList = PslgBuilder.SelectInteriorFaces(faces);
+        var selection = new PslgFaceSelection(-1, selectionList);
 
         // Triangulate and map to patches.
         var patches = PslgBuilder.TriangulateInteriorFaces(tri, vertices, selection);
