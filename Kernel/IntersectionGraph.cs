@@ -191,7 +191,7 @@ public sealed class IntersectionGraph
 
         public bool Equals(QuantizedPointKey other) => X == other.X && Y == other.Y && Z == other.Z;
 
-        public override bool Equals(object obj) => obj is QuantizedPointKey other && Equals(other);
+        public override bool Equals(object? obj) => obj is QuantizedPointKey other && Equals(other);
 
         public override int GetHashCode() => HashCode.Combine(X, Y, Z);
     }

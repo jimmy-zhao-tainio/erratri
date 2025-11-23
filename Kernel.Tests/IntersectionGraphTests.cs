@@ -159,7 +159,7 @@ public class IntersectionGraphTests
 
         var graph = IntersectionGraph.FromIntersectionSet(set);
 
-        Assert.Equal(1, graph.Vertices.Count);
+        Assert.Single(graph.Vertices);
         Assert.Empty(graph.Edges);
     }
 
@@ -235,7 +235,7 @@ public class IntersectionGraphTests
         var graph = IntersectionGraph.FromIntersectionSet(set);
         var index = TriangleIntersectionIndex.Build(graph);
 
-        Assert.Equal(1, graph.Vertices.Count);
+        Assert.Single(graph.Vertices);
         var sharedId = graph.Vertices[0].Id;
 
         Assert.Equal(2, index.TrianglesA.Count);
