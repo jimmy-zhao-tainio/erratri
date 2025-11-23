@@ -27,8 +27,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kernel", "Kernel\Kernel.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kernel.Tests", "Kernel.Tests\Kernel.Tests.csproj", "{58653B3A-B792-4F19-ADFB-AC694861312B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriangleSubdivision.Tests", "TriangleSubdivision.Tests\TriangleSubdivision.Tests.csproj", "{F12F75D2-3C05-4CF2-9D72-B4BE5D459EDC}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,9 +85,5 @@ Global
 		{58653B3A-B792-4F19-ADFB-AC694861312B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{58653B3A-B792-4F19-ADFB-AC694861312B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{58653B3A-B792-4F19-ADFB-AC694861312B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F12F75D2-3C05-4CF2-9D72-B4BE5D459EDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F12F75D2-3C05-4CF2-9D72-B4BE5D459EDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F12F75D2-3C05-4CF2-9D72-B4BE5D459EDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F12F75D2-3C05-4CF2-9D72-B4BE5D459EDC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

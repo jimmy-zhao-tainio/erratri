@@ -2,10 +2,9 @@ using System;
 using System.Collections.Generic;
 using Geometry;
 using Kernel;
-using TS = Kernel.TriangleSubdivision;
 using Xunit;
 
-namespace TriangleSubdivision.Tests;
+namespace Kernel.Tests;
 
 public class TriangleSubdivisionTests
 {
@@ -19,10 +18,10 @@ public class TriangleSubdivisionTests
 
         var tri = new Triangle(v0, v1, v2, missing);
 
-        var points = new List<TS.IntersectionPoint>();
-        var segments = new List<TS.IntersectionSegment>();
+        var points = new List<TriangleSubdivision.IntersectionPoint>();
+        var segments = new List<TriangleSubdivision.IntersectionSegment>();
 
-        var patches = TS.Subdivide(in tri, points, segments);
+        var patches = TriangleSubdivision.Subdivide(in tri, points, segments);
 
         var single = Assert.Single(patches);
 
@@ -49,20 +48,20 @@ public class TriangleSubdivisionTests
 
         var tri = new Triangle(v0, v1, v2, missing);
 
-        var points = new List<TS.IntersectionPoint>
+        var points = new List<TriangleSubdivision.IntersectionPoint>
         {
-            new TS.IntersectionPoint(
+            new TriangleSubdivision.IntersectionPoint(
                 new Barycentric(0.5, 0.5, 0.0),
                 new RealPoint(5.0, 5.0, 0.0))
         };
 
-        var segments = new List<TS.IntersectionSegment>
+        var segments = new List<TriangleSubdivision.IntersectionSegment>
         {
-            new TS.IntersectionSegment(0, 0)
+            new TriangleSubdivision.IntersectionSegment(0, 0)
         };
 
         Assert.Throws<InvalidOperationException>(
-            () => TS.Subdivide(in tri, points, segments));
+            () => TriangleSubdivision.Subdivide(in tri, points, segments));
     }
 
     [Fact]
@@ -84,18 +83,18 @@ public class TriangleSubdivisionTests
         var baryQ = new Barycentric(0.0, 0.7, 0.3);
         var posQ = tri.FromBarycentric(in baryQ);
 
-        var points = new List<TS.IntersectionPoint>
+        var points = new List<TriangleSubdivision.IntersectionPoint>
         {
-            new TS.IntersectionPoint(baryP, posP),
-            new TS.IntersectionPoint(baryQ, posQ)
+            new TriangleSubdivision.IntersectionPoint(baryP, posP),
+            new TriangleSubdivision.IntersectionPoint(baryQ, posQ)
         };
 
-        var segments = new List<TS.IntersectionSegment>
+        var segments = new List<TriangleSubdivision.IntersectionSegment>
         {
-            new TS.IntersectionSegment(0, 1)
+            new TriangleSubdivision.IntersectionSegment(0, 1)
         };
 
-        var patches = TS.Subdivide(in tri, points, segments);
+        var patches = TriangleSubdivision.Subdivide(in tri, points, segments);
 
         Assert.Equal(3, patches.Count);
 
@@ -145,19 +144,19 @@ public class TriangleSubdivisionTests
         var baryQ = new Barycentric(0.0, 0.4, 0.6);
         var posQ = tri.FromBarycentric(in baryQ);
 
-        var points = new List<TS.IntersectionPoint>
+        var points = new List<TriangleSubdivision.IntersectionPoint>
         {
-            new TS.IntersectionPoint(baryP, posP),
-            new TS.IntersectionPoint(baryQ, posQ)
+            new TriangleSubdivision.IntersectionPoint(baryP, posP),
+            new TriangleSubdivision.IntersectionPoint(baryQ, posQ)
         };
 
-        var segments = new List<TS.IntersectionSegment>
+        var segments = new List<TriangleSubdivision.IntersectionSegment>
         {
-            new TS.IntersectionSegment(0, 1)
+            new TriangleSubdivision.IntersectionSegment(0, 1)
         };
 
         var ex = Assert.Throws<InvalidOperationException>(
-            () => TS.Subdivide(in tri, points, segments));
+            () => TriangleSubdivision.Subdivide(in tri, points, segments));
 
         Assert.Contains("vertex endpoints", ex.Message);
     }
@@ -213,65 +212,65 @@ public class TriangleSubdivisionTests
     [Fact]
     public void ClassifyEdge_IdentifiesEdgesAndInterior()
     {
-        // Exact edge points.
+        // Exact edge poinTriangleSubdivision.
         var onEdge0 = new Barycentric(0.5, 0.5, 0.0); // w = 0
         var onEdge1 = new Barycentric(0.0, 0.5, 0.5); // u = 0
         var onEdge2 = new Barycentric(0.5, 0.0, 0.5); // v = 0
 
-        Assert.Equal(TS.EdgeLocation.Edge0, TS.ClassifyEdge(onEdge0));
-        Assert.Equal(TS.EdgeLocation.Edge1, TS.ClassifyEdge(onEdge1));
-        Assert.Equal(TS.EdgeLocation.Edge2, TS.ClassifyEdge(onEdge2));
+        Assert.Equal(TriangleSubdivision.EdgeLocation.Edge0, TriangleSubdivision.ClassifyEdge(onEdge0));
+        Assert.Equal(TriangleSubdivision.EdgeLocation.Edge1, TriangleSubdivision.ClassifyEdge(onEdge1));
+        Assert.Equal(TriangleSubdivision.EdgeLocation.Edge2, TriangleSubdivision.ClassifyEdge(onEdge2));
 
         // Interior point.
         var interior = new Barycentric(0.2, 0.3, 0.5);
-        Assert.Equal(TS.EdgeLocation.Interior, TS.ClassifyEdge(interior));
+        Assert.Equal(TriangleSubdivision.EdgeLocation.Interior, TriangleSubdivision.ClassifyEdge(interior));
     }
 
     [Fact]
     public void ClassifyPattern_NoneAndSingleEdgeToEdge()
     {
-        var points = new List<TS.IntersectionPoint>();
-        var segments = new List<TS.IntersectionSegment>();
+        var points = new List<TriangleSubdivision.IntersectionPoint>();
+        var segments = new List<TriangleSubdivision.IntersectionSegment>();
 
         // No segments -> None.
-        var pattern = TS.ClassifyPattern(points, segments);
-        Assert.Equal(TS.PatternKind.None, pattern);
+        var pattern = TriangleSubdivision.ClassifyPattern(points, segments);
+        Assert.Equal(TriangleSubdivision.PatternKind.None, pattern);
 
         // Single edge-to-edge segment: endpoints on distinct edges.
-        points.Add(new TS.IntersectionPoint(
+        points.Add(new TriangleSubdivision.IntersectionPoint(
             new Barycentric(0.5, 0.5, 0.0), new RealPoint(5.0, 5.0, 0.0))); // Edge0
-        points.Add(new TS.IntersectionPoint(
+        points.Add(new TriangleSubdivision.IntersectionPoint(
             new Barycentric(0.0, 0.5, 0.5), new RealPoint(5.0, 5.0, 0.0))); // Edge1
 
-        segments.Add(new TS.IntersectionSegment(0, 1));
+        segments.Add(new TriangleSubdivision.IntersectionSegment(0, 1));
 
-        pattern = TS.ClassifyPattern(points, segments);
-        Assert.Equal(TS.PatternKind.SingleEdgeToEdge, pattern);
+        pattern = TriangleSubdivision.ClassifyPattern(points, segments);
+        Assert.Equal(TriangleSubdivision.PatternKind.SingleEdgeToEdge, pattern);
     }
 
     [Fact]
     public void ClassifyPattern_InteriorOrMultipleSegments_IsOther()
     {
-        var points = new List<TS.IntersectionPoint>
+        var points = new List<TriangleSubdivision.IntersectionPoint>
         {
-            new TS.IntersectionPoint(
+            new TriangleSubdivision.IntersectionPoint(
                 new Barycentric(0.2, 0.3, 0.5), new RealPoint(2.0, 3.0, 0.0)), // interior
-            new TS.IntersectionPoint(
+            new TriangleSubdivision.IntersectionPoint(
                 new Barycentric(0.5, 0.5, 0.0), new RealPoint(5.0, 5.0, 0.0))  // edge0
         };
 
         // Single segment with an interior endpoint -> Other.
-        var segments = new List<TS.IntersectionSegment>
+        var segments = new List<TriangleSubdivision.IntersectionSegment>
         {
-            new TS.IntersectionSegment(0, 1)
+            new TriangleSubdivision.IntersectionSegment(0, 1)
         };
 
-        var pattern = TS.ClassifyPattern(points, segments);
-        Assert.Equal(TS.PatternKind.Other, pattern);
+        var pattern = TriangleSubdivision.ClassifyPattern(points, segments);
+        Assert.Equal(TriangleSubdivision.PatternKind.Other, pattern);
 
         // Multiple segments -> Other.
-        segments.Add(new TS.IntersectionSegment(1, 1));
-        pattern = TS.ClassifyPattern(points, segments);
-        Assert.Equal(TS.PatternKind.Other, pattern);
+        segments.Add(new TriangleSubdivision.IntersectionSegment(1, 1));
+        pattern = TriangleSubdivision.ClassifyPattern(points, segments);
+        Assert.Equal(TriangleSubdivision.PatternKind.Other, pattern);
     }
 }
