@@ -10,6 +10,23 @@ public static class Tolerances
     // (2D barycentric checks, segment intersection, collinearity, uniqueness).
     public const double TrianglePredicateEpsilon = 1e-12;
 
+    // Generic vertex-distance epsilon for 2D comparisons.
+    public const double EpsVertex = TrianglePredicateEpsilon;
+    public const double EpsVertexSquared = EpsVertex * EpsVertex;
+
+    // Generic "near corner" tolerance for snapping in planar charts.
+    public const double EpsCorner = 1e-7;
+
+    // Generic "on side" tolerance for boundary classification in planar charts.
+    public const double EpsSide = 1e-7;
+
+    // PSLG-level vertex merge tolerance in param space.
+    public const double PslgVertexMergeEpsilon = 1e-7;
+    public const double PslgVertexMergeEpsilonSquared = PslgVertexMergeEpsilon * PslgVertexMergeEpsilon;
+
+    // Generic area epsilon for 2D orientation/area checks.
+    public const double EpsArea = TrianglePredicateEpsilon;
+
     // Feature-level tolerances for intersection geometry built on top of
     // the predicate layer. These are initially derived from the predicate
     // epsilon but can be tuned independently if needed.
