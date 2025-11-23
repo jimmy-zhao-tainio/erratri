@@ -1,6 +1,6 @@
 using System;
 
-namespace TriangleSubdivision.Fuzz;
+namespace Kernel.Fuzz;
 
 internal static class Program
 {

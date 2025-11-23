@@ -5,7 +5,7 @@ using Geometry.Predicates;
 using Kernel;
 using KTS = Kernel.TriangleSubdivision;
 
-namespace TriangleSubdivision.Fuzz;
+namespace Kernel.Fuzz;
 
 public static class TriangleSubdivisionFuzz
 {
@@ -45,7 +45,7 @@ public static class TriangleSubdivisionFuzz
             IReadOnlyList<RealTriangle> patches;
             try
             {
-                patches = KTS.Subdivide(triangle, points, segments);
+                patches = TriangleSubdivision.Subdivide(triangle, points, segments);
             }
             catch (Exception ex)
             {
@@ -129,13 +129,13 @@ public static class TriangleSubdivisionFuzz
         return new Point(x, y, z);
     }
 
-    private static List<KTS.IntersectionPoint> RandomIntersectionPoints(
+    private static List<TriangleSubdivision.IntersectionPoint> RandomIntersectionPoints(
         Random rng,
         Triangle triangle,
         int maxPoints)
     {
         int n = rng.Next(0, maxPoints + 1);
-        var points = new List<KTS.IntersectionPoint>(n);
+        var points = new List<TriangleSubdivision.IntersectionPoint>(n);
 
         for (int i = 0; i < n; i++)
         {
@@ -149,17 +149,17 @@ public static class TriangleSubdivisionFuzz
             var bary = new Barycentric(u, v, w);
 
             var pos = triangle.FromBarycentric(in bary);
-            points.Add(new KTS.IntersectionPoint(bary, pos));
+            points.Add(new TriangleSubdivision.IntersectionPoint(bary, pos));
         }
 
         return points;
     }
 
-    private static List<KTS.IntersectionSegment> RandomNonCrossingSegments(
+    private static List<TriangleSubdivision.IntersectionSegment> RandomNonCrossingSegments(
         Random rng,
-        IReadOnlyList<KTS.IntersectionPoint> points)
+        IReadOnlyList<TriangleSubdivision.IntersectionPoint> points)
     {
-        var segments = new List<KTS.IntersectionSegment>();
+        var segments = new List<TriangleSubdivision.IntersectionSegment>();
         int n = points.Count;
         if (n < 2)
         {
@@ -179,7 +179,7 @@ public static class TriangleSubdivisionFuzz
 
             if (WouldCross(points, segments, i, j)) continue;
 
-            segments.Add(new KTS.IntersectionSegment(i, j));
+            segments.Add(new TriangleSubdivision.IntersectionSegment(i, j));
             if (segments.Count >= targetSegments)
             {
                 break;
@@ -190,7 +190,7 @@ public static class TriangleSubdivisionFuzz
     }
 
     private static bool HasSegment(
-        List<KTS.IntersectionSegment> segments,
+        List<TriangleSubdivision.IntersectionSegment> segments,
         int i,
         int j)
     {
@@ -205,8 +205,8 @@ public static class TriangleSubdivisionFuzz
     }
 
     private static bool WouldCross(
-        IReadOnlyList<KTS.IntersectionPoint> points,
-        List<KTS.IntersectionSegment> segments,
+        IReadOnlyList<TriangleSubdivision.IntersectionPoint> points,
+        List<TriangleSubdivision.IntersectionSegment> segments,
         int i,
         int j)
     {
@@ -244,8 +244,8 @@ public static class TriangleSubdivisionFuzz
         int iteration,
         int seed,
         Triangle triangle,
-        IReadOnlyList<KTS.IntersectionPoint> points,
-        IReadOnlyList<KTS.IntersectionSegment> segments,
+        IReadOnlyList<TriangleSubdivision.IntersectionPoint> points,
+        IReadOnlyList<TriangleSubdivision.IntersectionSegment> segments,
         Exception? ex)
     {
         Console.WriteLine("---- Fuzz failure ----");
