@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Geometry;
 
 namespace Kernel;
@@ -9,6 +10,8 @@ namespace Kernel;
 // around TriangleSubdivision.
 public sealed class TrianglePatchSet
 {
+    private static bool s_dumpWritten = false;
+
     // Patches for each triangle in IntersectionSet.TrianglesA.
     // Index i corresponds to triangle i in mesh A.
     public IReadOnlyList<IReadOnlyList<RealTriangle>> TrianglesA { get; }
@@ -136,7 +139,16 @@ public sealed class TrianglePatchSet
                 segments.Add(new TriangleSubdivision.IntersectionSegment(startIdx, endIdx));
             }
 
-            var patches = TriangleSubdivision.Subdivide(in triangle, points, segments);
+            IReadOnlyList<RealTriangle> patches;
+            try
+            {
+                patches = TriangleSubdivision.Subdivide(in triangle, points, segments);
+            }
+            catch (Exception ex)
+            {
+                TryDumpFailure(i, triangle, points, segments, ex);
+                throw;
+            }
             var stored = patches is List<RealTriangle> list ? list : new List<RealTriangle>(patches);
             result[i] = stored.ToArray();
         }
@@ -145,4 +157,47 @@ public sealed class TrianglePatchSet
     }
 
     private static (int, int) Normalize(int a, int b) => a < b ? (a, b) : (b, a);
+
+    private static void TryDumpFailure(
+        int triangleIndex,
+        Triangle triangle,
+        IReadOnlyList<TriangleSubdivision.IntersectionPoint> points,
+        IReadOnlyList<TriangleSubdivision.IntersectionSegment> segments,
+        Exception ex)
+    {
+        if (s_dumpWritten)
+        {
+            return;
+        }
+
+        s_dumpWritten = true;
+        var path = "triangle_subdivision_fail_dump.txt";
+
+        try
+        {
+            using var sw = new StreamWriter(path, append: false);
+            sw.WriteLine($"triangleIndex={triangleIndex}");
+            sw.WriteLine($"triangle=P0=({triangle.P0.X},{triangle.P0.Y},{triangle.P0.Z}) P1=({triangle.P1.X},{triangle.P1.Y},{triangle.P1.Z}) P2=({triangle.P2.X},{triangle.P2.Y},{triangle.P2.Z})");
+            sw.WriteLine("points:");
+            for (int i = 0; i < points.Count; i++)
+            {
+                var p = points[i];
+                sw.WriteLine($"  {i}: bary=({p.Barycentric.U},{p.Barycentric.V},{p.Barycentric.W}) world=({p.Position.X},{p.Position.Y},{p.Position.Z})");
+            }
+
+            sw.WriteLine("segments:");
+            for (int i = 0; i < segments.Count; i++)
+            {
+                var s = segments[i];
+                sw.WriteLine($"  {i}: {s.StartIndex} -> {s.EndIndex}");
+            }
+
+            sw.WriteLine($"exception={ex.GetType().Name}: {ex.Message}");
+            Console.WriteLine($"TriangleSubdivision failure captured to {path}");
+        }
+        catch
+        {
+            // ignore secondary dump failures
+        }
+    }
 }
