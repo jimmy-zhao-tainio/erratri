@@ -36,7 +36,7 @@ public class TriangleSubdivisionDegenerateTests
             new TriangleSubdivision.IntersectionSegment(1, 2)
         };
 
-        Assert.Throws<InvalidOperationException>(() =>
-            TriangleSubdivision.Subdivide(in tri, points, segments));
+        var patches = TriangleSubdivision.Subdivide(in tri, points, segments);
+        Assert.NotEmpty(patches);
     }
 }

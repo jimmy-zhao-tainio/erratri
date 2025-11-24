@@ -755,6 +755,27 @@ public static class PslgBuilder
 
         if (!double.IsNaN(expectedTriangleArea))
         {
+            double totalAbs = 0.0;
+            for (int i = 0; i < faces.Count; i++)
+            {
+                totalAbs += Math.Abs(faces[i].SignedAreaUV);
+            }
+
+            double absExpected = Math.Abs(expectedTriangleArea);
+            double relTol = epsRelative * absExpected;
+            bool totalMatches = Math.Abs(totalAbs - absExpected) <= epsAbsolute || Math.Abs(totalAbs - absExpected) <= relTol;
+            bool interiorMatches = Math.Abs(Math.Abs(sumInterior) - absExpected) <= epsAbsolute || Math.Abs(Math.Abs(sumInterior) - absExpected) <= relTol;
+
+            // If the total area of all faces matches the expected triangle area but
+            // removing the chosen outer face causes a mismatch, keep all faces as interior.
+            if (totalMatches && !interiorMatches)
+            {
+                return new PslgFaceSelection(outerFaceIndex: -1, DeduplicateFaces(faces));
+            }
+        }
+
+        if (!double.IsNaN(expectedTriangleArea))
+        {
             double diffSigned = Math.Abs(sumInterior - expectedTriangleArea);
             double diffAbs = Math.Abs(Math.Abs(sumInterior) - Math.Abs(expectedTriangleArea));
             double rel = epsRelative * Math.Abs(expectedTriangleArea);
