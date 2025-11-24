@@ -51,7 +51,7 @@ internal static class Program
 
     private static void Main(string[] args)
     {
-        int iterations = 1_000_000;
+        int iterations = 1000000;
         int seed = 12345;
         double minVolumeEps = 1e-6;
 
@@ -79,55 +79,124 @@ internal static class Program
         double innerMax = 75.0;
         var innerBox = new BoxSolid(innerMin, innerMax);
 
-        for (int iter = 0; iter < iterations; iter++)
+        int scenarios = 4;
+        int basePerScenario = iterations / scenarios;
+        int remainder = iterations % scenarios;
+        int globalIter = 0;
+
+        for (int scenario = 0; scenario < scenarios; scenario++)
         {
-            var tet = RandomTet(rng, outerMin, outerMax, innerMin, innerMax, minVolumeEps);
-
-            try
+            int scenarioIters = basePerScenario + (scenario < remainder ? 1 : 0);
+            int insideTarget = scenario switch
             {
-                RunOne(iter, tet, innerBox);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("---- Fuzz failure ----");
-                Console.WriteLine($"iteration={iter}");
-                Console.WriteLine("tet vertices:");
-                Console.WriteLine($"  A=({tet.A.X},{tet.A.Y},{tet.A.Z})");
-                Console.WriteLine($"  B=({tet.B.X},{tet.B.Y},{tet.B.Z})");
-                Console.WriteLine($"  C=({tet.C.X},{tet.C.Y},{tet.C.Z})");
-                Console.WriteLine($"  D=({tet.D.X},{tet.D.Y},{tet.D.Z})");
-                Console.WriteLine(ex);
+                0 => 1,
+                1 => 2,
+                2 => 3,
+                3 => 0,
+                _ => throw new InvalidOperationException()
+            };
 
-                var failTris = new List<Triangle>();
-                foreach (var bt in innerBox.Tets)
+            Console.WriteLine($"\nScenario {scenario}: insideTarget={insideTarget}");
+
+            for (int localIter = 0; localIter < scenarioIters; localIter++)
+            {
+                var tet = RandomTet(
+                    rng,
+                    outerMin,
+                    outerMax,
+                    innerMin,
+                    innerMax,
+                    minVolumeEps,
+                    insideTarget,
+                    insideTarget == 0 ? innerBox : null);
+
+                try
                 {
-                    failTris.AddRange(bt.Faces().Select(f => f.tri));
+                    RunOne(globalIter, tet, innerBox);
                 }
-                failTris.AddRange(tet.Faces().Select(f => f.tri));
+                catch (Exception ex)
+                {
+                    Console.WriteLine("---- Fuzz failure ----");
+                    Console.WriteLine($"iteration={globalIter}");
+                    Console.WriteLine($"scenario={scenario}, insideTarget={insideTarget}");
+                    Console.WriteLine("tet vertices:");
+                    Console.WriteLine($"  A=({tet.A.X},{tet.A.Y},{tet.A.Z})");
+                    Console.WriteLine($"  B=({tet.B.X},{tet.B.Y},{tet.B.Z})");
+                    Console.WriteLine($"  C=({tet.C.X},{tet.C.Y},{tet.C.Z})");
+                    Console.WriteLine($"  D=({tet.D.X},{tet.D.Y},{tet.D.Z})");
+                    Console.WriteLine(ex);
 
-                var stlPath = $"box_tet_fail_iter{iter}.stl";
-                StlWriter.Write(failTris, stlPath);
-                Console.WriteLine($"Saved fail geometry to {stlPath}");
-                return;
-            }
+                    var failTris = new List<Triangle>();
+                    foreach (var bt in innerBox.Tets)
+                    {
+                        failTris.AddRange(bt.Faces().Select(f => f.tri));
+                    }
+                    failTris.AddRange(tet.Faces().Select(f => f.tri));
 
-            if (iter % 1000 == 0)
-            {
-                Console.Write($"\r  iter {iter}/{iterations}");
+                    var stlPath = $"box_tet_fail_iter{globalIter}.stl";
+                    StlWriter.Write(failTris, stlPath);
+                    Console.WriteLine($"Saved fail geometry to {stlPath}");
+                    return;
+                }
+
+                if (globalIter % 1000 == 0)
+                {
+                    Console.Write($"\r  iter {globalIter}/{iterations}");
+                }
+
+                globalIter++;
             }
         }
 
         Console.WriteLine($"\rFuzz completed successfully. iterations={iterations}   ");
     }
 
-    private static Tet RandomTet(Random rng, double min, double max, double innerMin, double innerMax, double minVolumeEps)
+    private static Tet RandomTet(
+        Random rng,
+        double outerMin,
+        double outerMax,
+        double innerMin,
+        double innerMax,
+        double minVolumeEps,
+        int insideCountTarget,
+        BoxSolid? innerBoxForIntersectionCheck = null)
     {
         while (true)
         {
-            var p0 = RandomPoint(rng, min, max);
-            var p1 = RandomPoint(rng, min, max);
-            var p2 = RandomPoint(rng, min, max);
-            var p3 = RandomPoint(rng, min, max);
+            Point p0;
+            Point p1;
+            Point p2;
+            Point p3;
+
+            switch (insideCountTarget)
+            {
+                case 1:
+                    p0 = RandomPointInsideInnerBox(rng, innerMin, innerMax);
+                    p1 = RandomPointOutsideInnerBox(rng, outerMin, outerMax, innerMin, innerMax);
+                    p2 = RandomPointOutsideInnerBox(rng, outerMin, outerMax, innerMin, innerMax);
+                    p3 = RandomPointOutsideInnerBox(rng, outerMin, outerMax, innerMin, innerMax);
+                    break;
+                case 2:
+                    p0 = RandomPointInsideInnerBox(rng, innerMin, innerMax);
+                    p1 = RandomPointInsideInnerBox(rng, innerMin, innerMax);
+                    p2 = RandomPointOutsideInnerBox(rng, outerMin, outerMax, innerMin, innerMax);
+                    p3 = RandomPointOutsideInnerBox(rng, outerMin, outerMax, innerMin, innerMax);
+                    break;
+                case 3:
+                    p0 = RandomPointInsideInnerBox(rng, innerMin, innerMax);
+                    p1 = RandomPointInsideInnerBox(rng, innerMin, innerMax);
+                    p2 = RandomPointInsideInnerBox(rng, innerMin, innerMax);
+                    p3 = RandomPointOutsideInnerBox(rng, outerMin, outerMax, innerMin, innerMax);
+                    break;
+                case 0:
+                    p0 = RandomPointOutsideInnerBox(rng, outerMin, outerMax, innerMin, innerMax);
+                    p1 = RandomPointOutsideInnerBox(rng, outerMin, outerMax, innerMin, innerMax);
+                    p2 = RandomPointOutsideInnerBox(rng, outerMin, outerMax, innerMin, innerMax);
+                    p3 = RandomPointOutsideInnerBox(rng, outerMin, outerMax, innerMin, innerMax);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(insideCountTarget), insideCountTarget, "inside count must be between 0 and 3.");
+            }
 
             double volume = Math.Abs(ComputeSignedVolume(p0, p1, p2, p3));
             if (volume < minVolumeEps)
@@ -135,14 +204,21 @@ internal static class Program
                 continue; // degenerate
             }
 
-            // Reject if all inside inner box.
-            bool Inside(Point p) => p.X > innerMin && p.X < innerMax && p.Y > innerMin && p.Y < innerMax && p.Z > innerMin && p.Z < innerMax;
-            if (Inside(p0) && Inside(p1) && Inside(p2) && Inside(p3))
+            var tet = new Tet(p0, p1, p2, p3);
+            int insideCount = CountInsideInnerBox(tet, innerMin, innerMax);
+            if (insideCount != insideCountTarget)
             {
                 continue;
             }
 
-            return new Tet(p0, p1, p2, p3);
+            if (insideCountTarget == 0 &&
+                innerBoxForIntersectionCheck != null &&
+                !TetIntersectsInnerBox(tet, innerBoxForIntersectionCheck))
+            {
+                continue;
+            }
+
+            return tet;
         }
     }
 
@@ -152,6 +228,68 @@ internal static class Program
         double y = min + rng.NextDouble() * (max - min);
         double z = min + rng.NextDouble() * (max - min);
         return ToPoint(x, y, z);
+    }
+
+    private static bool IsInsideInnerBox(Point p, double innerMin, double innerMax)
+    {
+        return p.X > innerMin && p.X < innerMax
+            && p.Y > innerMin && p.Y < innerMax
+            && p.Z > innerMin && p.Z < innerMax;
+    }
+
+    private static Point RandomPointInsideInnerBox(Random rng, double innerMin, double innerMax)
+    {
+        double x = innerMin + rng.NextDouble() * (innerMax - innerMin);
+        double y = innerMin + rng.NextDouble() * (innerMax - innerMin);
+        double z = innerMin + rng.NextDouble() * (innerMax - innerMin);
+        return ToPoint(x, y, z);
+    }
+
+    private static Point RandomPointOutsideInnerBox(Random rng, double outerMin, double outerMax, double innerMin, double innerMax)
+    {
+        while (true)
+        {
+            var p = RandomPoint(rng, outerMin, outerMax);
+            if (!IsInsideInnerBox(p, innerMin, innerMax))
+            {
+                return p;
+            }
+        }
+    }
+
+    private static int CountInsideInnerBox(Tet tet, double innerMin, double innerMax)
+    {
+        int count = 0;
+        if (IsInsideInnerBox(tet.A, innerMin, innerMax)) count++;
+        if (IsInsideInnerBox(tet.B, innerMin, innerMax)) count++;
+        if (IsInsideInnerBox(tet.C, innerMin, innerMax)) count++;
+        if (IsInsideInnerBox(tet.D, innerMin, innerMax)) count++;
+        return count;
+    }
+
+    private static bool TetIntersectsInnerBox(Tet tet, BoxSolid innerBox)
+    {
+        foreach (var boxTet in innerBox.Tets)
+        {
+            var facesA = boxTet.Faces().ToArray();
+            var facesB = tet.Faces().ToArray();
+
+            for (int i = 0; i < facesA.Length; i++)
+            {
+                for (int j = 0; j < facesB.Length; j++)
+                {
+                    var triA = facesA[i].tri;
+                    var triB = facesB[j].tri;
+
+                    if (IntersectionTypes.Classify(in triA, in triB) != IntersectionType.None)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     private static Point ToPoint(double x, double y, double z)
