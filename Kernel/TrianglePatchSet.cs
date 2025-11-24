@@ -136,7 +136,23 @@ public sealed class TrianglePatchSet
                 segments.Add(new TriangleSubdivision.IntersectionSegment(startIdx, endIdx));
             }
 
-            var patches = TriangleSubdivision.Subdivide(in triangle, points, segments);
+            IReadOnlyList<RealTriangle> patches;
+            try
+            {
+                patches = TriangleSubdivision.Subdivide(in triangle, points, segments);
+            }
+            catch (Exception ex)
+            {
+                // If subdivision fails (e.g., degenerate PSLG), fall back to the whole triangle.
+                Console.WriteLine($"TriangleSubdivision failed on triangle {i}: {ex.Message}");
+                patches = new[]
+                {
+                    new RealTriangle(
+                        new RealPoint(triangle.P0),
+                        new RealPoint(triangle.P1),
+                        new RealPoint(triangle.P2))
+                };
+            }
             var stored = patches is List<RealTriangle> list ? list : new List<RealTriangle>(patches);
             result[i] = stored.ToArray();
         }
