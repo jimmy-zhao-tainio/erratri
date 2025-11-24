@@ -1435,7 +1435,7 @@ public static class PslgBuilder
                 var p1 = MapVertex(t.B);
                 var p2 = MapVertex(t.C);
 
-                double area = TriangleArea3D(p0, p1, p2);
+                double area = new RealTriangle(p0, p1, p2).SignedArea3D;
                 if (area <= 0)
                 {
                     throw new InvalidOperationException("Mapped triangle has non-positive area in world space.");
@@ -1447,23 +1447,4 @@ public static class PslgBuilder
 
         return patches;
     }
-
-    private static double TriangleArea3D(RealPoint a, RealPoint b, RealPoint c)
-    {
-        double abx = b.X - a.X;
-        double aby = b.Y - a.Y;
-        double abz = b.Z - a.Z;
-
-        double acx = c.X - a.X;
-        double acy = c.Y - a.Y;
-        double acz = c.Z - a.Z;
-
-        double cxp = aby * acz - abz * acy;
-        double cyp = abz * acx - abx * acz;
-        double czp = abx * acy - aby * acx;
-
-        double len = Math.Sqrt(cxp * cxp + cyp * cyp + czp * czp);
-        return 0.5 * len;
-    }
-
 }

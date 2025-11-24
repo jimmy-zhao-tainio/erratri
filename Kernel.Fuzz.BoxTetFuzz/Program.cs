@@ -289,12 +289,12 @@ internal static class Program
         double triArea = Math.Abs(new RealTriangle(
             new RealPoint(tri.P0),
             new RealPoint(tri.P1),
-            new RealPoint(tri.P2)).SignedArea3D());
+            new RealPoint(tri.P2)).SignedArea3D);
 
         double patchSum = 0.0;
         foreach (var p in patches)
         {
-            double area = Math.Abs(new RealTriangle(p.P0, p.P1, p.P2).SignedArea3D());
+            double area = Math.Abs(new RealTriangle(p.P0, p.P1, p.P2).SignedArea3D);
             if (area <= 0)
             {
                 Console.WriteLine($"Non-positive patch area on triangle {label} at iter {iteration}");
@@ -302,7 +302,7 @@ internal static class Program
                 for (int i = 0; i < patches.Count; i++)
                 {
                     var rt = patches[i];
-                    double a = new RealTriangle(rt.P0, rt.P1, rt.P2).SignedArea3D();
+                    double a = new RealTriangle(rt.P0, rt.P1, rt.P2).SignedArea3D;
                     Console.WriteLine($"    patch {i}: area3D={a} pts=({rt.P0.X},{rt.P0.Y},{rt.P0.Z}) ({rt.P1.X},{rt.P1.Y},{rt.P1.Z}) ({rt.P2.X},{rt.P2.Y},{rt.P2.Z})");
                 }
                 throw new InvalidOperationException($"Patch has non-positive area on triangle {label} at iter {iteration}.");
