@@ -8,7 +8,7 @@ namespace Kernel;
 // vertices with quantization and emitting indexed triangles.
 public static class BooleanMeshAssembler
 {
-    public static BooleanMesh Assemble(BooleanPatchSet patchSet, double epsilon = Tolerances.TrianglePredicateEpsilon)
+    public static BooleanMesh Assemble(BooleanPatchSet patchSet)
     {
         if (patchSet is null) throw new ArgumentNullException(nameof(patchSet));
 
@@ -17,9 +17,9 @@ public static class BooleanMeshAssembler
 
         void AddPatch(in RealTriangle tri)
         {
-            int i0 = AddOrGet(vertices, tri.P0, epsilon);
-            int i1 = AddOrGet(vertices, tri.P1, epsilon);
-            int i2 = AddOrGet(vertices, tri.P2, epsilon);
+            int i0 = AddOrGet(vertices, tri.P0);
+            int i1 = AddOrGet(vertices, tri.P1);
+            int i2 = AddOrGet(vertices, tri.P2);
             triangles.Add((i0, i1, i2));
         }
 
@@ -36,8 +36,9 @@ public static class BooleanMeshAssembler
         return new BooleanMesh(vertices, triangles);
     }
 
-    private static int AddOrGet(List<RealPoint> vertices, in RealPoint point, double eps)
+    private static int AddOrGet(List<RealPoint> vertices, in RealPoint point)
     {
+        double eps = Tolerances.TrianglePredicateEpsilon;
         double inv = 1.0 / eps;
         long qx = (long)Math.Round(point.X * inv);
         long qy = (long)Math.Round(point.Y * inv);
