@@ -1,4 +1,5 @@
 using Geometry;
+using System.Collections.Generic;
 
 namespace Topology;
 
@@ -13,6 +14,19 @@ public readonly struct BoundingBox
         Max = max;
     }
 
+    public double MaximumRayLength
+    {
+        get
+        {
+            double dx = Max.X - Min.X;
+            double dy = Max.Y - Min.Y;
+            double dz = Max.Z - Min.Z;
+            double diagonal = Math.Sqrt(dx * dx + dy * dy + dz * dz);
+            if (diagonal <= 0) diagonal = 1.0;
+            return diagonal * 2.0 + 1.0;
+        }
+    }
+
     public static BoundingBox FromPoints(in Point a, in Point b, in Point c)
     {
         long minX = Math.Min(a.X, Math.Min(b.X, c.X));
@@ -22,6 +36,40 @@ public readonly struct BoundingBox
         long maxY = Math.Max(a.Y, Math.Max(b.Y, c.Y));
         long maxZ = Math.Max(a.Z, Math.Max(b.Z, c.Z));
         return new BoundingBox(new Point(minX, minY, minZ), new Point(maxX, maxY, maxZ));
+    }
+
+    public static BoundingBox FromPoints(in RealPoint a, in RealPoint b)
+    {
+        double minX = Math.Min(a.X, b.X);
+        double minY = Math.Min(a.Y, b.Y);
+        double minZ = Math.Min(a.Z, b.Z);
+        double maxX = Math.Max(a.X, b.X);
+        double maxY = Math.Max(a.Y, b.Y);
+        double maxZ = Math.Max(a.Z, b.Z);
+
+        long lx0 = (long)Math.Floor(minX) - 1;
+        long ly0 = (long)Math.Floor(minY) - 1;
+        long lz0 = (long)Math.Floor(minZ) - 1;
+        long lx1 = (long)Math.Ceiling(maxX) + 1;
+        long ly1 = (long)Math.Ceiling(maxY) + 1;
+        long lz1 = (long)Math.Ceiling(maxZ) + 1;
+
+        return new BoundingBox(new Point(lx0, ly0, lz0), new Point(lx1, ly1, lz1));
+    }
+
+    public static BoundingBox FromTriangles(IReadOnlyList<Triangle> triangles)
+    {
+        if (triangles is null) throw new ArgumentNullException(nameof(triangles));
+        if (triangles.Count == 0) return Empty;
+
+        var box = FromTriangle(triangles[0]);
+        for (int i = 1; i < triangles.Count; i++)
+        {
+            var b = FromTriangle(triangles[i]);
+            box = Union(in box, in b);
+        }
+
+        return box;
     }
 
     public static BoundingBox FromTriangle(in Triangle t)

@@ -6,6 +6,18 @@ public readonly struct RealTriangle
     public RealPoint P1 { get; }
     public RealPoint P2 { get; }
 
+    // Centroid of the triangle in 3D.
+    public RealPoint Centroid
+    {
+        get
+        {
+            double cx = (P0.X + P1.X + P2.X) / 3.0;
+            double cy = (P0.Y + P1.Y + P2.Y) / 3.0;
+            double cz = (P0.Z + P1.Z + P2.Z) / 3.0;
+            return new RealPoint(cx, cy, cz);
+        }
+    }
+
     // Signed area in the XY plane.
     public double SignedArea
     {
