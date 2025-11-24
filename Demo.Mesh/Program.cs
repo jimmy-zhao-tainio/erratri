@@ -1,4 +1,8 @@
+using System;
+using System.Collections.Generic;
 using Geometry;
+using IO;
+using Kernel;
 using World;
 
 internal static class Program
@@ -12,19 +16,40 @@ internal static class Program
         var a = new Sphere(r, subdivisions: 3, center: aCenter);
         var b = new Sphere(r, subdivisions: 3, center: bCenter);
 
-        var world = new World.World();
-        world.Add(a);
-        world.Add(b);
+        var set = new IntersectionSet(a.Mesh.Triangles, b.Mesh.Triangles);
+        var graph = IntersectionGraph.FromIntersectionSet(set);
+        var index = TriangleIntersectionIndex.Build(graph);
+        var topoA = MeshATopology.Build(graph, index);
+        var topoB = MeshBTopology.Build(graph, index);
+        var patches = TrianglePatchSet.Build(graph, index, topoA, topoB);
+        var classification = PatchClassifier.Classify(set, patches);
+        var selected = BooleanPatchClassifier.Select(BooleanOperation.Union, classification);
+        var mesh = BooleanMeshAssembler.Assemble(selected);
 
-        // Intersection demo temporarily disabled; writing both meshes as-is.
-        var triangleCount = 0;
-        foreach (var shape in world.Shapes)
+        var triangles = ToTriangles(mesh);
+        var outPath = "spheres_union.stl";
+        StlWriter.Write(triangles, outPath);
+        Console.WriteLine($"Wrote union: {System.IO.Path.GetFullPath(outPath)} with {triangles.Count} triangles");
+    }
+
+    private static IReadOnlyList<Triangle> ToTriangles(BooleanMesh mesh)
+    {
+        var tris = new List<Triangle>(mesh.Triangles.Count);
+        foreach (var (a, b, c) in mesh.Triangles)
         {
-            triangleCount += shape.Mesh.Triangles.Count;
+            var p0 = ToPoint(mesh.Vertices[a]);
+            var p1 = ToPoint(mesh.Vertices[b]);
+            var p2 = ToPoint(mesh.Vertices[c]);
+            tris.Add(Triangle.FromWinding(p0, p1, p2));
         }
+        return tris;
+    }
 
-        var outPath = "spheres_with_disc.stl";
-        world.Save(outPath);
-        Console.WriteLine($"Wrote placeholder (no intersection): {System.IO.Path.GetFullPath(outPath)} with {triangleCount} triangles");
+    private static Point ToPoint(in RealPoint p)
+    {
+        long x = (long)Math.Round(p.X);
+        long y = (long)Math.Round(p.Y);
+        long z = (long)Math.Round(p.Z);
+        return new Point(x, y, z);
     }
 }
