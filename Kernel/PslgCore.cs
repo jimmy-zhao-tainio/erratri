@@ -1229,6 +1229,32 @@ public static class PslgBuilder
             AddCycleSegments(polygon.ToArray());
         }
 
+        // Compress consecutive duplicates, including a repeated start/end.
+        var compressed = new List<int>(polygon.Count);
+        for (int i = 0; i < polygon.Count; i++)
+        {
+            int curr = polygon[i];
+            if (compressed.Count > 0 && compressed[^1] == curr)
+            {
+                continue;
+            }
+            compressed.Add(curr);
+        }
+
+        if (compressed.Count > 1 && compressed[0] == compressed[^1])
+        {
+            compressed.RemoveAt(compressed.Count - 1);
+        }
+
+        polygon = compressed;
+
+        // Degenerate after compression?
+        var distinct = new HashSet<int>(polygon);
+        if (polygon.Count < 3 || distinct.Count < 3)
+        {
+            throw new InvalidOperationException($"Stitched polygon degenerated after compression: {string.Join("->", polygon)}");
+        }
+
         // Sanity checks: no immediate duplicates.
         for (int i = polygon.Count - 1, j = 0; j < polygon.Count; i = j, j++)
         {
@@ -1409,8 +1435,7 @@ public static class PslgBuilder
                 var p1 = MapVertex(t.B);
                 var p2 = MapVertex(t.C);
 
-                double area = new RealTriangle(p0, p1, p2).SignedArea * 1.0; // SignedArea in XY; use magnitude below
-                area = Math.Abs(area);
+                double area = TriangleArea3D(p0, p1, p2);
                 if (area <= 0)
                 {
                     throw new InvalidOperationException("Mapped triangle has non-positive area in world space.");
@@ -1421,6 +1446,24 @@ public static class PslgBuilder
         }
 
         return patches;
+    }
+
+    private static double TriangleArea3D(RealPoint a, RealPoint b, RealPoint c)
+    {
+        double abx = b.X - a.X;
+        double aby = b.Y - a.Y;
+        double abz = b.Z - a.Z;
+
+        double acx = c.X - a.X;
+        double acy = c.Y - a.Y;
+        double acz = c.Z - a.Z;
+
+        double cxp = aby * acz - abz * acy;
+        double cyp = abz * acx - abx * acz;
+        double czp = abx * acy - aby * acx;
+
+        double len = Math.Sqrt(cxp * cxp + cyp * cyp + czp * czp);
+        return 0.5 * len;
     }
 
 }
