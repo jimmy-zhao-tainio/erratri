@@ -73,8 +73,8 @@ public sealed class PslgFace
     // CCW outer boundary vertex indices.
     public int[] OuterVertices { get; }
 
-    // Zero or more CCW hole cycles.
-    public IReadOnlyList<int[]> Holes { get; }
+    // Zero or more CCW interior cycles (nested boundaries).
+    public IReadOnlyList<int[]> InteriorCycles { get; }
 
     // Signed area in UV: outer area minus sum(holes).
     public double SignedAreaUV { get; }
@@ -88,10 +88,10 @@ public sealed class PslgFace
     {
     }
 
-    public PslgFace(int[] outerVertices, IReadOnlyList<int[]> holes, double signedArea)
+    public PslgFace(int[] outerVertices, IReadOnlyList<int[]> interiorCycles, double signedArea)
     {
         OuterVertices = outerVertices;
-        Holes = holes;
+        InteriorCycles = interiorCycles;
         SignedAreaUV = signedArea;
     }
 }
@@ -999,7 +999,7 @@ public static class PslgBuilder
             throw new ArgumentException("Face must have an outer boundary with at least 3 vertices.", nameof(face));
         }
 
-        if (face.Holes.Count == 0)
+        if (face.InteriorCycles.Count == 0)
         {
             return TriangulateSimple(face.OuterVertices, vertices, face.SignedAreaUV);
         }
@@ -1155,14 +1155,14 @@ public static class PslgBuilder
         }
 
         AddCycleSegments(face.OuterVertices);
-        foreach (var hole in face.Holes)
+        foreach (var hole in face.InteriorCycles)
         {
             AddCycleSegments(hole);
         }
 
-        var uniqueHoles = new List<int[]>(face.Holes.Count);
+        var uniqueHoles = new List<int[]>(face.InteriorCycles.Count);
         var holeKeys = new HashSet<string>();
-        foreach (var hcyc in face.Holes)
+        foreach (var hcyc in face.InteriorCycles)
         {
             var key = CanonicalFaceKey(hcyc);
             if (holeKeys.Add(key))
