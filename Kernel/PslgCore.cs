@@ -748,6 +748,21 @@ public static class PslgBuilder
             sumInterior += interiors[i].SignedAreaUV;
         }
 
+        const double expectedArea = 0.5; // barycentric triangle area
+        double totalAbs = 0.0;
+        for (int i = 0; i < faces.Count; i++)
+        {
+            totalAbs += Math.Abs(faces[i].SignedAreaUV);
+        }
+
+        double absDiff = Math.Abs(totalAbs - expectedArea);
+        double relTol = Tolerances.BarycentricInsideEpsilon * expectedArea;
+        if (absDiff <= Tolerances.EpsArea || absDiff <= relTol)
+        {
+            // All faces appear to be bounded and cover the triangle; keep them all.
+            return new PslgFaceSelection(outerFaceIndex: -1, DeduplicateFaces(faces));
+        }
+
         return new PslgFaceSelection(outerIndex, interiors);
     }
 

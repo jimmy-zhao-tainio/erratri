@@ -508,6 +508,7 @@ public class PslgCoreTests
 
         var selection = PslgBuilder.SelectInteriorFaceSelection(faces);
         Assert.Equal(0, selection.OuterFaceIndex);
+        Assert.Equal(0, selection.OuterFaceIndex);
         Assert.Empty(selection.InteriorFaces);
     }
 
