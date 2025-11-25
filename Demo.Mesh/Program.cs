@@ -40,28 +40,10 @@ internal static class Program
             var p0 = ToPoint(mesh.Vertices[a]);
             var p1 = ToPoint(mesh.Vertices[b]);
             var p2 = ToPoint(mesh.Vertices[c]);
-            if (!IsDegenerate(p0, p1, p2))
-            {
-                tris.Add(Triangle.FromWinding(p0, p1, p2));
-            }
+            tris.Add(Triangle.FromWinding(p0, p1, p2));
         }
         return tris;
     }
-
-    private static bool IsDegenerate(Point a, Point b, Point c)
-    {
-        long abx = b.X - a.X;
-        long aby = b.Y - a.Y;
-        long abz = b.Z - a.Z;
-        long acx = c.X - a.X;
-        long acy = c.Y - a.Y;
-        long acz = c.Z - a.Z;
-        long cxp = aby * acz - abz * acy;
-        long cyp = abz * acx - abx * acz;
-        long czp = abx * acy - aby * acx;
-        return cxp == 0 && cyp == 0 && czp == 0;
-    }
-
     private static Point ToPoint(in RealPoint p)
     {
         long x = (long)Math.Round(p.X);

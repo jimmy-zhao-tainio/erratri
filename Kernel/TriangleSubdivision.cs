@@ -18,6 +18,9 @@ namespace Kernel;
 //     non-fast patterns still throw to avoid silent fallbacks.
 public static class TriangleSubdivision
 {
+    // Reference UV triangle has vertices (1,0), (0,1), (0,0); its area is 1/2.
+    public const double ReferenceTriangleAreaUv = 0.5;
+
     // Location of a point on the reference triangle, expressed in terms of
     // which oriented edge it lies on (if any). The numbering matches the
     // TRIANGLESUBDIVISION roadmap:
@@ -210,8 +213,7 @@ public static class TriangleSubdivision
 
                 // Use chart-space face classification only; world-space area
                 // conservation is checked by the caller/fuzz harness.
-                var interiorFaces = PslgBuilder.SelectInteriorFaces(faces);
-                var selection = PslgBuilder.SelectInteriorFaceSelection(faces);
+                var selection = PslgBuilder.SelectInteriorFacesWithAreaCheck(faces);
                 return PslgBuilder.TriangulateInteriorFaces(triangle, pslgVertices, selection);
         }
     }

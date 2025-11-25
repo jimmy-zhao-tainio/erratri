@@ -36,8 +36,7 @@ public static class BooleanMeshAssembler
             AddPatch(tri);
         }
 
-        // NOTE: manifold validation temporarily disabled to allow debug output.
-        // ValidateManifoldEdges(triangles, triangleSources);
+        ValidateManifoldEdges(triangles, triangleSources);
 
         return new BooleanMesh(vertices, triangles);
     }

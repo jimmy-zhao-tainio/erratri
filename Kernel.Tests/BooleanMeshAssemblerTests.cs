@@ -61,4 +61,26 @@ public class BooleanMeshAssemblerTests
         Assert.True(mesh.Triangles.Count > 0);
         Assert.True(mesh.Vertices.Count < outer.Mesh.Triangles.Count * 3);
     }
+
+    [Fact]
+    public void NonManifoldEdge_DumpCase_MissingTwin()
+    {
+        // This is currently a placeholder: we need a deterministic reproducer for the
+        // sphere-union non-manifold edge. For now, assert that a simple disjoint
+        // union builds without throwing; real repro to be added once captured.
+        var a = new WTetrahedron(
+            new Point(0, 0, 0),
+            new Point(2, 0, 0),
+            new Point(0, 2, 0),
+            new Point(0, 0, 2));
+
+        var b = new WTetrahedron(
+            new Point(100, 100, 100),
+            new Point(102, 100, 100),
+            new Point(100, 102, 100),
+            new Point(100, 100, 102));
+
+        var mesh = Build(BooleanOperation.Union, a, b);
+        Assert.NotEmpty(mesh.Triangles);
+    }
 }

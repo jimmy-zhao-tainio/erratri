@@ -76,7 +76,7 @@ public sealed class PslgFace
     // Zero or more CCW interior cycles (nested boundaries).
     public IReadOnlyList<int[]> InteriorCycles { get; }
 
-    // Signed area in UV: outer area minus sum(holes).
+    // Signed area in UV: outer ring area minus sum(interior cycles).
     public double SignedAreaUV { get; }
 
     // Backward compatibility helpers for older tests/usage.
@@ -98,13 +98,11 @@ public sealed class PslgFace
 
 public readonly struct PslgFaceSelection
 {
-    public int OuterFaceIndex { get; }
     public IReadOnlyList<PslgFace> InteriorFaces { get; }
 
-    public PslgFaceSelection(int outerFaceIndex, IReadOnlyList<PslgFace> interiorFaces)
+    public PslgFaceSelection(IReadOnlyList<PslgFace> interiorFaces)
     {
-        OuterFaceIndex = outerFaceIndex;
-        InteriorFaces = interiorFaces;
+        InteriorFaces = interiorFaces ?? throw new ArgumentNullException(nameof(interiorFaces));
     }
 }
 
@@ -676,6 +674,11 @@ public static class PslgBuilder
         return BuildFaces(rawCycles, vertices);
     }
 
+    /// <summary>
+    /// Filters out degenerate faces and deduplicates boundaries without any
+    /// outer/interior area reasoning. This is a lightweight utility; use
+    /// the area-checked selector for subdivision.
+    /// </summary>
     public static List<PslgFace> SelectInteriorFaces(
         IReadOnlyList<PslgFace> faces)
     {
@@ -696,74 +699,71 @@ public static class PslgBuilder
         return DeduplicateFaces(filtered);
     }
 
-    internal static PslgFaceSelection SelectInteriorFaceSelection(
+    /// <summary>
+    /// Selects interior faces for a PSLG inside the reference triangle's UV chart:
+    /// filters non-degenerate faces, treats them all as interior pieces, and
+    /// verifies their total absolute UV area matches the reference triangle area.
+    /// </summary>
+    internal static PslgFaceSelection SelectInteriorFacesWithAreaCheck(
         IReadOnlyList<PslgFace> faces)
     {
         if (faces is null) throw new ArgumentNullException(nameof(faces));
-        if (faces.Count == 0) return new PslgFaceSelection(-1, Array.Empty<PslgFace>());
+        var interiorFaces = SelectInteriorFaces(faces);
 
-        int outerIndex = 0;
-        double outerAbs = Math.Abs(faces[0].SignedAreaUV);
-        for (int i = 1; i < faces.Count; i++)
+        const double ReferenceTriangleAreaUv = 0.5;
+        double targetArea = Math.Abs(ReferenceTriangleAreaUv);
+        double relTol = Tolerances.BarycentricInsideEpsilon * targetArea;
+
+        // Drop any full-triangle rings when we already have multiple faces.
+        IReadOnlyList<PslgFace> filtered = interiorFaces;
+        if (interiorFaces.Count > 1)
         {
-            double abs = Math.Abs(faces[i].SignedAreaUV);
-            if (abs > outerAbs)
+            var pruned = new List<PslgFace>(interiorFaces.Count);
+            for (int i = 0; i < interiorFaces.Count; i++)
             {
-                outerAbs = abs;
-                outerIndex = i;
+                double areaAbs = Math.Abs(interiorFaces[i].SignedAreaUV);
+                double diff = Math.Abs(areaAbs - targetArea);
+                if (diff <= Tolerances.EpsArea || diff <= relTol)
+                {
+                    continue;
+                }
+                pruned.Add(interiorFaces[i]);
             }
+
+            filtered = pruned;
         }
 
-        var interiors = new List<PslgFace>(faces.Count - 1);
-        var seenOuterKey = CanonicalFaceKey(faces[outerIndex].OuterVertices);
-
-        for (int i = 0; i < faces.Count; i++)
+        if (filtered.Count == 0 && interiorFaces.Count > 0)
         {
-            if (i == outerIndex)
+            int maxIdx = 0;
+            double maxArea = Math.Abs(interiorFaces[0].SignedAreaUV);
+            for (int i = 1; i < interiorFaces.Count; i++)
             {
-                continue;
+                double areaAbs = Math.Abs(interiorFaces[i].SignedAreaUV);
+                if (areaAbs > maxArea)
+                {
+                    maxArea = areaAbs;
+                    maxIdx = i;
+                }
             }
 
-            double areaAbs = Math.Abs(faces[i].SignedAreaUV);
-            if (areaAbs <= Tolerances.EpsArea)
-            {
-                continue;
-            }
-
-            // Skip any duplicate of the outer boundary face.
-            var key = CanonicalFaceKey(faces[i].OuterVertices);
-            if (key == seenOuterKey)
-            {
-                continue;
-            }
-
-            interiors.Add(faces[i]);
+            filtered = new List<PslgFace>(capacity: 1) { interiorFaces[maxIdx] };
         }
 
-        interiors = DeduplicateFaces(interiors);
-
-        double sumInterior = 0.0;
-        for (int i = 0; i < interiors.Count; i++)
-        {
-            sumInterior += interiors[i].SignedAreaUV;
-        }
-
-        const double expectedArea = 0.5; // barycentric triangle area
         double totalAbs = 0.0;
-        for (int i = 0; i < faces.Count; i++)
+        for (int i = 0; i < filtered.Count; i++)
         {
-            totalAbs += Math.Abs(faces[i].SignedAreaUV);
+            totalAbs += Math.Abs(filtered[i].SignedAreaUV);
         }
 
-        double absDiff = Math.Abs(totalAbs - expectedArea);
-        double relTol = Tolerances.BarycentricInsideEpsilon * expectedArea;
-        if (absDiff <= Tolerances.EpsArea || absDiff <= relTol)
+        double absDiff = Math.Abs(totalAbs - targetArea);
+        if (absDiff > Tolerances.EpsArea && absDiff > relTol)
         {
-            // All faces appear to be bounded and cover the triangle; keep them all.
-            return new PslgFaceSelection(outerFaceIndex: -1, DeduplicateFaces(faces));
+            throw new InvalidOperationException(
+                $"Face areas do not sum to the expected reference triangle area: totalAbs={totalAbs}, expected={ReferenceTriangleAreaUv}.");
         }
 
-        return new PslgFaceSelection(outerIndex, interiors);
+        return new PslgFaceSelection(filtered);
     }
 
     private readonly struct RawCycle
@@ -854,8 +854,8 @@ public static class PslgBuilder
         var faces = new List<PslgFace>();
         for (int i = 0; i < n; i++)
         {
-            var holes = new List<int[]>();
-            var holeKeys = new HashSet<string>();
+            var innerCycles = new List<int[]>();
+            var innerCycleKeys = new HashSet<string>();
             if (children[i] != null)
             {
                 foreach (var ch in children[i])
@@ -863,27 +863,27 @@ public static class PslgBuilder
                     if (depth[ch] == depth[i] + 1)
                     {
                         var key = CanonicalFaceKey(norm[ch].Vertices);
-                        if (holeKeys.Add(key))
+                        if (innerCycleKeys.Add(key))
                         {
-                            holes.Add(norm[ch].Vertices);
+                            innerCycles.Add(norm[ch].Vertices);
                         }
                     }
                 }
             }
 
-            double holeAreaSum = 0.0;
-            foreach (var h in holes)
+            double innerCycleAreaSum = 0.0;
+            foreach (var innerCycle in innerCycles)
             {
-                holeAreaSum += CycleArea(vertices, h);
+                innerCycleAreaSum += CycleArea(vertices, innerCycle);
             }
 
-            double signedArea = norm[i].Area - holeAreaSum;
+            double signedArea = norm[i].Area - innerCycleAreaSum;
             if (Math.Abs(signedArea) <= Tolerances.EpsArea)
             {
                 continue;
             }
 
-            faces.Add(new PslgFace(norm[i].Vertices, holes, signedArea));
+            faces.Add(new PslgFace(norm[i].Vertices, innerCycles, signedArea));
         }
 
         return DeduplicateFaces(faces);
@@ -964,10 +964,12 @@ public static class PslgBuilder
         return string.Join(",", ordered);
     }
 
-    // Phase G: ear-clipping triangulation of one simple polygonal face in
-    // parameter space. Supports optional holes by bridging them into a
-    // single simple polygon before ear clipping. Returns triangles as
-    // triples of vertex indices into the global PSLG vertex list.
+    // Phase G: ear-clipping triangulation of one face in the reference
+    // triangle's UV chart. InteriorCycles are bounded inner rings inside
+    // the same triangle (no unbounded "outside" face in this chart).
+    // Supports optional interior cycles by bridging them into a single
+    // simple polygon before ear clipping. Returns triangles as triples of
+    // vertex indices into the global PSLG vertex list.
     internal static List<(int A, int B, int C)> TriangulateFace(
         PslgFace face,
         IReadOnlyList<PslgVertex> vertices)
@@ -983,7 +985,7 @@ public static class PslgBuilder
             return TriangulateSimple(face.OuterVertices, vertices, face.SignedAreaUV);
         }
 
-        return TriangulateWithHoles(face, vertices);
+        return TriangulateWithInteriorCycles(face, vertices);
     }
 
     private static List<(int A, int B, int C)> TriangulateSimple(
@@ -1108,16 +1110,17 @@ public static class PslgBuilder
         return triangles;
     }
 
-    private static List<(int A, int B, int C)> TriangulateWithHoles(
+    private static List<(int A, int B, int C)> TriangulateWithInteriorCycles(
         PslgFace face,
         IReadOnlyList<PslgVertex> vertices)
     {
-        // Build visibility-tested bridges and stitch into a simple polygon.
-        var stitched = StitchHoles(face, vertices);
+        // Build visibility-tested bridges between the outer ring and any
+        // interior cycles, stitching them into a simple polygon.
+        var stitched = StitchInteriorCycles(face, vertices);
         return TriangulateSimple(stitched.ToArray(), vertices, face.SignedAreaUV);
     }
 
-    private static List<int> StitchHoles(PslgFace face, IReadOnlyList<PslgVertex> vertices)
+    private static List<int> StitchInteriorCycles(PslgFace face, IReadOnlyList<PslgVertex> vertices)
     {
         var polygon = new List<int>(face.OuterVertices);
 
@@ -1134,39 +1137,39 @@ public static class PslgBuilder
         }
 
         AddCycleSegments(face.OuterVertices);
-        foreach (var hole in face.InteriorCycles)
+        foreach (var interiorCycle in face.InteriorCycles)
         {
-            AddCycleSegments(hole);
+            AddCycleSegments(interiorCycle);
         }
 
-        var uniqueHoles = new List<int[]>(face.InteriorCycles.Count);
-        var holeKeys = new HashSet<string>();
-        foreach (var hcyc in face.InteriorCycles)
+        var uniqueInteriorCycles = new List<int[]>(face.InteriorCycles.Count);
+        var interiorCycleKeys = new HashSet<string>();
+        foreach (var cycle in face.InteriorCycles)
         {
-            var key = CanonicalFaceKey(hcyc);
-            if (holeKeys.Add(key))
+            var key = CanonicalFaceKey(cycle);
+            if (interiorCycleKeys.Add(key))
             {
-                uniqueHoles.Add(hcyc);
+                uniqueInteriorCycles.Add(cycle);
             }
         }
 
-        foreach (var hole in uniqueHoles)
+        foreach (var interiorCycle in uniqueInteriorCycles)
         {
-            if (hole.Length < 3) continue;
+            if (interiorCycle.Length < 3) continue;
 
-            // Pick hole vertex with smallest (x,y).
+            // Pick interior-cycle vertex with smallest (x,y).
             int hIndex = 0;
-            for (int i = 1; i < hole.Length; i++)
+            for (int i = 1; i < interiorCycle.Length; i++)
             {
-                var vh = vertices[hole[i]];
-                var vbest = vertices[hole[hIndex]];
+                var vh = vertices[interiorCycle[i]];
+                var vbest = vertices[interiorCycle[hIndex]];
                 if (vh.X < vbest.X - Tolerances.EpsVertex ||
                     (Math.Abs(vh.X - vbest.X) <= Tolerances.EpsVertex && vh.Y < vbest.Y))
                 {
                     hIndex = i;
                 }
             }
-            int hVertex = hole[hIndex];
+            int hVertex = interiorCycle[hIndex];
 
             int bestOuterIdx = -1;
             double bestDist2 = double.MaxValue;
@@ -1188,27 +1191,27 @@ public static class PslgBuilder
 
             if (bestOuterIdx < 0)
             {
-                throw new InvalidOperationException("Failed to find a visible bridge from hole to outer boundary.");
+                throw new InvalidOperationException("Failed to find a visible bridge from interior cycle to outer boundary.");
             }
 
             // Build stitched path:
-            // outer[0..bestOuterIdx], bridge to h, traverse hole CW from h back to h,
+            // outer[0..bestOuterIdx], bridge to h, traverse interior cycle CW from h back to h,
             // bridge back to outer[bestOuterIdx], then continue outer.
-            var stitched = new List<int>(polygon.Count + hole.Length + 3);
+            var stitched = new List<int>(polygon.Count + interiorCycle.Length + 3);
             for (int i = 0; i <= bestOuterIdx; i++)
             {
                 stitched.Add(polygon[i]);
             }
 
-            stitched.Add(hVertex); // enter hole
+            stitched.Add(hVertex); // enter interior cycle
 
-            for (int k = 1; k < hole.Length; k++)
+            for (int k = 1; k < interiorCycle.Length; k++)
             {
-                int idx = (hIndex - k + hole.Length) % hole.Length; // CW order
-                stitched.Add(hole[idx]);
+                int idx = (hIndex - k + interiorCycle.Length) % interiorCycle.Length; // CW order
+                stitched.Add(interiorCycle[idx]);
             }
 
-            stitched.Add(hVertex); // exit hole
+            stitched.Add(hVertex); // exit interior cycle
             stitched.Add(polygon[bestOuterIdx]); // bridge back to outer
 
             for (int i = bestOuterIdx + 1; i < polygon.Count; i++)
@@ -1218,7 +1221,7 @@ public static class PslgBuilder
 
             polygon = stitched;
 
-            // Rebuild segments with the new polygon cycle (outer edges plus hole perimeter and bridges).
+            // Rebuild segments with the new polygon cycle (outer edges plus interior-cycle perimeter and bridges).
             segments.Clear();
             AddCycleSegments(polygon.ToArray());
         }

@@ -490,10 +490,10 @@ public class PslgCoreTests
         PslgBuilder.BuildHalfEdges(vertices, edges, out var halfEdges);
         var faces = PslgBuilder.ExtractFaces(vertices, halfEdges);
 
-        var selectionList = PslgBuilder.SelectInteriorFaces(faces);
+        var selection = PslgBuilder.SelectInteriorFacesWithAreaCheck(faces);
 
-        Assert.Equal(2, selectionList.Count);
-        Assert.InRange(selectionList.Sum(f => Math.Abs(f.SignedAreaUV)), 0.5 - 1e-6, 0.5 + 1e-6);
+        Assert.Equal(2, selection.InteriorFaces.Count);
+        Assert.InRange(selection.InteriorFaces.Sum(f => Math.Abs(f.SignedAreaUV)), 0.5 - 1e-6, 0.5 + 1e-6);
     }
 
     [Fact]
@@ -506,10 +506,8 @@ public class PslgCoreTests
             new PslgFace(new [] { 0, 1, 2 }, 0.1)   // interior 2 (sum 0.2, expect 0.5)
         };
 
-        var selection = PslgBuilder.SelectInteriorFaceSelection(faces);
-        Assert.Equal(0, selection.OuterFaceIndex);
-        Assert.Equal(0, selection.OuterFaceIndex);
-        Assert.Empty(selection.InteriorFaces);
+        Assert.Throws<InvalidOperationException>(
+            () => PslgBuilder.SelectInteriorFacesWithAreaCheck(faces));
     }
 
     [Fact]
@@ -628,7 +626,7 @@ public class PslgCoreTests
         PslgBuilder.BuildHalfEdges(vertices, edges, out var halfEdges);
         var faces = PslgBuilder.ExtractFaces(vertices, halfEdges);
         var selectionList = PslgBuilder.SelectInteriorFaces(faces);
-        var selection = new PslgFaceSelection(-1, selectionList);
+        var selection = new PslgFaceSelection(selectionList);
 
         // Triangulate and map to patches.
         var patches = PslgBuilder.TriangulateInteriorFaces(tri, vertices, selection);
