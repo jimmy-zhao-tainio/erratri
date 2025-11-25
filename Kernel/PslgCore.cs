@@ -673,11 +673,9 @@ public static class PslgBuilder
             }
         }
 
-        return BuildFacesWithHoles(rawCycles, vertices);
+        return BuildFaces(rawCycles, vertices);
     }
 
-    // Phase F: select bounded interior faces by removing the outer face
-    // (largest absolute area) and any vanishing sliver faces.
     public static List<PslgFace> SelectInteriorFaces(
         IReadOnlyList<PslgFace> faces)
     {
@@ -767,7 +765,7 @@ public static class PslgBuilder
         }
     }
 
-    private static List<PslgFace> BuildFacesWithHoles(
+    private static List<PslgFace> BuildFaces(
         IReadOnlyList<RawCycle> cycles,
         IReadOnlyList<PslgVertex> vertices)
     {
