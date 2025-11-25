@@ -10,7 +10,7 @@ namespace Kernel.Tests;
 public class TriangleSubdivisionDegenerateTests
 {
     [Fact]
-    public void FailingCase_TriangleIndex84_ReproThrows()
+    public void FailingCase_TriangleIndex84_SubdivideSucceeds()
     {
         // Captured from Demo.Mesh triangleIndex=84 dump.
         var tri = new Triangle(
@@ -38,8 +38,14 @@ public class TriangleSubdivisionDegenerateTests
             new TriangleSubdivision.IntersectionSegment(1, 2)
         };
 
-        Assert.Throws<InvalidOperationException>(() =>
-            TriangleSubdivision.Subdivide(in tri, points, segments));
+        var patches = TriangleSubdivision.Subdivide(in tri, points, segments);
+        Assert.NotEmpty(patches);
+        double triArea = Math.Abs(new RealTriangle(
+            new RealPoint(tri.P0),
+            new RealPoint(tri.P1),
+            new RealPoint(tri.P2)).SignedArea3D);
+        double patchSum = patches.Sum(p => Math.Abs(new RealTriangle(p.P0, p.P1, p.P2).SignedArea3D));
+        Assert.InRange(patchSum, triArea - 1e-6, triArea + 1e-6);
     }
 
     [Fact]
@@ -112,8 +118,8 @@ public class TriangleSubdivisionDegenerateTests
             }
         }
 
-        // Force current behavior: area selection must still throw here to flag the defect.
-        Assert.Throws<InvalidOperationException>(() =>
-            PslgBuilder.SelectInteriorFaces(faces, expectedTriangleArea: 0.5));
+        var selection = PslgBuilder.SelectInteriorFaces(faces, expectedTriangleArea: 0.5);
+        Assert.Equal(-1, selection.OuterFaceIndex);
+        Assert.Equal(2, selection.InteriorFaces.Count);
     }
 }
