@@ -210,8 +210,8 @@ public static class TriangleSubdivision
 
                 // Use chart-space face classification only; world-space area
                 // conservation is checked by the caller/fuzz harness.
-                var interiorFaces = PslgBuilder.SelectInteriorFaces(faces, expectedTriangleArea: 0.5);
-                var selection = new PslgFaceSelection(interiorFaces.OuterFaceIndex, interiorFaces.InteriorFaces);
+                var interiorFaces = PslgBuilder.SelectInteriorFaces(faces);
+                var selection = PslgBuilder.SelectInteriorFaceSelection(faces);
                 return PslgBuilder.TriangulateInteriorFaces(triangle, pslgVertices, selection);
         }
     }

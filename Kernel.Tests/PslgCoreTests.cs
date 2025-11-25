@@ -497,7 +497,7 @@ public class PslgCoreTests
     }
 
     [Fact]
-    public void SelectInteriorFaces_WithExpectedArea_ThrowsOnMismatch()
+    public void SelectInteriorFaces_AcceptsMismatchedAreasNow()
     {
         var faces = new List<PslgFace>
         {
@@ -506,8 +506,9 @@ public class PslgCoreTests
             new PslgFace(new [] { 0, 1, 2 }, 0.1)   // interior 2 (sum 0.2, expect 0.5)
         };
 
-        Assert.Throws<InvalidOperationException>(
-            () => PslgBuilder.SelectInteriorFaces(faces, expectedTriangleArea: 0.5));
+        var selection = PslgBuilder.SelectInteriorFaceSelection(faces);
+        Assert.Equal(0, selection.OuterFaceIndex);
+        Assert.Empty(selection.InteriorFaces);
     }
 
     [Fact]

@@ -698,11 +698,8 @@ public static class PslgBuilder
         return DeduplicateFaces(filtered);
     }
 
-    internal static PslgFaceSelection SelectInteriorFaces(
-        IReadOnlyList<PslgFace> faces,
-        double expectedTriangleArea,
-        double epsAbsolute = Tolerances.EpsArea,
-        double epsRelative = Tolerances.BarycentricInsideEpsilon)
+    internal static PslgFaceSelection SelectInteriorFaceSelection(
+        IReadOnlyList<PslgFace> faces)
     {
         if (faces is null) throw new ArgumentNullException(nameof(faces));
         if (faces.Count == 0) return new PslgFaceSelection(-1, Array.Empty<PslgFace>());
@@ -751,37 +748,6 @@ public static class PslgBuilder
         for (int i = 0; i < interiors.Count; i++)
         {
             sumInterior += interiors[i].SignedAreaUV;
-        }
-
-        if (!double.IsNaN(expectedTriangleArea))
-        {
-            double totalAbs = 0.0;
-            for (int i = 0; i < faces.Count; i++)
-            {
-                totalAbs += Math.Abs(faces[i].SignedAreaUV);
-            }
-
-            double absExpected = Math.Abs(expectedTriangleArea);
-            double relTol = epsRelative * absExpected;
-            bool totalMatches = Math.Abs(totalAbs - absExpected) <= epsAbsolute || Math.Abs(totalAbs - absExpected) <= relTol;
-            if (totalMatches)
-            {
-                // All faces appear to be bounded and cover the triangle; treat all as interior.
-                return new PslgFaceSelection(outerFaceIndex: -1, DeduplicateFaces(faces));
-            }
-
-            double diffSigned = Math.Abs(sumInterior - expectedTriangleArea);
-            double diffAbs = Math.Abs(Math.Abs(sumInterior) - Math.Abs(expectedTriangleArea));
-            double rel = epsRelative * Math.Abs(expectedTriangleArea);
-            bool withinSigned = diffSigned <= epsAbsolute || diffSigned <= rel;
-            bool withinAbs = diffAbs <= epsAbsolute || diffAbs <= rel;
-
-            if (!withinSigned && !withinAbs)
-            {
-                throw new InvalidOperationException(
-                    $"PSLG interior face area check failed: expected={expectedTriangleArea}, sumInterior={sumInterior}, " +
-                    $"outerIndex={outerIndex}, faces={faces.Count}, interiors={interiors.Count}");
-            }
         }
 
         return new PslgFaceSelection(outerIndex, interiors);
