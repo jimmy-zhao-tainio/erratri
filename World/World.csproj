@@ -9,6 +9,7 @@
     <ProjectReference Include="..\\Topology\\Topology.csproj" />
     <ProjectReference Include="..\\Geometry.Predicates\\Geometry.Predicates.csproj" />
     <ProjectReference Include="..\\IO\\IO.csproj" />
+    <ProjectReference Include="..\\Kernel\\Kernel.csproj" />
   </ItemGroup>
 </Project>
 
