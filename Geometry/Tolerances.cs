@@ -10,6 +10,10 @@ public static class Tolerances
     // (2D barycentric checks, segment intersection, collinearity, uniqueness).
     public const double TrianglePredicateEpsilon = 1e-12;
 
+    // Epsilon for world-space vertex merging in mesh assembly/auditing.
+    public const double MergeEpsilon = 1e-12;
+    public const double MergeEpsilonSquared = MergeEpsilon * MergeEpsilon;
+
     // Generic vertex-distance epsilon for 2D comparisons.
     public const double EpsVertex = TrianglePredicateEpsilon;
     public const double EpsVertexSquared = EpsVertex * EpsVertex;

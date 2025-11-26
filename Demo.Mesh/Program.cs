@@ -23,33 +23,54 @@ internal static class Program
         var topoB = MeshBTopology.Build(graph, index);
         var patches = TrianglePatchSet.Build(graph, index, topoA, topoB);
         var classification = PatchClassifier.Classify(set, patches);
-        var selected = BooleanPatchClassifier.Select(BooleanOperation.Union, classification);
-        var mesh = BooleanMeshAssembler.Assemble(selected);
 
-        var triangles = ToTriangles(mesh, out int removed);
-        var outPath = "spheres_union.stl";
-        StlWriter.Write(triangles, outPath);
-        Console.WriteLine($"Demo.Mesh: removed {removed} degenerate triangles, kept {triangles.Count}.");
-        Console.WriteLine($"Wrote union: {System.IO.Path.GetFullPath(outPath)} with {triangles.Count} triangles");
+        var ops = new[]
+        {
+            BooleanOperation.Union,
+            BooleanOperation.Intersection,
+            BooleanOperation.DifferenceAB,
+            BooleanOperation.DifferenceBA,
+            BooleanOperation.SymmetricDifference
+        };
+
+        foreach (var op in ops)
+        {
+            var selected = BooleanPatchClassifier.Select(op, classification);
+            var mesh = BooleanMeshAssembler.Assemble(selected);
+
+            var outPath = $"spheres_{op.ToString().ToLower()}.stl";
+            WriteMeshStl(mesh, outPath);
+            Console.WriteLine($"Demo.Mesh ({op}): wrote {System.IO.Path.GetFullPath(outPath)} with {mesh.Triangles.Count} triangles");
+        }
     }
 
-    private static IReadOnlyList<Triangle> ToTriangles(BooleanMesh mesh, out int removed)
+    private static void WriteMeshStl(BooleanMesh mesh, string path)
     {
-        removed = 0;
-        var tris = new List<Triangle>(mesh.Triangles.Count);
+        using var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+        using var bw = new BinaryWriter(fs);
+
+        var header = new byte[80];
+        var tag = System.Text.Encoding.ASCII.GetBytes("Seaharp STL");
+        Array.Copy(tag, header, Math.Min(header.Length, tag.Length));
+        bw.Write(header);
+
+        bw.Write((uint)mesh.Triangles.Count);
         foreach (var (a, b, c) in mesh.Triangles)
         {
             var p0 = ToPoint(mesh.Vertices[a]);
             var p1 = ToPoint(mesh.Vertices[b]);
             var p2 = ToPoint(mesh.Vertices[c]);
-            if (TriangleCleaning.IsDegenerate(p0, p1, p2))
-            {
-                removed++;
-                continue;
-            }
-            tris.Add(Triangle.FromWinding(p0, p1, p2));
+
+            var n = ComputeNormal(mesh.Vertices[a], mesh.Vertices[b], mesh.Vertices[c]);
+
+            bw.Write((float)n.X);
+            bw.Write((float)n.Y);
+            bw.Write((float)n.Z);
+            bw.Write((float)p0.X); bw.Write((float)p0.Y); bw.Write((float)p0.Z);
+            bw.Write((float)p1.X); bw.Write((float)p1.Y); bw.Write((float)p1.Z);
+            bw.Write((float)p2.X); bw.Write((float)p2.Y); bw.Write((float)p2.Z);
+            bw.Write((ushort)0);
         }
-        return tris;
     }
     private static Point ToPoint(in RealPoint p)
     {
@@ -58,26 +79,26 @@ internal static class Program
         long z = (long)Math.Round(p.Z);
         return new Point(x, y, z);
     }
-}
 
-internal static class TriangleCleaning
-{
-    public static bool IsDegenerate(Point p0, Point p1, Point p2)
+    private static RealPoint ComputeNormal(in RealPoint p0, in RealPoint p1, in RealPoint p2)
     {
-        long v0x = p1.X - p0.X;
-        long v0y = p1.Y - p0.Y;
-        long v0z = p1.Z - p0.Z;
+        double v0x = p1.X - p0.X;
+        double v0y = p1.Y - p0.Y;
+        double v0z = p1.Z - p0.Z;
 
-        long v1x = p2.X - p0.X;
-        long v1y = p2.Y - p0.Y;
-        long v1z = p2.Z - p0.Z;
+        double v1x = p2.X - p0.X;
+        double v1y = p2.Y - p0.Y;
+        double v1z = p2.Z - p0.Z;
 
-        long cx = v0y * v1z - v0z * v1y;
-        long cy = v0z * v1x - v0x * v1z;
-        long cz = v0x * v1y - v0y * v1x;
-
-        double lenSq = (double)cx * cx + (double)cy * cy + (double)cz * cz;
-        const double epsSq = 1e-12;
-        return lenSq < epsSq;
+        double nx = v0y * v1z - v0z * v1y;
+        double ny = v0z * v1x - v0x * v1z;
+        double nz = v0x * v1y - v0y * v1x;
+        double len = Math.Sqrt(nx * nx + ny * ny + nz * nz);
+        if (len <= 0.0)
+        {
+            return new RealPoint(0, 0, 0);
+        }
+        double inv = 1.0 / len;
+        return new RealPoint(nx * inv, ny * inv, nz * inv);
     }
 }

@@ -20,14 +20,23 @@ public static class BooleanMeshAssembler
 
         void AddPatch(in RealTriangle tri)
         {
-            int i0 = AddOrGet(vertices, vertexMap, tri.P0);
-            int i1 = AddOrGet(vertices, vertexMap, tri.P1);
-            int i2 = AddOrGet(vertices, vertexMap, tri.P2);
             if (IsDegenerate(tri.P0, tri.P1, tri.P2))
             {
                 if (BooleanDebugSettings.LogSkippedDegenerate)
                 {
                     Console.WriteLine($"BooleanMeshAssembler: skipped degenerate triangle ({tri.P0.X},{tri.P0.Y},{tri.P0.Z})|({tri.P1.X},{tri.P1.Y},{tri.P1.Z})|({tri.P2.X},{tri.P2.Y},{tri.P2.Z})");
+                }
+                return;
+            }
+
+            int i0 = AddOrGet(vertices, vertexMap, tri.P0);
+            int i1 = AddOrGet(vertices, vertexMap, tri.P1);
+            int i2 = AddOrGet(vertices, vertexMap, tri.P2);
+            if (i0 == i1 || i1 == i2 || i2 == i0)
+            {
+                if (BooleanDebugSettings.LogSkippedDegenerate)
+                {
+                    Console.WriteLine($"BooleanMeshAssembler: skipped triangle collapsed by vertex merge ({tri.P0.X},{tri.P0.Y},{tri.P0.Z})|({tri.P1.X},{tri.P1.Y},{tri.P1.Z})|({tri.P2.X},{tri.P2.Y},{tri.P2.Z})");
                 }
                 return;
             }
@@ -304,7 +313,7 @@ public static class BooleanMeshAssembler
         double cz = v0x * v1y - v0y * v1x;
 
         double lenSq = cx * cx + cy * cy + cz * cz;
-        const double epsSq = 1e-20;
+        const double epsSq = 1e-12;
         return lenSq < epsSq;
     }
 
@@ -360,15 +369,12 @@ public static class BooleanDebugSettings
 
 internal static class VertexCanonicalizer
 {
-    public const double MergeEpsilon = 1e-12;
-    private const double MergeEpsilonSq = MergeEpsilon * MergeEpsilon;
-
     public static int GetOrAddCanonicalId(
         RealPoint p,
         Dictionary<int, RealPoint> idToPos,
         Dictionary<(int, int, int), List<int>> voxelToIds)
     {
-        double inv = 1.0 / MergeEpsilon;
+        double inv = 1.0 / Tolerances.MergeEpsilon;
         int vx = (int)Math.Floor(p.X * inv);
         int vy = (int)Math.Floor(p.Y * inv);
         int vz = (int)Math.Floor(p.Z * inv);
@@ -392,7 +398,7 @@ internal static class VertexCanonicalizer
                         double dyp = p.Y - c.Y;
                         double dzp = p.Z - c.Z;
                         double distSq = dxp * dxp + dyp * dyp + dzp * dzp;
-                        if (distSq <= MergeEpsilonSq)
+                        if (distSq <= Tolerances.MergeEpsilonSquared)
                         {
                             return id;
                         }
