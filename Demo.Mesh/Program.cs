@@ -26,20 +26,27 @@ internal static class Program
         var selected = BooleanPatchClassifier.Select(BooleanOperation.Union, classification);
         var mesh = BooleanMeshAssembler.Assemble(selected);
 
-        var triangles = ToTriangles(mesh);
+        var triangles = ToTriangles(mesh, out int removed);
         var outPath = "spheres_union.stl";
         StlWriter.Write(triangles, outPath);
+        Console.WriteLine($"Demo.Mesh: removed {removed} degenerate triangles, kept {triangles.Count}.");
         Console.WriteLine($"Wrote union: {System.IO.Path.GetFullPath(outPath)} with {triangles.Count} triangles");
     }
 
-    private static IReadOnlyList<Triangle> ToTriangles(BooleanMesh mesh)
+    private static IReadOnlyList<Triangle> ToTriangles(BooleanMesh mesh, out int removed)
     {
+        removed = 0;
         var tris = new List<Triangle>(mesh.Triangles.Count);
         foreach (var (a, b, c) in mesh.Triangles)
         {
             var p0 = ToPoint(mesh.Vertices[a]);
             var p1 = ToPoint(mesh.Vertices[b]);
             var p2 = ToPoint(mesh.Vertices[c]);
+            if (TriangleCleaning.IsDegenerate(p0, p1, p2))
+            {
+                removed++;
+                continue;
+            }
             tris.Add(Triangle.FromWinding(p0, p1, p2));
         }
         return tris;
@@ -50,5 +57,27 @@ internal static class Program
         long y = (long)Math.Round(p.Y);
         long z = (long)Math.Round(p.Z);
         return new Point(x, y, z);
+    }
+}
+
+internal static class TriangleCleaning
+{
+    public static bool IsDegenerate(Point p0, Point p1, Point p2)
+    {
+        long v0x = p1.X - p0.X;
+        long v0y = p1.Y - p0.Y;
+        long v0z = p1.Z - p0.Z;
+
+        long v1x = p2.X - p0.X;
+        long v1y = p2.Y - p0.Y;
+        long v1z = p2.Z - p0.Z;
+
+        long cx = v0y * v1z - v0z * v1y;
+        long cy = v0z * v1x - v0x * v1z;
+        long cz = v0x * v1y - v0y * v1x;
+
+        double lenSq = (double)cx * cx + (double)cy * cy + (double)cz * cz;
+        const double epsSq = 1e-12;
+        return lenSq < epsSq;
     }
 }
