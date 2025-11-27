@@ -14,8 +14,6 @@ Note: This repository is a fully GPT-5 Codex experiment. All code and documentat
 
 ![Clean Solar System](clean_system.png)
 
-![Boolean Mesh Gallery](boolean_mesh.png)
-
 ## Demo Code
 
 The demo uses a tiny data helper (`Demo/Planets.cs`) so `Program.cs` reads like a short scene description. Here is the essence of the program:
@@ -89,6 +87,8 @@ This produces the boolean gallery rendered in `boolean_mesh.png`.
 
 ## Boolean Kernel Layers (Work in Progress)
 
+![Boolean Mesh Gallery](boolean_mesh.png)
+
 The boolean mesher lives in `Kernel` and is deliberately layered:
 
 - **Intersection graph + topology**: `IntersectionSet`, `IntersectionGraph`, `TriangleIntersectionIndex`, and `MeshATopology` / `MeshBTopology` capture where two closed meshes intersect and how triangles are connected.
@@ -96,7 +96,7 @@ The boolean mesher lives in `Kernel` and is deliberately layered:
 - **Patch classification and selection**: `TrianglePatchSet`, `PatchClassifier`, and `BooleanPatchClassifier` group subdivided triangles into patches, classify them as inside/outside the other solid, and pick which patches to keep for each boolean operation.
 - **Assembly and validation**: `BooleanMeshAssembler` merges vertices, assembles triangles into a `BooleanMesh`, and runs strict manifold and degeneracy checks. `BooleanOps` is a small façade that ties these layers together for `ClosedSurface` inputs.
 
-All of this is still work in progress: the fast-path classifiers and PSLG triangulation are being iterated, and there are known regression tests (e.g., drilled boxes and "cheese" shapes) that currently fail until the kernel is tightened. The intent is to keep the layering clear and testable while gradually hardening the algorithms.*** End Patch``` ёв``` ಾತ್ರಿ  assistant to=functions.apply_patchябрьassistant to=functions.apply_patch.`|`
+All of this is still work in progress: the fast-path classifiers and PSLG triangulation are being iterated, and there are known regression tests (e.g., drilled boxes and "cheese" shapes) that currently fail until the kernel is tightened. The intent is to keep the layering clear and testable while gradually hardening the algorithms.
 
 ## Building and Running
 
@@ -105,3 +105,4 @@ All of this is still work in progress: the fast-path classifiers and PSLG triang
 - Output: `Demo/bin/Release/net9.0/clean_system.stl`
 
 The screenshot above is `clean_system.png` generated from that STL.
+
