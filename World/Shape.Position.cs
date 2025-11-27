@@ -7,9 +7,9 @@ namespace World;
 public abstract partial class Shape
 {
     // Translates all mesh vertices by the given delta and rebuilds the mesh.
-    public void Position(long dx, long dy, long dz)
+    public Shape Position(long dx, long dy, long dz)
     {
-        if (Mesh is null || Mesh.Count == 0) return;
+        if (Mesh is null || Mesh.Count == 0) return this;
 
         var tris = Mesh.Triangles;
         var vertexMap = new Dictionary<Point, Point>();
@@ -34,5 +34,6 @@ public abstract partial class Shape
         }
 
         Mesh = new ClosedSurface(updated);
+        return this;
     }
 }

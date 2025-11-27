@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Geometry\Geometry.csproj" />
+    <ProjectReference Include="..\Topology\Topology.csproj" />
+    <ProjectReference Include="..\World\World.csproj" />
+    <ProjectReference Include="..\Geometry.Predicates\Geometry.Predicates.csproj" />
+    <ProjectReference Include="..\IO\IO.csproj" />
+    <ProjectReference Include="..\Kernel\Kernel.csproj" />
+  </ItemGroup>
+</Project>

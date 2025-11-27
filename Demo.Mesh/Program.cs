@@ -11,21 +11,17 @@ internal static class Program
     {
         long r = 200;
         var aCenter = new Point(0, 0, 0);
-        var bCenter = new Point(150, 50, -30);
+        var bCenter = new Point(150, 0, 0);
 
         var a = new Sphere(r, subdivisions: 3, center: aCenter);
         var b = new Sphere(r, subdivisions: 3, center: bCenter);
 
         // Build boolean shapes and lay them out in a grid.
         var spacing = 500;
-        var union = new Union(a, b);
-        union.Position(0, 0, 0);
-        var intersection = new Intersection(a, b);
-        intersection.Position(spacing, 0, 0);
-        var diffAB = new DifferenceAB(a, b);
-        diffAB.Position(2 * spacing, 0, 0);
-        var diffBA = new DifferenceBA(a, b);
-        diffBA.Position(3 * spacing, 0, 0);
+        var union = new Union(a, b).Position(0, 0, 0);
+        var intersection = new Intersection(a, b).Position(spacing, 0, 0);
+        var diffAB = new DifferenceAB(a, b).Position(2 * spacing, 0, 0);
+        var diffBA = new DifferenceBA(a, b).Position((int)(2.5 * spacing), 0, 0);
 
         var world = new World.World();
         world.Add(union);

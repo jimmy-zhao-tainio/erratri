@@ -14,6 +14,8 @@ Note: This repository is a fully GPT-5 Codex experiment. All code and documentat
 
 ![Clean Solar System](clean_system.png)
 
+![Boolean Mesh Gallery](boolean_mesh.png)
+
 ## Demo Code
 
 The demo uses a tiny data helper (`Demo/Planets.cs`) so `Program.cs` reads like a short scene description. Here is the essence of the program:
@@ -54,6 +56,47 @@ world.Save("clean_system.stl");
 See the full, runnable code in:
 - `Demo/Program.cs`
 - `Demo/Planets.cs`
+
+The boolean gallery in `Demo.Mesh/Program.cs` showcases four basic CSG operations on two spheres:
+
+```csharp
+using World;
+using Geometry;
+
+long r = 200;
+var aCenter = new Point(0, 0, 0);
+var bCenter = new Point(150, 0, 0);
+
+var a = new Sphere(r, subdivisions: 3, center: aCenter);
+var b = new Sphere(r, subdivisions: 3, center: bCenter);
+
+var spacing = 500;
+var union        = new Union(a, b).Position(0,          0, 0);
+var intersection = new Intersection(a, b).Position(spacing,     0, 0);
+var diffAB       = new DifferenceAB(a, b).Position(2 * spacing, 0, 0);
+var diffBA       = new DifferenceBA(a, b).Position(3 * spacing / 2, 0, 0);
+
+var world = new World.World();
+world.Add(union);
+world.Add(intersection);
+world.Add(diffAB);
+world.Add(diffBA);
+
+world.Save("spheres_boolean_showcase.stl");
+```
+
+This produces the boolean gallery rendered in `boolean_mesh.png`.
+
+## Boolean Kernel Layers (Work in Progress)
+
+The boolean mesher lives in `Kernel` and is deliberately layered:
+
+- **Intersection graph + topology**: `IntersectionSet`, `IntersectionGraph`, `TriangleIntersectionIndex`, and `MeshATopology` / `MeshBTopology` capture where two closed meshes intersect and how triangles are connected.
+- **Per-triangle PSLG subdivision**: `TriangleSubdivision` and `PslgBuilder` build a local planar straight-line graph in barycentric UV space for each intersected triangle, then triangulate interior faces back to 3D.
+- **Patch classification and selection**: `TrianglePatchSet`, `PatchClassifier`, and `BooleanPatchClassifier` group subdivided triangles into patches, classify them as inside/outside the other solid, and pick which patches to keep for each boolean operation.
+- **Assembly and validation**: `BooleanMeshAssembler` merges vertices, assembles triangles into a `BooleanMesh`, and runs strict manifold and degeneracy checks. `BooleanOps` is a small façade that ties these layers together for `ClosedSurface` inputs.
+
+All of this is still work in progress: the fast-path classifiers and PSLG triangulation are being iterated, and there are known regression tests (e.g., drilled boxes and "cheese" shapes) that currently fail until the kernel is tightened. The intent is to keep the layering clear and testable while gradually hardening the algorithms.*** End Patch``` ёв``` ಾತ್ರಿ  assistant to=functions.apply_patchябрьassistant to=functions.apply_patch.`|`
 
 ## Building and Running
 

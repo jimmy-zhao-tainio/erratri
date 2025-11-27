@@ -988,7 +988,7 @@ public static class PslgBuilder
         return TriangulateWithInteriorCycles(face, vertices);
     }
 
-    private static List<(int A, int B, int C)> TriangulateSimple(
+    internal static List<(int A, int B, int C)> TriangulateSimple(
         int[] polygon,
         IReadOnlyList<PslgVertex> vertices,
         double expectedArea)
@@ -1068,6 +1068,7 @@ public static class PslgBuilder
 
             if (!earFound)
             {
+                TryDumpTriangulationFailure(polyList, vertices, expectedArea);
                 throw new InvalidOperationException("Ear clipping failed: no valid ear found for a non-triangular polygon.");
             }
         }
@@ -1108,6 +1109,47 @@ public static class PslgBuilder
         }
 
         return triangles;
+    }
+
+    private static void TryDumpTriangulationFailure(
+        IReadOnlyList<int> polygon,
+        IReadOnlyList<PslgVertex> vertices,
+        double expectedArea)
+    {
+        try
+        {
+            var path = "pslg_tri_fail_dump.txt";
+            using var sw = new StreamWriter(path, append: false);
+
+            sw.WriteLine("Polygon:");
+            sw.Write("int[] polygon = { ");
+            for (int i = 0; i < polygon.Count; i++)
+            {
+                sw.Write(polygon[i]);
+                if (i < polygon.Count - 1) sw.Write(", ");
+            }
+            sw.WriteLine(" };");
+            sw.WriteLine();
+
+            sw.WriteLine("Vertices:");
+            sw.WriteLine("RealPoint[] vertices = new RealPoint[]");
+            sw.WriteLine("{");
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                var v = vertices[i];
+                sw.WriteLine($"    new RealPoint({v.X}, {v.Y}, 0.0), // {i}");
+            }
+            sw.WriteLine("};");
+            sw.WriteLine();
+            sw.WriteLine($"double expectedArea = {expectedArea};");
+            sw.WriteLine();
+            sw.WriteLine("// TriangulateSimple call: TriangulateSimple(polygon, vertices, expectedArea);");
+            Console.WriteLine($"PSLG triangulation failure dumped to {path}");
+        }
+        catch
+        {
+            // best effort only
+        }
     }
 
     private static List<(int A, int B, int C)> TriangulateWithInteriorCycles(

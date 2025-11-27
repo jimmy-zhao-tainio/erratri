@@ -192,11 +192,25 @@ public static class TriangleSubdivision
 
         // Fast-lane patterns (Phase B) or general PSLG lane.
         var pattern = ClassifyPattern(points, filteredSegments);
+        bool SegmentHasVertexEndpoint(IntersectionSegment s)
+        {
+            var pA = points[s.StartIndex].Barycentric;
+            var pB = points[s.EndIndex].Barycentric;
+            return IsAtVertex(pA) || IsAtVertex(pB);
+        }
 
         switch (pattern)
         {
-            case PatternKind.SingleEdgeToEdge:
-                return SubdivideSingleEdgeToEdge(triangle, points, filteredSegments);
+            case PatternKind.SingleEdgeToEdge when !SegmentHasVertexEndpoint(filteredSegments[0]):
+                try
+                {
+                    return SubdivideSingleEdgeToEdge(triangle, points, filteredSegments);
+                }
+                catch (InvalidOperationException ex) when (ex.Message.Contains("vertex endpoints", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Fall through to PSLG path below.
+                }
+                goto default;
 
             case PatternKind.None:
                 // Should not occur here because segments.Count > 0, but keep

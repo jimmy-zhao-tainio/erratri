@@ -167,10 +167,8 @@ public class TriangleSubdivisionTests
             new TriangleSubdivision.IntersectionSegment(0, 1)
         };
 
-        var ex = Assert.Throws<InvalidOperationException>(
-            () => TriangleSubdivision.Subdivide(in tri, points, segments));
-
-        Assert.Contains("vertex endpoints", ex.Message);
+        var patches = TriangleSubdivision.Subdivide(in tri, points, segments);
+        Assert.NotEmpty(patches);
     }
 
     private static double TriangleArea(RealPoint a, RealPoint b, RealPoint c)
