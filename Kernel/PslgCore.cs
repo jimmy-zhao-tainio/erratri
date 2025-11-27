@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Geometry;
 using Geometry.Predicates;
@@ -108,6 +109,35 @@ public readonly struct PslgFaceSelection
 
 public static class PslgBuilder
 {
+    private sealed class PslgDebugSnapshot
+    {
+        public Triangle Triangle { get; }
+        public PslgVertex[] Vertices { get; }
+        public PslgEdge[] Edges { get; }
+        public HalfEdge[] HalfEdges { get; }
+        public PslgFace[] Faces { get; }
+        public PslgFaceSelection Selection { get; }
+
+        public PslgDebugSnapshot(
+            in Triangle triangle,
+            IReadOnlyList<PslgVertex> vertices,
+            IReadOnlyList<PslgEdge> edges,
+            IReadOnlyList<HalfEdge> halfEdges,
+            IReadOnlyList<PslgFace> faces,
+            PslgFaceSelection selection)
+        {
+            Triangle = triangle;
+            Vertices = vertices.ToArray();
+            Edges = edges.ToArray();
+            HalfEdges = halfEdges.ToArray();
+            Faces = faces.ToArray();
+            Selection = selection;
+        }
+    }
+
+    [ThreadStatic]
+    private static PslgDebugSnapshot? _lastSnapshot;
+
     // Builds an initial PSLG for one triangle and its intersection points/segments.
     //
     // Vertices:
@@ -1118,8 +1148,30 @@ public static class PslgBuilder
     {
         try
         {
+            var fmt = CultureInfo.InvariantCulture;
             var path = "pslg_tri_fail_dump.txt";
             using var sw = new StreamWriter(path, append: false);
+
+            var faceCoords = new List<RealPoint>(polygon.Count);
+            foreach (var idx in polygon)
+            {
+                var v = vertices[idx];
+                faceCoords.Add(new RealPoint(v.X, v.Y, 0.0));
+            }
+            double computedArea = new RealPolygon(faceCoords).SignedArea;
+
+            double minEdgeLength = double.MaxValue;
+            double maxEdgeLength = 0.0;
+            for (int i = 0; i < faceCoords.Count; i++)
+            {
+                var a = faceCoords[i];
+                var b = faceCoords[(i + 1) % faceCoords.Count];
+                double dx = a.X - b.X;
+                double dy = a.Y - b.Y;
+                double dist = Math.Sqrt(dx * dx + dy * dy);
+                minEdgeLength = Math.Min(minEdgeLength, dist);
+                maxEdgeLength = Math.Max(maxEdgeLength, dist);
+            }
 
             sw.WriteLine("Polygon:");
             sw.Write("int[] polygon = { ");
@@ -1137,19 +1189,93 @@ public static class PslgBuilder
             for (int i = 0; i < vertices.Count; i++)
             {
                 var v = vertices[i];
-                sw.WriteLine($"    new RealPoint({v.X}, {v.Y}, 0.0), // {i}");
+                sw.WriteLine($"    new RealPoint({v.X.ToString(fmt)}, {v.Y.ToString(fmt)}, 0.0), // {i}");
             }
             sw.WriteLine("};");
             sw.WriteLine();
-            sw.WriteLine($"double expectedArea = {expectedArea};");
+            sw.WriteLine($"double expectedArea = {expectedArea.ToString(fmt)};");
+            sw.WriteLine($"double computedArea = {computedArea.ToString(fmt)};");
+            sw.WriteLine($"double minEdgeLength = {minEdgeLength.ToString(fmt)};");
+            sw.WriteLine($"double maxEdgeLength = {maxEdgeLength.ToString(fmt)};");
+            if (Math.Abs(computedArea) <= Tolerances.EpsArea)
+            {
+                sw.WriteLine("// NOTE: computed polygon area is ~0 (vertices likely collinear or duplicate).");
+            }
             sw.WriteLine();
             sw.WriteLine("// TriangulateSimple call: TriangulateSimple(polygon, vertices, expectedArea);");
+
+            if (_lastSnapshot != null)
+            {
+                sw.WriteLine();
+                sw.WriteLine("Snapshot:");
+                sw.WriteLine($"Triangle P0=({_lastSnapshot.Triangle.P0.X}, {_lastSnapshot.Triangle.P0.Y}, {_lastSnapshot.Triangle.P0.Z})");
+                sw.WriteLine($"Triangle P1=({_lastSnapshot.Triangle.P1.X}, {_lastSnapshot.Triangle.P1.Y}, {_lastSnapshot.Triangle.P1.Z})");
+                sw.WriteLine($"Triangle P2=({_lastSnapshot.Triangle.P2.X}, {_lastSnapshot.Triangle.P2.Y}, {_lastSnapshot.Triangle.P2.Z})");
+
+                sw.WriteLine();
+                sw.WriteLine("Edges:");
+                for (int i = 0; i < _lastSnapshot.Edges.Length; i++)
+                {
+                    var e = _lastSnapshot.Edges[i];
+                    sw.WriteLine($"  [{i}] {e.Start}->{e.End} (boundary={e.IsBoundary})");
+                }
+
+                sw.WriteLine();
+                sw.WriteLine("Faces:");
+                for (int i = 0; i < _lastSnapshot.Faces.Length; i++)
+                {
+                    var f = _lastSnapshot.Faces[i];
+                    var pts = f.OuterVertices
+                        .Select(idx => new RealPoint(_lastSnapshot.Vertices[idx].X, _lastSnapshot.Vertices[idx].Y, 0.0))
+                        .ToList();
+                    double area = new RealPolygon(pts).SignedArea;
+                    sw.WriteLine($"  Face {i}: signedAreaUV={f.SignedAreaUV.ToString(fmt)}, computedArea={area.ToString(fmt)}, outer=[{string.Join(",", f.OuterVertices)}]");
+                    if (f.InteriorCycles.Count > 0)
+                    {
+                        for (int j = 0; j < f.InteriorCycles.Count; j++)
+                        {
+                            sw.WriteLine($"    hole {j}: [{string.Join(",", f.InteriorCycles[j])}]");
+                        }
+                    }
+                }
+
+                sw.WriteLine();
+                sw.WriteLine("Selected interior faces:");
+                for (int i = 0; i < _lastSnapshot.Selection.InteriorFaces.Count; i++)
+                {
+                    var f = _lastSnapshot.Selection.InteriorFaces[i];
+                    var pts = f.OuterVertices
+                        .Select(idx => new RealPoint(_lastSnapshot.Vertices[idx].X, _lastSnapshot.Vertices[idx].Y, 0.0))
+                        .ToList();
+                    double area = new RealPolygon(pts).SignedArea;
+                    sw.WriteLine($"  Sel {i}: signedAreaUV={f.SignedAreaUV.ToString(fmt)}, computedArea={area.ToString(fmt)}, outer=[{string.Join(",", f.OuterVertices)}]");
+                    if (f.InteriorCycles.Count > 0)
+                    {
+                        for (int j = 0; j < f.InteriorCycles.Count; j++)
+                        {
+                            sw.WriteLine($"    hole {j}: [{string.Join(",", f.InteriorCycles[j])}]");
+                        }
+                    }
+                }
+            }
+
             Console.WriteLine($"PSLG triangulation failure dumped to {path}");
         }
         catch
         {
             // best effort only
         }
+    }
+
+    internal static void SetDebugSnapshot(
+        in Triangle triangle,
+        IReadOnlyList<PslgVertex> vertices,
+        IReadOnlyList<PslgEdge> edges,
+        IReadOnlyList<HalfEdge> halfEdges,
+        IReadOnlyList<PslgFace> faces,
+        PslgFaceSelection selection)
+    {
+        _lastSnapshot = new PslgDebugSnapshot(triangle, vertices, edges, halfEdges, faces, selection);
     }
 
     private static List<(int A, int B, int C)> TriangulateWithInteriorCycles(
