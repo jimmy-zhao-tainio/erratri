@@ -161,9 +161,11 @@ public static class PairFeaturesFactory
         // Apply an additional feature-layer dedup in world space so
         // downstream barycentric merging operates on a stable set of
         // samples.
-        var uniquePoints = new List<Vector>(rawPoints.Count);
+        var uniquePoints = new List<RealVector>(rawPoints.Count);
         foreach (var p in rawPoints)
+        {
             AddUniqueWorldPoint(uniquePoints, in p);
+        }
 
         if (uniquePoints.Count == 0)
         {
@@ -372,15 +374,14 @@ public static class PairFeaturesFactory
         return vertices.Count - 1;
     }
 
-    private static void AddUniqueWorldPoint(List<Vector> points, in Vector candidate)
+    private static void AddUniqueWorldPoint(List<RealVector> points, in RealVector candidate)
     {
+        var candidatePoint = new RealPoint(candidate.X, candidate.Y, candidate.Z);
         for (int i = 0; i < points.Count; i++)
         {
             var existing = points[i];
-            double dx = existing.X - candidate.X;
-            double dy = existing.Y - candidate.Y;
-            double dz = existing.Z - candidate.Z;
-            double squaredDistance = dx * dx + dy * dy + dz * dz;
+            var existingPoint = new RealPoint(existing.X, existing.Y, existing.Z);
+            double squaredDistance = existingPoint.DistanceSquared(in candidatePoint);
 
             if (squaredDistance <= Tolerances.FeatureWorldDistanceEpsilonSquared)
                 return;

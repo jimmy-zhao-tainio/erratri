@@ -4,10 +4,10 @@ namespace Geometry;
 // Uses the triangle's outward unit normal and a reference point on the plane.
 public readonly struct Plane
 {
-    public readonly Normal Normal; // unit length
+    public readonly RealNormal Normal; // unit length
     public readonly Point Point;   // reference point (on plane)
 
-    public Plane(Normal normal, Point point)
+    public Plane(RealNormal normal, Point point)
     {
         Normal = normal;
         Point = point;

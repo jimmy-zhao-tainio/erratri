@@ -275,8 +275,8 @@ public class TetrahedronTests
 
     private static double DotToMissing(in Triangle tri, in Point missing)
     {
-        var p0 = new Vector(tri.P0.X, tri.P0.Y, tri.P0.Z);
-        var pm = new Vector(missing.X, missing.Y, missing.Z);
+        var p0 = new RealVector(tri.P0.X, tri.P0.Y, tri.P0.Z);
+        var pm = new RealVector(missing.X, missing.Y, missing.Z);
         return tri.Normal.Dot(pm - p0);
     }
 
@@ -290,9 +290,9 @@ public class TetrahedronTests
 
     private static void AssertOrthogonal(in Triangle tri, double tol)
     {
-        var v0 = new Vector(tri.P0.X, tri.P0.Y, tri.P0.Z);
-        var e1 = new Vector(tri.P1.X - tri.P0.X, tri.P1.Y - tri.P0.Y, tri.P1.Z - tri.P0.Z);
-        var e2 = new Vector(tri.P2.X - tri.P0.X, tri.P2.Y - tri.P0.Y, tri.P2.Z - tri.P0.Z);
+        var v0 = new RealVector(tri.P0.X, tri.P0.Y, tri.P0.Z);
+        var e1 = new RealVector(tri.P1.X - tri.P0.X, tri.P1.Y - tri.P0.Y, tri.P1.Z - tri.P0.Z);
+        var e2 = new RealVector(tri.P2.X - tri.P0.X, tri.P2.Y - tri.P0.Y, tri.P2.Z - tri.P0.Z);
         AssertInRange(Math.Abs(tri.Normal.Dot(e1)), 0, tol);
         AssertInRange(Math.Abs(tri.Normal.Dot(e2)), 0, tol);
     }
@@ -325,8 +325,8 @@ public class TetrahedronTests
             Int128 cy = e1z * e2x - e1x * e2z;
             Int128 cz = e1x * e2y - e1y * e2x;
 
-            var n = new Vector((double)cx, (double)cy, (double)cz);
-            var expected = Normal.FromVector(n);
+            var n = new RealVector((double)cx, (double)cy, (double)cz);
+            var expected = RealNormal.FromVector(n);
 
             Int128 mdx = (Int128)missing.X - (Int128)tri.P0.X;
             Int128 mdy = (Int128)missing.Y - (Int128)tri.P0.Y;
@@ -334,7 +334,7 @@ public class TetrahedronTests
             Int128 sign = cx * mdx + cy * mdy + cz * mdz;
             if (sign >= 0)
             {
-                expected = Normal.FromVector(n * -1.0);
+                expected = RealNormal.FromVector(n * -1.0);
             }
 
             AssertNormalApprox(tri.Normal, expected.X, expected.Y, expected.Z, tol);
@@ -413,10 +413,11 @@ public class TetrahedronTests
         AssertNormalApprox(tet.BCD.Normal, inv, inv, inv, 1e-12);
     }
 
-    private static void AssertNormalApprox(Normal n, double x, double y, double z, double tol)
+    private static void AssertNormalApprox(RealNormal n, double x, double y, double z, double tol)
     {
         AssertInRange(n.X, x, tol);
         AssertInRange(n.Y, y, tol);
         AssertInRange(n.Z, z, tol);
     }
 }
+

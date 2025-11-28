@@ -1029,6 +1029,12 @@ public static class PslgBuilder
             throw new InvalidOperationException("Face must have at least 3 vertices.");
         }
 
+        polyList = SimplifyPolygonRing(polyList, vertices);
+        if (polyList.Count < 3)
+        {
+            throw new InvalidOperationException("Face must have at least 3 vertices after simplification.");
+        }
+
         // Ensure CCW orientation.
         var faceCoords = new List<RealPoint>(polyList.Count);
         foreach (var idx in polyList)
@@ -1045,65 +1051,90 @@ public static class PslgBuilder
 
         var triangles = new List<(int A, int B, int C)>(polyList.Count - 2);
 
-        while (polyList.Count > 3)
+        if (IsConvexOrCollinear(polyList, vertices))
         {
-            bool earFound = false;
-            int n = polyList.Count;
-
-            for (int i = 0; i < n; i++)
+            int anchor = polyList[0];
+            int last = polyList[1];
+            for (int i = 2; i < polyList.Count; i++)
             {
-                int prev = polyList[(i - 1 + n) % n];
-                int curr = polyList[i];
-                int next = polyList[(i + 1) % n];
-
+                int c = polyList[i];
                 double area = new RealTriangle(
-                    new RealPoint(vertices[prev].X, vertices[prev].Y, 0.0),
-                    new RealPoint(vertices[curr].X, vertices[curr].Y, 0.0),
-                    new RealPoint(vertices[next].X, vertices[next].Y, 0.0)).SignedArea;
+                    new RealPoint(vertices[anchor].X, vertices[anchor].Y, 0.0),
+                    new RealPoint(vertices[last].X, vertices[last].Y, 0.0),
+                    new RealPoint(vertices[c].X, vertices[c].Y, 0.0)).SignedArea;
                 if (area <= Tolerances.EpsArea)
                 {
-                    continue; // not strictly convex or degenerate
+                    // Skip collinear/degenerate step; move last forward.
+                    last = c;
+                    continue;
                 }
 
-                bool anyInside = false;
-                for (int k = 0; k < n; k++)
+                triangles.Add((anchor, last, c));
+                last = c;
+            }
+        }
+        else
+        {
+            while (polyList.Count > 3)
+            {
+                bool earFound = false;
+                int n = polyList.Count;
+
+                for (int i = 0; i < n; i++)
                 {
-                    if (k == (i - 1 + n) % n || k == i || k == (i + 1) % n)
+                    int prev = polyList[(i - 1 + n) % n];
+                    int curr = polyList[i];
+                    int next = polyList[(i + 1) % n];
+
+                    double area = new RealTriangle(
+                        new RealPoint(vertices[prev].X, vertices[prev].Y, 0.0),
+                        new RealPoint(vertices[curr].X, vertices[curr].Y, 0.0),
+                        new RealPoint(vertices[next].X, vertices[next].Y, 0.0)).SignedArea;
+                    if (area <= Tolerances.EpsArea)
+                    {
+                        continue; // not strictly convex or degenerate
+                    }
+
+                    bool anyInside = false;
+                    for (int k = 0; k < n; k++)
+                    {
+                        if (k == (i - 1 + n) % n || k == i || k == (i + 1) % n)
+                        {
+                            continue;
+                        }
+
+                        if (RealTrianglePredicates.IsInsideStrict(
+                                new RealTriangle(
+                                    new RealPoint(vertices[prev].X, vertices[prev].Y, 0.0),
+                                    new RealPoint(vertices[curr].X, vertices[curr].Y, 0.0),
+                                    new RealPoint(vertices[next].X, vertices[next].Y, 0.0)),
+                                new RealPoint(vertices[polyList[k]].X, vertices[polyList[k]].Y, 0.0)))
+                        {
+                            anyInside = true;
+                            break;
+                        }
+                    }
+
+                    if (anyInside)
                     {
                         continue;
                     }
 
-                    if (RealTrianglePredicates.IsInsideStrict(
-                            new RealTriangle(
-                                new RealPoint(vertices[prev].X, vertices[prev].Y, 0.0),
-                                new RealPoint(vertices[curr].X, vertices[curr].Y, 0.0),
-                                new RealPoint(vertices[next].X, vertices[next].Y, 0.0)),
-                            new RealPoint(vertices[polyList[k]].X, vertices[polyList[k]].Y, 0.0)))
-                    {
-                        anyInside = true;
-                        break;
-                    }
+                    triangles.Add((prev, curr, next));
+                    polyList.RemoveAt(i);
+                    earFound = true;
+                    break;
                 }
 
-                if (anyInside)
+                if (!earFound)
                 {
-                    continue;
+                    TryDumpTriangulationFailure(polyList, vertices, expectedArea);
+                    throw new InvalidOperationException("Ear clipping failed: no valid ear found for a non-triangular polygon.");
                 }
-
-                triangles.Add((prev, curr, next));
-                polyList.RemoveAt(i);
-                earFound = true;
-                break;
             }
 
-            if (!earFound)
-            {
-                TryDumpTriangulationFailure(polyList, vertices, expectedArea);
-                throw new InvalidOperationException("Ear clipping failed: no valid ear found for a non-triangular polygon.");
-            }
+            triangles.Add((polyList[0], polyList[1], polyList[2]));
         }
-
-        triangles.Add((polyList[0], polyList[1], polyList[2]));
 
         double sumArea = 0.0;
         foreach (var t in triangles)
@@ -1139,6 +1170,57 @@ public static class PslgBuilder
         }
 
         return triangles;
+    }
+
+    private static List<int> SimplifyPolygonRing(List<int> polygon, IReadOnlyList<PslgVertex> vertices)
+    {
+        if (polygon.Count <= 3)
+        {
+            return polygon;
+        }
+
+        var simplified = new List<int>(polygon.Count);
+        int n = polygon.Count;
+
+        for (int i = 0; i < n; i++)
+        {
+            int prev = polygon[(i - 1 + n) % n];
+            int curr = polygon[i];
+            int next = polygon[(i + 1) % n];
+
+            if (curr == prev || curr == next)
+            {
+                continue;
+            }
+
+            simplified.Add(curr);
+        }
+
+        return simplified.Count >= 3 ? simplified : polygon;
+    }
+
+    private static bool IsConvexOrCollinear(List<int> polyList, IReadOnlyList<PslgVertex> vertices)
+    {
+        int n = polyList.Count;
+        for (int i = 0; i < n; i++)
+        {
+            int prev = polyList[(i - 1 + n) % n];
+            int curr = polyList[i];
+            int next = polyList[(i + 1) % n];
+
+            double ax = vertices[curr].X - vertices[prev].X;
+            double ay = vertices[curr].Y - vertices[prev].Y;
+            double bx = vertices[next].X - vertices[curr].X;
+            double by = vertices[next].Y - vertices[curr].Y;
+            double cross = ax * by - ay * bx;
+
+            if (cross < -Tolerances.EpsArea)
+            {
+                return false; // reflex
+            }
+        }
+
+        return true;
     }
 
     private static void TryDumpTriangulationFailure(

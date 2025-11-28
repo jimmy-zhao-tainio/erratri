@@ -59,3 +59,4 @@ CON
 # .NET local tools
 .config/dotnet-tools.json
 .dotnet-tools/
+/.vs

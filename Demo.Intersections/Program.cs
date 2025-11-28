@@ -300,10 +300,7 @@ internal static class Program
         for (int i = 0; i < acc.WorldPoints.Count; i++)
         {
             var wp = acc.WorldPoints[i];
-            double dx = wp.X - pos.X;
-            double dy = wp.Y - pos.Y;
-            double dz = wp.Z - pos.Z;
-            double d2 = dx * dx + dy * dy + dz * dz;
+            double d2 = wp.DistanceSquared(in pos);
             if (d2 <= Tolerances.FeatureWorldDistanceEpsilonSquared)
             {
                 return i;

@@ -42,7 +42,7 @@ internal static class PairIntersectionMath
     //
     // Deduplication is done with a small epsilon so we don't get the same
     // point twice from different edge/vertex combinations.
-    internal static List<Vector> ComputeNonCoplanarIntersectionPoints(
+    internal static List<RealVector> ComputeNonCoplanarIntersectionPoints(
         in Triangle triA,
         in Triangle triB)
     {
@@ -52,10 +52,10 @@ internal static class PairIntersectionMath
         if (!IntersectsPlane(in triA, in planeB) ||
             !IntersectsPlane(in triB, in planeA))
         {
-            return new List<Vector>();
+            return new List<RealVector>();
         }
 
-        var rawPoints = new List<Vector>(4);
+        var rawPoints = new List<RealVector>(4);
 
         CollectTrianglePlaneIntersections(in triA, in planeB, in triB, rawPoints);
         CollectTrianglePlaneIntersections(in triB, in planeA, in triA, rawPoints);
@@ -67,7 +67,7 @@ internal static class PairIntersectionMath
 
         // Deduplicate with a distance-based filter in world space,
         // mirroring TriangleNonCoplanarIntersection.AddUniqueIntersectionPoint.
-        var unique = new List<Vector>(rawPoints.Count);
+        var unique = new List<RealVector>(rawPoints.Count);
         foreach (var p in rawPoints)
         {
             AddUniqueIntersectionPoint(unique, in p);
@@ -137,7 +137,7 @@ internal static class PairIntersectionMath
     // Edge vectors and dot products follow the same pattern so
     // feature construction does not diverge from the predicate layer.
     internal static bool IsPointInTriangle(
-        in Vector point,
+        in RealVector point,
         in Triangle triangle)
     {
         var a = ToVector(triangle.P0);
@@ -197,11 +197,11 @@ internal static class PairIntersectionMath
     // of as a raw Vector.
     internal static Barycentric ToBarycentric(
         in Triangle tri,
-        in Vector point)
+        in RealVector point)
     {
-        var p0 = new Vector(tri.P0.X, tri.P0.Y, tri.P0.Z);
-        var p1 = new Vector(tri.P1.X, tri.P1.Y, tri.P1.Z);
-        var p2 = new Vector(tri.P2.X, tri.P2.Y, tri.P2.Z);
+        var p0 = new RealVector(tri.P0.X, tri.P0.Y, tri.P0.Z);
+        var p1 = new RealVector(tri.P1.X, tri.P1.Y, tri.P1.Z);
+        var p2 = new RealVector(tri.P2.X, tri.P2.Y, tri.P2.Z);
 
         var v0 = p1 - p0;
         var v1 = p2 - p0;
@@ -295,7 +295,7 @@ internal static class PairIntersectionMath
         in Triangle sourceTriangle,
         in Plane targetPlane,
         in Triangle targetTriangle,
-        List<Vector> intersectionPoints)
+        List<RealVector> intersectionPoints)
     {
         AddVertexIfOnPlaneAndInside(sourceTriangle.P0, in targetPlane, in targetTriangle, intersectionPoints);
         AddVertexIfOnPlaneAndInside(sourceTriangle.P1, in targetPlane, in targetTriangle, intersectionPoints);
@@ -330,7 +330,7 @@ internal static class PairIntersectionMath
             var startVector = ToVector(start);
             var endVector = ToVector(end);
 
-            var intersectionPoint = new Vector(
+            var intersectionPoint = new RealVector(
                 startVector.X + t * (endVector.X - startVector.X),
                 startVector.Y + t * (endVector.Y - startVector.Y),
                 startVector.Z + t * (endVector.Z - startVector.Z));
@@ -346,7 +346,7 @@ internal static class PairIntersectionMath
         in Point vertex,
         in Plane targetPlane,
         in Triangle targetTriangle,
-        List<Vector> intersectionPoints)
+        List<RealVector> intersectionPoints)
     {
         double distance = targetPlane.Evaluate(vertex);
         if (Math.Abs(distance) > Tolerances.TrianglePredicateEpsilon)
@@ -361,21 +361,20 @@ internal static class PairIntersectionMath
         }
     }
 
-    private static Vector ToVector(in Point point)
-        => new Vector(point.X, point.Y, point.Z);
+    private static RealVector ToVector(in Point point)
+        => new RealVector(point.X, point.Y, point.Z);
 
     private static void AddUniqueIntersectionPoint(
-        List<Vector> points,
-        in Vector candidate)
+        List<RealVector> points,
+        in RealVector candidate)
     {
         double squaredEpsilon = Tolerances.FeatureWorldDistanceEpsilonSquared;
         for (int i = 0; i < points.Count; i++)
         {
             var existing = points[i];
-            double dx = existing.X - candidate.X;
-            double dy = existing.Y - candidate.Y;
-            double dz = existing.Z - candidate.Z;
-            double squaredDistance = dx * dx + dy * dy + dz * dz;
+            var existingPoint = new RealPoint(existing.X, existing.Y, existing.Z);
+            var candidatePoint = new RealPoint(candidate.X, candidate.Y, candidate.Z);
+            double squaredDistance = existingPoint.DistanceSquared(in candidatePoint);
             if (squaredDistance <= squaredEpsilon)
             {
                 return;
@@ -385,7 +384,7 @@ internal static class PairIntersectionMath
         points.Add(candidate);
     }
 
-    private static int ChooseProjectionAxis(in Normal normal)
+    private static int ChooseProjectionAxis(in RealNormal normal)
     {
         var ax = Math.Abs(normal.X);
         var ay = Math.Abs(normal.Y);

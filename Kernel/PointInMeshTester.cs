@@ -20,7 +20,7 @@ internal sealed class PointInMeshTester
         bounds = BoundingBox.FromTriangles(triangles);
 
         var dirVector = new RealVector(1.0, 0.3141592653589793, 0.2718281828459045);
-        rayDirection = new RealNormal(in dirVector);
+        rayDirection = RealNormal.FromVector(dirVector);
         maxRayLength = bounds.MaximumRayLength;
     }
 

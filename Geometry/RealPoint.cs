@@ -19,4 +19,12 @@ public readonly struct RealPoint
         Y = p.Y;
         Z = p.Z;
     }
+
+    public double DistanceSquared(in RealPoint other)
+    {
+        double dx = X - other.X;
+        double dy = Y - other.Y;
+        double dz = Z - other.Z;
+        return dx * dx + dy * dy + dz * dz;
+    }
 }

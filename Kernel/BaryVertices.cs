@@ -25,7 +25,7 @@ internal sealed class BaryVertices
 
     // Remember that "vertexIndex" in the PairFeatures.Vertices list
     // has a 3D position "point" in world space.
-    public void Add(int vertexIndex, in Vector point)
+    public void Add(int vertexIndex, in RealVector point)
     {
         _samples.Add(new PairVertexSample3D(vertexIndex, point));
     }
@@ -45,9 +45,9 @@ internal sealed class BaryVertices
 internal readonly struct PairVertexSample3D
 {
     public int VertexIndex { get; }
-    public Vector Point { get; }
+    public RealVector Point { get; }
 
-    public PairVertexSample3D(int vertexIndex, Vector point)
+    public PairVertexSample3D(int vertexIndex, RealVector point)
     {
         VertexIndex = vertexIndex;
         Point = point;
@@ -69,17 +69,15 @@ internal readonly struct PairVertexSample3D
 
         for (int i = 0; i < samples.Count - 1; i++)
         {
-            var pi = samples[i].Point;
-            for (int j = i + 1; j < samples.Count; j++)
-            {
-                var pj = samples[j].Point;
-                double dx = pj.X - pi.X;
-                double dy = pj.Y - pi.Y;
-                double dz = pj.Z - pi.Z;
-                double d2 = dx * dx + dy * dy + dz * dz;
-                if (d2 > maxSqDist)
+                var pi = samples[i].Point;
+                for (int j = i + 1; j < samples.Count; j++)
                 {
-                    maxSqDist = d2;
+                    var pj = samples[j].Point;
+                    double d2 = new RealPoint(pj.X, pj.Y, pj.Z).DistanceSquared(
+                        new RealPoint(pi.X, pi.Y, pi.Z));
+                    if (d2 > maxSqDist)
+                    {
+                        maxSqDist = d2;
                     startVertexIndex = samples[i].VertexIndex;
                     endVertexIndex = samples[j].VertexIndex;
                 }
@@ -198,9 +196,7 @@ internal readonly struct PairVertexSample2D
             for (int j = i + 1; j < samples.Count; j++)
             {
                 var pj = samples[j].Point;
-                double dx = pj.X - pi.X;
-                double dy = pj.Y - pi.Y;
-                double d2 = dx * dx + dy * dy;
+                double d2 = new RealPoint(pj.X, pj.Y, 0.0).DistanceSquared(new RealPoint(pi.X, pi.Y, 0.0));
                 if (d2 > maxSqDist)
                 {
                     maxSqDist = d2;

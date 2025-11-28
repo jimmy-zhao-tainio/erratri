@@ -1,5 +1,6 @@
 using System.Linq;
 using Geometry;
+using Topology;
 using World;
 using Xunit;
 using WTetrahedron = World.Tetrahedron;

@@ -7,7 +7,7 @@ public readonly struct Triangle
     public readonly Point P0;
     public readonly Point P1;
     public readonly Point P2;
-    public readonly Normal Normal; // outward, unit length
+    public readonly RealNormal Normal; // outward, unit length
 
     // Construct a triangle from three points and a "missing" point.
     // The missing point is NOT part of the triangle. It is a fourth vertex
@@ -22,15 +22,15 @@ public readonly struct Triangle
         var e1 = Vector128.FromPoints(p0, p1);
         var e2 = Vector128.FromPoints(p0, p2);
         var nc = Vector128.Cross(e1, e2);
-        var n = new Vector((double)nc.X, (double)nc.Y, (double)nc.Z);
-        var normal = Normal.FromVector(n);
+        var n = new RealVector((double)nc.X, (double)nc.Y, (double)nc.Z);
+        var normal = RealNormal.FromVector(n);
 
         // Ensure outward: decide using exact Int128 dot to avoid floating ambiguity.
         var missDelta = Vector128.FromPoints(p0, missing);
         var sign = Vector128.Dot(nc, missDelta);
         if (sign >= 0)
         {
-            normal = Normal.FromVector(n * -1.0);
+            normal = RealNormal.FromVector(n * -1.0);
         }
 
         Normal = normal;
@@ -40,16 +40,16 @@ public readonly struct Triangle
     // Normal is computed directly from P0->P1 and P0->P2.
     public static Triangle FromWinding(Point p0, Point p1, Point p2)
     {
-        var e1 = new Vector((double)p1.X - p0.X, (double)p1.Y - p0.Y, (double)p1.Z - p0.Z);
-        var e2 = new Vector((double)p2.X - p0.X, (double)p2.Y - p0.Y, (double)p2.Z - p0.Z);
+        var e1 = new RealVector((double)p1.X - p0.X, (double)p1.Y - p0.Y, (double)p1.Z - p0.Z);
+        var e2 = new RealVector((double)p2.X - p0.X, (double)p2.Y - p0.Y, (double)p2.Z - p0.Z);
         var n = e1.Cross(e2).Normalized();
         return new Triangle(p0, p1, p2, n);
     }
 
     // Private ctor to set exact normal when already computed as unit vector.
-    private Triangle(Point p0, Point p1, Point p2, Vector unitNormal)
+    private Triangle(Point p0, Point p1, Point p2, RealVector unitNormal)
     {
-        P0 = p0; P1 = p1; P2 = p2; Normal = Normal.FromVector(unitNormal);
+        P0 = p0; P1 = p1; P2 = p2; Normal = RealNormal.FromVector(unitNormal);
     }
 
     // Convert a point in the plane of this triangle to barycentric
@@ -59,7 +59,7 @@ public readonly struct Triangle
     public Barycentric ToBarycentric(Point point)
         => Internal.PairIntersectionMath.ToBarycentric(
             in this,
-            new Vector(point.X, point.Y, point.Z));
+            new RealVector(point.X, point.Y, point.Z));
 
     // Reconstruct a real-valued point from barycentric coordinates
     // with respect to this triangle: P = U*P0 + V*P1 + W*P2.

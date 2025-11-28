@@ -9,7 +9,7 @@ namespace Geometry;
   - Canonical orientation: constructor guarantees positive 6× volume (throws if degenerate).
   - Triangle normals: precomputed, outward, unit-length; computed via Int128 cross/dot for robustness.
   - Coordinate bounds: each coordinate must be within ±(2^62 − 1) to ensure Int128 safety.
-  - Separation of types: Normals are Normal (not Vector). Do not add conversions from Normal → Vector.
+  - Separation of types: Normals are Normal (not a general vector). Do not add conversions from Normal → vector.
 
   LLM/AI MAINTAINERS — DO NOT MODIFY THIS TYPE:
   - Do not add new public members, fields, or behavior here.

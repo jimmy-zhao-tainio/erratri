@@ -333,10 +333,7 @@ public class IntersectionGraphTests
 
                 var bary = v.Barycentric;
                 var world = tri.FromBarycentric(in bary);
-                var dx = world.X - global.X;
-                var dy = world.Y - global.Y;
-                var dz = world.Z - global.Z;
-                var dist2 = dx * dx + dy * dy + dz * dz;
+                var dist2 = world.DistanceSquared(in global);
                 Assert.True(dist2 <= tol * tol);
             }
         }
@@ -352,10 +349,7 @@ public class IntersectionGraphTests
 
                 var bary = v.Barycentric;
                 var world = tri.FromBarycentric(in bary);
-                var dx = world.X - global.X;
-                var dy = world.Y - global.Y;
-                var dz = world.Z - global.Z;
-                var dist2 = dx * dx + dy * dy + dz * dz;
+                var dist2 = world.DistanceSquared(in global);
                 Assert.True(dist2 <= tol * tol);
             }
         }

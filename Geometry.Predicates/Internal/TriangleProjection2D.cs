@@ -17,7 +17,7 @@ internal static class TriangleProjection2D
         }
     }
 
-    internal static int ChooseProjectionAxis(in Normal normal)
+    internal static int ChooseProjectionAxis(in RealNormal normal)
     {
         var ax = Math.Abs(normal.X);
         var ay = Math.Abs(normal.Y);

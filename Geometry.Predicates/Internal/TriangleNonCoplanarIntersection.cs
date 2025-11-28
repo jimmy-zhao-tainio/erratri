@@ -21,7 +21,7 @@ internal static class TriangleNonCoplanarIntersection
             return new TriangleIntersection(TriangleIntersectionType.None);
         }
 
-        var intersectionPoints = new List<Vector>(4);
+        var intersectionPoints = new List<RealVector>(4);
 
         CollectTrianglePlaneIntersections(first, planeSecond, in second, intersectionPoints);
         CollectTrianglePlaneIntersections(second, planeFirst, in first, intersectionPoints);
@@ -32,7 +32,7 @@ internal static class TriangleNonCoplanarIntersection
         }
 
         // Deduplicate with a distance-based filter.
-        var uniquePoints = new List<Vector>(intersectionPoints.Count);
+        var uniquePoints = new List<RealVector>(intersectionPoints.Count);
         foreach (var point in intersectionPoints)
         {
             AddUniqueIntersectionPoint(uniquePoints, in point);
@@ -97,7 +97,7 @@ internal static class TriangleNonCoplanarIntersection
         in Triangle sourceTriangle,
         in Plane targetPlane,
         in Triangle targetTriangle,
-        List<Vector> intersectionPoints)
+        List<RealVector> intersectionPoints)
     {
         // First, handle vertices of the source triangle that lie on the target plane.
         AddVertexIfOnPlaneAndInside(sourceTriangle.P0, targetPlane, in targetTriangle, intersectionPoints);
@@ -134,7 +134,7 @@ internal static class TriangleNonCoplanarIntersection
             var startVector = ToVector(start);
             var endVector = ToVector(end);
 
-            var intersectionPoint = new Vector(
+            var intersectionPoint = new RealVector(
                 startVector.X + t * (endVector.X - startVector.X),
                 startVector.Y + t * (endVector.Y - startVector.Y),
                 startVector.Z + t * (endVector.Z - startVector.Z));
@@ -150,7 +150,7 @@ internal static class TriangleNonCoplanarIntersection
         in Point vertex,
         in Plane targetPlane,
         in Triangle targetTriangle,
-        List<Vector> intersectionPoints)
+        List<RealVector> intersectionPoints)
     {
         double epsilon = Tolerances.TrianglePredicateEpsilon;
 
@@ -167,11 +167,11 @@ internal static class TriangleNonCoplanarIntersection
         }
     }
 
-    private static Vector ToVector(in Point point)
-        => new Vector(point.X, point.Y, point.Z);
+    private static RealVector ToVector(in Point point)
+        => new RealVector(point.X, point.Y, point.Z);
 
     private static bool IsPointInTriangle(
-        in Vector point,
+        in RealVector point,
         in Triangle triangle)
     {
         double epsilon = Tolerances.TrianglePredicateEpsilon;
@@ -180,9 +180,9 @@ internal static class TriangleNonCoplanarIntersection
         var b = ToVector(triangle.P1);
         var c = ToVector(triangle.P2);
 
-        var edgeAC = new Vector(c.X - a.X, c.Y - a.Y, c.Z - a.Z);
-        var edgeAB = new Vector(b.X - a.X, b.Y - a.Y, b.Z - a.Z);
-        var fromAToPoint = new Vector(point.X - a.X, point.Y - a.Y, point.Z - a.Z);
+        var edgeAC = new RealVector(c.X - a.X, c.Y - a.Y, c.Z - a.Z);
+        var edgeAB = new RealVector(b.X - a.X, b.Y - a.Y, b.Z - a.Z);
+        var fromAToPoint = new RealVector(point.X - a.X, point.Y - a.Y, point.Z - a.Z);
 
         double dotEdgeACWithEdgeAC = edgeAC.Dot(edgeAC);
         double dotEdgeACWithEdgeAB = edgeAC.Dot(edgeAB);
@@ -221,17 +221,16 @@ internal static class TriangleNonCoplanarIntersection
     }
 
     private static void AddUniqueIntersectionPoint(
-        List<Vector> points,
-        in Vector candidate)
+        List<RealVector> points,
+        in RealVector candidate)
     {
         double squaredEpsilon = Tolerances.FeatureWorldDistanceEpsilonSquared;
         for (int i = 0; i < points.Count; i++)
         {
             var existing = points[i];
-            double dx = existing.X - candidate.X;
-            double dy = existing.Y - candidate.Y;
-            double dz = existing.Z - candidate.Z;
-            double squaredDistance = dx * dx + dy * dy + dz * dz;
+            var existingPoint = new RealPoint(existing.X, existing.Y, existing.Z);
+            var candidatePoint = new RealPoint(candidate.X, candidate.Y, candidate.Z);
+            double squaredDistance = existingPoint.DistanceSquared(in candidatePoint);
             if (squaredDistance <= squaredEpsilon)
             {
                 return;

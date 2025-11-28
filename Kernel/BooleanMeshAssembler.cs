@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Geometry;
+using Topology;
 
 namespace Kernel;
 
@@ -394,11 +395,8 @@ internal static class VertexCanonicalizer
                     foreach (var id in candidates)
                     {
                         var c = idToPos[id];
-                        double dxp = p.X - c.X;
-                        double dyp = p.Y - c.Y;
-                        double dzp = p.Z - c.Z;
-                        double distSq = dxp * dxp + dyp * dyp + dzp * dzp;
-                        if (distSq <= Tolerances.MergeEpsilonSquared)
+                        
+                        if (p.DistanceSquared(in c) <= Tolerances.MergeEpsilonSquared)
                         {
                             return id;
                         }
