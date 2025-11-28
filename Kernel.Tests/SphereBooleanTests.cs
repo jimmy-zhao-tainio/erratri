@@ -17,11 +17,11 @@ public class SphereBooleanTests
         var sphereA = new Sphere(r, subdivisions: 3, center: aCenter);
         var sphereB = new Sphere(r, subdivisions: 3, center: bCenter);
 
-        var booleanMesh = BooleanOps.Union(sphereA.Mesh, sphereB.Mesh);
-        Assert.NotNull(booleanMesh);
-        Assert.NotEmpty(booleanMesh.Triangles);
+        var realMesh = BooleanOps.Union(sphereA.Mesh, sphereB.Mesh);
+        Assert.NotNull(realMesh);
+        Assert.NotEmpty(realMesh.Triangles);
 
-        var snapped = BooleanMeshConverter.ToClosedSurface(booleanMesh);
+        var snapped = BooleanMeshConverter.ToMesh(realMesh);
         Assert.True(snapped.Count > 0);
     }
 }

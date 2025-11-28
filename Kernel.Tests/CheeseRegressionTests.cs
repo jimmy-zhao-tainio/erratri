@@ -40,7 +40,7 @@ public class CheeseRegressionTests
         // Cylinder passing near the same corner along Y.
         var cyl = new Cylinder(radius: 60, thickness: 120, height: 300, center: new Point(half, 0, half), xTiltDeg: 90);
 
-        var union = BooleanMeshConverter.ToClosedSurface(BooleanOps.Union(cornerSphere.Mesh, cyl.Mesh));
+        var union = BooleanMeshConverter.ToMesh(BooleanOps.Union(cornerSphere.Mesh, cyl.Mesh));
         var result = BooleanOps.DifferenceAB(box.Mesh, union);
 
         Assert.NotNull(result);

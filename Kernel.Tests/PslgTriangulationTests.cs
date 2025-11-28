@@ -80,6 +80,46 @@ public class PslgTriangulationTests
         Assert.Equal(polygon.Length - 2, triangles.Count);
     }
 
+    [Fact]
+    public void RectWithEdgeSubdivisions_ShouldTriangulateAndPreserveArea()
+    {
+        // Outer rectangle: (-1,-1) -> (1,-1) -> (1,1) -> (-1,1)
+        // Add two extra points on bottom edge: (-0.3,-1), (0.4,-1)
+        var vertices = new[]
+        {
+            new PslgVertex(-1, -1, false, -1),
+            new PslgVertex(-0.3, -1, false, -1),
+            new PslgVertex(0.4, -1, false, -1),
+            new PslgVertex(1, -1, false, -1),
+            new PslgVertex(1, 1, false, -1),
+            new PslgVertex(-1, 1, false, -1),
+        };
+
+        int[] polygon = { 0, 1, 2, 3, 4, 5 };
+        double expectedArea = 4.0; // 2x2 rectangle
+
+        var tris = PslgBuilder.TriangulateSimple(polygon, vertices, expectedArea);
+
+        Assert.NotEmpty(tris);
+
+        double sum = 0;
+        foreach (var (a, b, c) in tris)
+        {
+            sum += TriangleArea(vertices[a], vertices[b], vertices[c]);
+        }
+
+        Assert.InRange(sum, expectedArea - 1e-8, expectedArea + 1e-8);
+    }
+
+    private static double TriangleArea(PslgVertex a, PslgVertex b, PslgVertex c)
+    {
+        var ax = b.X - a.X;
+        var ay = b.Y - a.Y;
+        var bx = c.X - a.X;
+        var by = c.Y - a.Y;
+        return 0.5 * Math.Abs(ax * by - ay * bx);
+    }
+
     private static TriangleSubdivision.IntersectionPoint MakeOnEdgePoint(
         Triangle triangle,
         double vOnEdge)

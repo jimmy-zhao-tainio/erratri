@@ -9,7 +9,7 @@ namespace Kernel;
 // vertices with quantization and emitting indexed triangles.
 public static class BooleanMeshAssembler
 {
-    public static BooleanMesh Assemble(BooleanPatchSet patchSet)
+    public static RealMesh Assemble(BooleanPatchSet patchSet)
     {
         if (patchSet is null) throw new ArgumentNullException(nameof(patchSet));
 
@@ -61,7 +61,7 @@ public static class BooleanMeshAssembler
 
         ValidateManifoldEdges(vertices, triangles, triangleSources);
 
-        return new BooleanMesh(vertices, triangles);
+        return new RealMesh(vertices, triangles);
     }
 
     private static int AddOrGet(

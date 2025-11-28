@@ -57,7 +57,7 @@ public sealed class Sphere : Shape
             }
         }
 
-        Mesh = ClosedSurface.FromTetrahedra(tetrahedra);
+        Mesh = Mesh.FromTetrahedra(tetrahedra);
 
     }
 

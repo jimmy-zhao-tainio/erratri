@@ -14,7 +14,7 @@ internal static class Program
     {
         public TrianglePairShape(in Triangle first, in Triangle second)
         {
-            Mesh = new ClosedSurface(new[] { first, second });
+            Mesh = new Mesh(new[] { first, second });
         }
     }
 

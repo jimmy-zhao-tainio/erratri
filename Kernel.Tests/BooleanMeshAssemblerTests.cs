@@ -8,7 +8,7 @@ namespace Kernel.Tests;
 
 public class BooleanMeshAssemblerTests
 {
-    private static BooleanMesh Build(BooleanOperation op, WTetrahedron a, WTetrahedron b)
+    private static RealMesh Build(BooleanOperation op, WTetrahedron a, WTetrahedron b)
     {
         var set = new IntersectionSet(a.Mesh.Triangles, b.Mesh.Triangles);
         var graph = IntersectionGraph.FromIntersectionSet(set);

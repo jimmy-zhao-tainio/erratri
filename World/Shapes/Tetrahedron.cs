@@ -9,7 +9,7 @@ public sealed class Tetrahedron : Shape
     {
         A = a; B = b; C = c; D = d;
         var tetrahedron = new Geometry.Tetrahedron(A, B, C, D);
-        Mesh = ClosedSurface.FromTetrahedra(new[] { tetrahedron });
+        Mesh = Mesh.FromTetrahedra(new[] { tetrahedron });
     }
 
     public Point A { get; }

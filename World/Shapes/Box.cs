@@ -32,7 +32,7 @@ public sealed class Box : Shape
             new Geometry.Tetrahedron(p100, p001, p101, p111)
         };
 
-        Mesh = ClosedSurface.FromTetrahedra(tetrahedra);
+        Mesh = Mesh.FromTetrahedra(tetrahedra);
     }
 
     public long Width { get; }

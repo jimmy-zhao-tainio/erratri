@@ -33,7 +33,7 @@ public abstract partial class Shape
             updated.Add(Triangle.FromWinding(p0, p1, p2));
         }
 
-        Mesh = new ClosedSurface(updated);
+        Mesh = new Mesh(updated);
         return this;
     }
 }

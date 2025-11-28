@@ -3,12 +3,12 @@ using Geometry;
 namespace Topology;
 
 // A lightweight collection wrapper for a set of triangles assumed to bound a closed volume.
-public sealed class ClosedSurface
+public sealed class Mesh
 {
     public IReadOnlyList<Triangle> Triangles => triangles;
     private readonly List<Triangle> triangles;
 
-    public ClosedSurface(IEnumerable<Triangle> triangles)
+    public Mesh(IEnumerable<Triangle> triangles)
     {
         if (triangles is null) throw new ArgumentNullException(nameof(triangles));
         this.triangles = new List<Triangle>(triangles);
@@ -16,9 +16,9 @@ public sealed class ClosedSurface
 
     public int Count => triangles.Count;
 
-    // Factory: builds a ClosedSurface from a collection of tetrahedra by
+    // Factory: builds a Mesh from a collection of tetrahedra by
     // selecting only boundary triangles (those that appear exactly once).
-    public static ClosedSurface FromTetrahedra(IEnumerable<Tetrahedron> tetrahedra)
+    public static Mesh FromTetrahedra(IEnumerable<Tetrahedron> tetrahedra)
     {
         if (tetrahedra is null) throw new ArgumentNullException(nameof(tetrahedra));
         var triangleOccurrences = new Dictionary<TriangleKey, (int count, Triangle triangle)>();
@@ -42,6 +42,6 @@ public sealed class ClosedSurface
         foreach (var pair in triangleOccurrences)
             if (pair.Value.count == 1) boundary.Add(pair.Value.triangle);
 
-        return new ClosedSurface(boundary);
+        return new Mesh(boundary);
     }
 }

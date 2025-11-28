@@ -27,7 +27,7 @@ public sealed class Cylinder : Shape
         if (Segments < 8) Segments = 8;
 
         BuildShell(xTiltDeg, yTiltDeg, zSpinDeg);
-        Mesh = ClosedSurface.FromTetrahedra(tetrahedra);
+        Mesh = Mesh.FromTetrahedra(tetrahedra);
     }
 
     public long InnerRadius { get; }

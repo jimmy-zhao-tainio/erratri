@@ -3,10 +3,10 @@ using Topology;
 
 namespace IO;
 
-// Shared STL writer for ClosedSurface and triangle collections (binary little-endian)
+// Shared STL writer for Mesh and triangle collections (binary little-endian)
 public static class StlWriter
 {
-    public static void Write(ClosedSurface surface, string path)
+    public static void Write(Mesh surface, string path)
         => Write(surface.Triangles, path);
 
     public static void Write(IReadOnlyList<Triangle> triangles, string path)

@@ -7,17 +7,17 @@ namespace Kernel;
 
 public static class BooleanMeshConverter
 {
-    public static ClosedSurface ToClosedSurface(BooleanMesh mesh)
+    public static Mesh ToMesh(RealMesh realMesh)
     {
-        if (mesh is null) throw new ArgumentNullException(nameof(mesh));
+        if (realMesh is null) throw new ArgumentNullException(nameof(realMesh));
 
-        var triangles = new List<Triangle>(mesh.Triangles.Count);
-        for (int i = 0; i < mesh.Triangles.Count; i++)
+        var triangles = new List<Triangle>(realMesh.Triangles.Count);
+        for (int i = 0; i < realMesh.Triangles.Count; i++)
         {
-            var (a, b, c) = mesh.Triangles[i];
-            var p0 = mesh.Vertices[a];
-            var p1 = mesh.Vertices[b];
-            var p2 = mesh.Vertices[c];
+            var (a, b, c) = realMesh.Triangles[i];
+            var p0 = realMesh.Vertices[a];
+            var p1 = realMesh.Vertices[b];
+            var p2 = realMesh.Vertices[c];
 
             var q0 = RoundPoint(p0);
             var q1 = RoundPoint(p1);
@@ -31,18 +31,18 @@ public static class BooleanMeshConverter
             triangles.Add(Triangle.FromWinding(q0, q1, q2));
         }
 
-        return new ClosedSurface(triangles);
+        return new Mesh(triangles);
     }
 
-    public static BooleanMesh FromClosedSurface(ClosedSurface surface)
+    public static RealMesh FromMesh(Mesh mesh)
     {
-        if (surface is null) throw new ArgumentNullException(nameof(surface));
+        if (mesh is null) throw new ArgumentNullException(nameof(mesh));
 
         var vertices = new List<RealPoint>();
         var map = new Dictionary<Point, int>();
-        var tris = new List<(int A, int B, int C)>(surface.Triangles.Count);
+        var tris = new List<(int A, int B, int C)>(mesh.Triangles.Count);
 
-        foreach (var tri in surface.Triangles)
+        foreach (var tri in mesh.Triangles)
         {
             int i0 = GetOrAdd(vertices, map, tri.P0);
             int i1 = GetOrAdd(vertices, map, tri.P1);
@@ -50,7 +50,7 @@ public static class BooleanMeshConverter
             tris.Add((i0, i1, i2));
         }
 
-        return new BooleanMesh(vertices, tris);
+        return new RealMesh(vertices, tris);
     }
 
     private static Point RoundPoint(in RealPoint p)

@@ -16,7 +16,7 @@ public class BooleanShape : Shape
         Mesh = BuildMesh();
     }
 
-    private ClosedSurface BuildMesh()
+    private Mesh BuildMesh()
     {
         var result = op switch
         {
@@ -28,7 +28,7 @@ public class BooleanShape : Shape
             _ => throw new ArgumentOutOfRangeException(nameof(op), op, "Unsupported boolean operation")
         };
 
-        return Kernel.BooleanMeshConverter.ToClosedSurface(result);
+        return Kernel.BooleanMeshConverter.ToMesh(result);
     }
 }
 
