@@ -32,9 +32,9 @@ public static class RealSegmentPredicates
         double t = (qpx * sy - qpy * sx) / rxs;
         double u = (qpx * ry - qpy * rx) / rxs;
 
-        double epsParam = Tolerances.BarycentricInsideEpsilon;
-        if (t < -epsParam || t > 1.0 + epsParam ||
-            u < -epsParam || u > 1.0 + epsParam)
+        double epsilon = Tolerances.BarycentricInsideEpsilon;
+        if (t < -epsilon || t > 1.0 + epsilon ||
+            u < -epsilon || u > 1.0 + epsilon)
         {
             intersection = new RealPoint(double.NaN, double.NaN, double.NaN);
             return false;

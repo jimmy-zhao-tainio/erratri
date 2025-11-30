@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Point2D = Geometry.Predicates.Internal.TriangleProjection2D.Point2D;
 
 namespace Geometry.Predicates.Internal;
 
@@ -14,17 +13,17 @@ internal static class TriangleCoplanarIntersection
         // - edge/edge intersection points
         // Then decide intersection dimension from these candidates.
 
-        int axis = TriangleProjection2D.ChooseProjectionAxis(a.Normal);
+        var plane = TriangleProjection2D.ChooseProjectionAxis(a.Normal);
 
-        var a0 = TriangleProjection2D.ProjectTo2D(a.P0, axis);
-        var a1 = TriangleProjection2D.ProjectTo2D(a.P1, axis);
-        var a2 = TriangleProjection2D.ProjectTo2D(a.P2, axis);
+        var a0 = TriangleProjection2D.ProjectPointTo2D(a.P0, plane);
+        var a1 = TriangleProjection2D.ProjectPointTo2D(a.P1, plane);
+        var a2 = TriangleProjection2D.ProjectPointTo2D(a.P2, plane);
 
-        var b0 = TriangleProjection2D.ProjectTo2D(b.P0, axis);
-        var b1 = TriangleProjection2D.ProjectTo2D(b.P1, axis);
-        var b2 = TriangleProjection2D.ProjectTo2D(b.P2, axis);
+        var b0 = TriangleProjection2D.ProjectPointTo2D(b.P0, plane);
+        var b1 = TriangleProjection2D.ProjectPointTo2D(b.P1, plane);
+        var b2 = TriangleProjection2D.ProjectPointTo2D(b.P2, plane);
 
-        var candidates = new List<Point2D>(12);
+        var candidates = new List<TriangleProjection2D.Point2D>(12);
 
         // Vertices of A inside B (including on boundary)
         TriangleProjection2D.AddIfInsideTriangle(a0, b0, b1, b2, candidates);

@@ -99,14 +99,14 @@ public sealed class IntersectionGraph
         {
             var pair = pairs[pairIndex];
             var intersection = pair.Intersection;
-            var triA = trianglesA[intersection.TriangleIndexA];
+            var triangleA = trianglesA[intersection.TriangleIndexA];
 
             var localVertices = pair.Vertices;
             for (int i = 0; i < localVertices.Count; i++)
             {
                 var v = localVertices[i];
-                var baryOnA = v.OnTriangleA;
-                var world = Barycentric.ToRealPointOnTriangle(in triA, in baryOnA);
+                var barycentricOnA = v.OnTriangleA;
+                var world = Barycentric.ToRealPointOnTriangle(in triangleA, in barycentricOnA);
 
                 var key = QuantizedPointKey.FromRealPoint(world);
                 if (!vertexLookup.TryGetValue(key, out var globalId))

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Geometry;
+using Geometry.Predicates;
 
 namespace Geometry.Predicates.Internal;
 
@@ -77,15 +78,15 @@ internal static class PairIntersectionMath
         in Triangle triangleA,
         in Triangle triangleB)
     {
-        int projectionAxis = TriangleProjection2D.ChooseProjectionAxis(triangleA.Normal);
+        var projectionPlane = TriangleProjection2D.ChooseProjectionAxis(triangleA.Normal);
 
-        var a0 = TriangleProjection2D.ProjectTo2D(triangleA.P0, projectionAxis);
-        var a1 = TriangleProjection2D.ProjectTo2D(triangleA.P1, projectionAxis);
-        var a2 = TriangleProjection2D.ProjectTo2D(triangleA.P2, projectionAxis);
+        var a0 = TriangleProjection2D.ProjectPointTo2D(triangleA.P0, projectionPlane);
+        var a1 = TriangleProjection2D.ProjectPointTo2D(triangleA.P1, projectionPlane);
+        var a2 = TriangleProjection2D.ProjectPointTo2D(triangleA.P2, projectionPlane);
 
-        var b0 = TriangleProjection2D.ProjectTo2D(triangleB.P0, projectionAxis);
-        var b1 = TriangleProjection2D.ProjectTo2D(triangleB.P1, projectionAxis);
-        var b2 = TriangleProjection2D.ProjectTo2D(triangleB.P2, projectionAxis);
+        var b0 = TriangleProjection2D.ProjectPointTo2D(triangleB.P0, projectionPlane);
+        var b1 = TriangleProjection2D.ProjectPointTo2D(triangleB.P1, projectionPlane);
+        var b2 = TriangleProjection2D.ProjectPointTo2D(triangleB.P2, projectionPlane);
 
         var candidates2D = new List<TriangleProjection2D.Point2D>(12);
 
@@ -190,7 +191,7 @@ internal static class PairIntersectionMath
 
             var realTriangle = new RealTriangle(targetTriangle);
             var intersectionPointReal = new RealPoint(intersectionPoint.X, intersectionPoint.Y, intersectionPoint.Z);
-            if (RealTrianglePredicates.IsPointInsidePredicate(in realTriangle, in intersectionPointReal))
+            if (RealTrianglePredicates.IsInsideStrict(realTriangle, intersectionPointReal))
             {
                 AddUniqueIntersectionPoint(intersectionPoints, in intersectionPoint);
             }
@@ -212,7 +213,7 @@ internal static class PairIntersectionMath
         var vertexVector = ToVector(vertex);
         var realTriangle = new RealTriangle(targetTriangle);
         var vertexPoint = new RealPoint(vertexVector.X, vertexVector.Y, vertexVector.Z);
-        if (RealTrianglePredicates.IsPointInsidePredicate(in realTriangle, in vertexPoint))
+        if (RealTrianglePredicates.IsInsideStrict(realTriangle, vertexPoint))
         {
             AddUniqueIntersectionPoint(intersectionPoints, in vertexVector);
         }

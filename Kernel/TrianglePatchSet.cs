@@ -99,13 +99,13 @@ public sealed class TrianglePatchSet
             var points = new List<TriangleSubdivision.IntersectionPoint>(vertices.Length);
             var pointIndexByVertexId = new Dictionary<int, int>(vertices.Length);
 
-            for (int v = 0; v < vertices.Length; v++)
+            for (int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++)
             {
-                var tiv = vertices[v];
-                var bary = tiv.Barycentric;
-                var world = Barycentric.ToRealPointOnTriangle(in triangle, in bary);
-                pointIndexByVertexId[tiv.VertexId.Value] = points.Count;
-                points.Add(new TriangleSubdivision.IntersectionPoint(tiv.Barycentric, world));
+                var vertex = vertices[vertexIndex];
+                var barycentric = vertex.Barycentric;
+                var world = Barycentric.ToRealPointOnTriangle(in triangle, in barycentric);
+                pointIndexByVertexId[vertex.VertexId.Value] = points.Count;
+                points.Add(new TriangleSubdivision.IntersectionPoint(vertex.Barycentric, world));
             }
 
             var segments = new List<TriangleSubdivision.IntersectionSegment>(edges.Length);

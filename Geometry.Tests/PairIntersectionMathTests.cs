@@ -71,18 +71,18 @@ public class PairIntersectionMathTests
 
         bool HasCorner(long x, long y)
         {
-            int axis = TriangleProjection2D.ChooseProjectionAxis(triA.Normal);
+            var plane = TriangleProjection2D.ChooseProjectionAxis(triA.Normal);
             foreach (var p in points)
             {
                 // Simple projection-aware check: map the 3D grid points
                 // into the same 2D space as ProjectTriangleTo2D.
                 double px, py;
-                if (axis == 0)
+                if (plane == TriangleProjection2D.ProjectionPlane.YZ)
                 {
                     px = y;
                     py = 0; // Z is always 0 in this test.
                 }
-                else if (axis == 1)
+                else if (plane == TriangleProjection2D.ProjectionPlane.XZ)
                 {
                     px = x;
                     py = 0;

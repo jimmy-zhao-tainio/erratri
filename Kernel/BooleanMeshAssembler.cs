@@ -17,17 +17,17 @@ public static class BooleanMeshAssembler
         var triangles = new List<(int A, int B, int C)>();
         var vertexMap = new Dictionary<(long X, long Y, long Z), int>();
 
-        void AddPatch(in RealTriangle tri)
+        void AddPatch(in RealTriangle triangle)
         {
-            if (IsDegenerate(tri.P0, tri.P1, tri.P2))
+            if (IsDegenerate(triangle.P0, triangle.P1, triangle.P2))
             {
                 // Drop degenerate triangle
                 return;
             }
 
-            int i0 = AddOrGet(vertices, vertexMap, tri.P0);
-            int i1 = AddOrGet(vertices, vertexMap, tri.P1);
-            int i2 = AddOrGet(vertices, vertexMap, tri.P2);
+            int i0 = AddOrGet(vertices, vertexMap, triangle.P0);
+            int i1 = AddOrGet(vertices, vertexMap, triangle.P1);
+            int i2 = AddOrGet(vertices, vertexMap, triangle.P2);
 
             // Drop triangles that collapse due to vertex merge
             if (i0 == i1 || i1 == i2 || i2 == i0)
@@ -38,14 +38,14 @@ public static class BooleanMeshAssembler
             triangles.Add((i0, i1, i2));
         }
 
-        foreach (var tri in patchSet.FromMeshA)
+        foreach (var triangle in patchSet.FromMeshA)
         {
-            AddPatch(tri);
+            AddPatch(triangle);
         }
 
-        foreach (var tri in patchSet.FromMeshB)
+        foreach (var triangle in patchSet.FromMeshB)
         {
-            AddPatch(tri);
+            AddPatch(triangle);
         }
 
         // Enforce manifoldness: every edge must be used exactly twice.
@@ -59,8 +59,8 @@ public static class BooleanMeshAssembler
         Dictionary<(long X, long Y, long Z), int> map,
         in RealPoint point)
     {
-        double eps = Tolerances.TrianglePredicateEpsilon;
-        double inv = 1.0 / eps;
+        double epsilon = Tolerances.TrianglePredicateEpsilon;
+        double inv = 1.0 / epsilon;
         long qx = (long)Math.Round(point.X * inv);
         long qy = (long)Math.Round(point.Y * inv);
         long qz = (long)Math.Round(point.Z * inv);

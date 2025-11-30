@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Geometry.Predicates;
 
 namespace Geometry.Predicates.Internal;
 
@@ -51,16 +52,20 @@ internal static class TriangleNonCoplanarIntersection
 
         // More than one distinct point: check whether we have a genuine segment.
         double maximumSquaredDistance = 0.0;
-        for (int i = 0; i < uniquePoints.Count - 1; i++)
+        var realPoints = new List<RealPoint>(uniquePoints.Count);
+        for (int i = 0; i < uniquePoints.Count; i++)
         {
-            var pi = uniquePoints[i];
-            for (int j = i + 1; j < uniquePoints.Count; j++)
+            var v = uniquePoints[i];
+            realPoints.Add(new RealPoint(v.X, v.Y, v.Z));
+        }
+
+        for (int i = 0; i < realPoints.Count - 1; i++)
+        {
+            var pi = realPoints[i];
+            for (int j = i + 1; j < realPoints.Count; j++)
             {
-                var pj = uniquePoints[j];
-                double dx = pj.X - pi.X;
-                double dy = pj.Y - pi.Y;
-                double dz = pj.Z - pi.Z;
-                double squaredDistance = dx * dx + dy * dy + dz * dz;
+                var pj = realPoints[j];
+                double squaredDistance = pi.DistanceSquared(in pj);
                 if (squaredDistance > maximumSquaredDistance)
                 {
                     maximumSquaredDistance = squaredDistance;
@@ -99,10 +104,12 @@ internal static class TriangleNonCoplanarIntersection
         in Triangle targetTriangle,
         List<RealVector> intersectionPoints)
     {
+        var realTargetTriangle = new RealTriangle(targetTriangle);
+
         // First, handle vertices of the source triangle that lie on the target plane.
-        AddVertexIfOnPlaneAndInside(sourceTriangle.P0, targetPlane, in targetTriangle, intersectionPoints);
-        AddVertexIfOnPlaneAndInside(sourceTriangle.P1, targetPlane, in targetTriangle, intersectionPoints);
-        AddVertexIfOnPlaneAndInside(sourceTriangle.P2, targetPlane, in targetTriangle, intersectionPoints);
+        AddVertexIfOnPlaneAndInside(sourceTriangle.P0, targetPlane, in realTargetTriangle, intersectionPoints);
+        AddVertexIfOnPlaneAndInside(sourceTriangle.P1, targetPlane, in realTargetTriangle, intersectionPoints);
+        AddVertexIfOnPlaneAndInside(sourceTriangle.P2, targetPlane, in realTargetTriangle, intersectionPoints);
 
         var vertices = new[] { sourceTriangle.P0, sourceTriangle.P1, sourceTriangle.P2 };
 
@@ -131,8 +138,8 @@ internal static class TriangleNonCoplanarIntersection
 
             double t = distanceStart / (distanceStart - distanceEnd);
 
-            var startVector = ToVector(start);
-            var endVector = ToVector(end);
+            var startVector = new RealVector(start.X, start.Y, start.Z);
+            var endVector = new RealVector(end.X, end.Y, end.Z);
 
             var intersectionPoint = new RealVector(
                 startVector.X + t * (endVector.X - startVector.X),
@@ -140,7 +147,7 @@ internal static class TriangleNonCoplanarIntersection
                 startVector.Z + t * (endVector.Z - startVector.Z));
 
             var intersectionPointReal = new RealPoint(intersectionPoint.X, intersectionPoint.Y, intersectionPoint.Z);
-            if (IsPointInTriangle(in intersectionPointReal, in targetTriangle))
+            if (RealTrianglePredicates.IsInsideStrict(realTargetTriangle, intersectionPointReal))
             {
                 AddUniqueIntersectionPoint(intersectionPoints, in intersectionPoint);
             }
@@ -150,7 +157,7 @@ internal static class TriangleNonCoplanarIntersection
     private static void AddVertexIfOnPlaneAndInside(
         in Point vertex,
         in Plane targetPlane,
-        in Triangle targetTriangle,
+        in RealTriangle targetTriangle,
         List<RealVector> intersectionPoints)
     {
         double epsilon = Tolerances.TrianglePredicateEpsilon;
@@ -161,65 +168,12 @@ internal static class TriangleNonCoplanarIntersection
             return;
         }
 
-        var vertexVector = ToVector(vertex);
+        var vertexVector = new RealVector(vertex.X, vertex.Y, vertex.Z);
         var vertexPoint = new RealPoint(vertexVector.X, vertexVector.Y, vertexVector.Z);
-        if (IsPointInTriangle(in vertexPoint, in targetTriangle))
+        if (RealTrianglePredicates.IsInsideStrict(targetTriangle, vertexPoint))
         {
             AddUniqueIntersectionPoint(intersectionPoints, in vertexVector);
         }
-    }
-
-    private static RealVector ToVector(in Point point)
-        => new RealVector(point.X, point.Y, point.Z);
-
-    private static bool IsPointInTriangle(
-        in RealPoint point,
-        in Triangle triangle)
-    {
-        double epsilon = Tolerances.TrianglePredicateEpsilon;
-
-        var a = ToVector(triangle.P0);
-        var b = ToVector(triangle.P1);
-        var c = ToVector(triangle.P2);
-
-        var edgeAC = new RealVector(c.X - a.X, c.Y - a.Y, c.Z - a.Z);
-        var edgeAB = new RealVector(b.X - a.X, b.Y - a.Y, b.Z - a.Z);
-        var fromAToPoint = new RealVector(point.X - a.X, point.Y - a.Y, point.Z - a.Z);
-
-        double dotEdgeACWithEdgeAC = edgeAC.Dot(edgeAC);
-        double dotEdgeACWithEdgeAB = edgeAC.Dot(edgeAB);
-        double dotEdgeACWithPoint = edgeAC.Dot(fromAToPoint);
-        double dotEdgeABWithEdgeAB = edgeAB.Dot(edgeAB);
-        double dotEdgeABWithPoint = edgeAB.Dot(fromAToPoint);
-
-        double denominator =
-            dotEdgeACWithEdgeAC * dotEdgeABWithEdgeAB - dotEdgeACWithEdgeAB * dotEdgeACWithEdgeAB;
-
-        if (Math.Abs(denominator) < epsilon)
-        {
-            // Degenerate triangle in the chosen metric; should not happen for well-formed input.
-            return false;
-        }
-
-        double inverseDenominator = 1.0 / denominator;
-        double coordinateU =
-            (dotEdgeABWithEdgeAB * dotEdgeACWithPoint - dotEdgeACWithEdgeAB * dotEdgeABWithPoint) *
-            inverseDenominator;
-        double coordinateV =
-            (dotEdgeACWithEdgeAC * dotEdgeABWithPoint - dotEdgeACWithEdgeAB * dotEdgeACWithPoint) *
-            inverseDenominator;
-
-        if (coordinateU < -epsilon || coordinateV < -epsilon)
-        {
-            return false;
-        }
-
-        if (coordinateU + coordinateV > 1.0 + epsilon)
-        {
-            return false;
-        }
-
-        return true;
     }
 
     private static void AddUniqueIntersectionPoint(

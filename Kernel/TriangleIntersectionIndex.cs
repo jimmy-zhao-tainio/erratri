@@ -88,8 +88,8 @@ public sealed class TriangleIntersectionIndex
             var pair = pairs[pairIndex];
             var intersection = pair.Intersection;
 
-            var triA = trianglesA[intersection.TriangleIndexA];
-            var triB = trianglesB[intersection.TriangleIndexB];
+            var triangleA = trianglesA[intersection.TriangleIndexA];
+            var triangleB = trianglesB[intersection.TriangleIndexB];
 
             var localVertices = pair.Vertices;
 
@@ -100,8 +100,8 @@ public sealed class TriangleIntersectionIndex
                 // Use barycentric coordinates on triangle A to reconstruct
                 // the shared world-space point, then map back to the global
                 // IntersectionVertexId via the quantized lookup.
-                var baryOnA = v.OnTriangleA;
-                var world = Barycentric.ToRealPointOnTriangle(in triA, in baryOnA);
+                var barycentricOnA = v.OnTriangleA;
+                var world = Barycentric.ToRealPointOnTriangle(in triangleA, in barycentricOnA);
                 var key = Quantize(world, invEpsilon);
 
                 if (!globalVertexLookup.TryGetValue(key, out var globalId))

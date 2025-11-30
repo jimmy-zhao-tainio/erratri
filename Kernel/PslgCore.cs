@@ -344,7 +344,7 @@ public static class PslgBuilder
         List<PslgEdge> edges,
         HashSet<(int, int)> edgeKeys)
     {
-        // Side 0: V0 -> V1, with vertices satisfying u + v = 1 (within eps).
+        // Side 0: V0 -> V1, with vertices satisfying u + v = 1 (within epsilon).
         BuildBoundarySide(
             vertices,
             edges,
@@ -1104,15 +1104,15 @@ public static class PslgBuilder
                         }
 
                         if (RealTrianglePredicates.IsInsideStrict(
-                                new RealTriangle(
-                                    new RealPoint(vertices[prev].X, vertices[prev].Y, 0.0),
-                                    new RealPoint(vertices[curr].X, vertices[curr].Y, 0.0),
+                                  new RealTriangle(
+                                      new RealPoint(vertices[prev].X, vertices[prev].Y, 0.0),
+                                      new RealPoint(vertices[curr].X, vertices[curr].Y, 0.0),
                                     new RealPoint(vertices[next].X, vertices[next].Y, 0.0)),
                                 new RealPoint(vertices[polyList[k]].X, vertices[polyList[k]].Y, 0.0)))
                         {
                             anyInside = true;
                             break;
-                        }
+                          }
                     }
 
                     if (anyInside)
@@ -1581,8 +1581,9 @@ public static class PslgBuilder
             }
         }
 
-        return false;
-    }
+          return false;
+      }
+
 
     private static bool IsBridgeVisible(
         IReadOnlyList<PslgVertex> vertices,

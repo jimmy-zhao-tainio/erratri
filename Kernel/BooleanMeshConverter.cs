@@ -40,17 +40,17 @@ public static class BooleanMeshConverter
 
         var vertices = new List<RealPoint>();
         var map = new Dictionary<Point, int>();
-        var tris = new List<(int A, int B, int C)>(mesh.Triangles.Count);
+        var triangles = new List<(int A, int B, int C)>(mesh.Triangles.Count);
 
-        foreach (var tri in mesh.Triangles)
+        foreach (var triangle in mesh.Triangles)
         {
-            int i0 = GetOrAdd(vertices, map, tri.P0);
-            int i1 = GetOrAdd(vertices, map, tri.P1);
-            int i2 = GetOrAdd(vertices, map, tri.P2);
-            tris.Add((i0, i1, i2));
+            int i0 = GetOrAdd(vertices, map, triangle.P0);
+            int i1 = GetOrAdd(vertices, map, triangle.P1);
+            int i2 = GetOrAdd(vertices, map, triangle.P2);
+            triangles.Add((i0, i1, i2));
         }
 
-        return new RealMesh(vertices, tris);
+        return new RealMesh(vertices, triangles);
     }
 
     private static int GetOrAdd(List<RealPoint> vertices, Dictionary<Point, int> map, Point p)

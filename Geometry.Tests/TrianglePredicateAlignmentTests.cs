@@ -1,5 +1,5 @@
 using Geometry;
-using Geometry.Predicates.Internal;
+using Geometry.Predicates;
 using Xunit;
 
 namespace Geometry.Tests;
@@ -104,7 +104,7 @@ public class TrianglePredicateAlignmentTests
         foreach (var p in samples)
         {
             var realTri = new RealTriangle(tri);
-            bool newResult = RealTrianglePredicates.IsPointInsidePredicate(in realTri, in p);
+            bool newResult = RealTrianglePredicates.IsInsideStrict(realTri, p);
             bool legacyPair = LegacyPairIntersectionMathIsPointInTriangle(in tri, in p);
             bool legacyPred = LegacyPredicateIsPointInTriangle(in tri, in p);
 

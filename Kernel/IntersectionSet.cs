@@ -49,8 +49,8 @@ public readonly struct IntersectionSet
 
         for (int i = 0; i < trianglesA.Count; i++)
         {
-            var triA = trianglesA[i];
-            var boxA = BoundingBox.FromPoints(in triA.P0, in triA.P1, in triA.P2);
+            var triangleA = trianglesA[i];
+            var boxA = BoundingBox.FromPoints(in triangleA.P0, in triangleA.P1, in triangleA.P2);
 
             candidates.Clear();
             tree.Query(in boxA, candidates);
@@ -58,9 +58,9 @@ public readonly struct IntersectionSet
             for (int j = 0; j < candidates.Count; j++)
             {
                 int indexB = candidates[j];
-                var triB = trianglesB[indexB];
+                var triangleB = trianglesB[indexB];
 
-                var type = IntersectionTypes.Classify(in triA, in triB);
+                var type = IntersectionTypes.Classify(in triangleA, in triangleB);
                 if (type == IntersectionType.None)
                     continue;
 

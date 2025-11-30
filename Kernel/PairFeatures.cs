@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Geometry;
 using Geometry.Predicates;
 using Geometry.Predicates.Internal;
-using Geometry.Predicates;
 using Topology;
 
 namespace Kernel;
@@ -129,29 +128,29 @@ public static class PairFeaturesFactory
         if (set.TrianglesA is null) throw new ArgumentNullException(nameof(set.TrianglesA));
         if (set.TrianglesB is null) throw new ArgumentNullException(nameof(set.TrianglesB));
 
-        var triA = set.TrianglesA[intersection.TriangleIndexA];
-        var triB = set.TrianglesB[intersection.TriangleIndexB];
+        var triangleA = set.TrianglesA[intersection.TriangleIndexA];
+        var triangleB = set.TrianglesB[intersection.TriangleIndexB];
 
         var vertices = new List<PairVertex>();
         var segments = new List<PairSegment>();
 
-        bool coplanar = TrianglePredicates.IsCoplanar(in triA, in triB);
+        bool coplanar = TrianglePredicates.IsCoplanar(in triangleA, in triangleB);
 
         if (coplanar)
-            BuildCoplanarFeatures(in triA, in triB, intersection.Type, vertices, segments);
+            BuildCoplanarFeatures(in triangleA, in triangleB, intersection.Type, vertices, segments);
         else
-            BuildNonCoplanarFeatures(in triA, in triB, intersection.Type, vertices, segments);
+            BuildNonCoplanarFeatures(in triangleA, in triangleB, intersection.Type, vertices, segments);
 
         return new PairFeatures(intersection, vertices, segments);
     }
 
-    private static void BuildNonCoplanarFeatures(in Triangle triA,
-                                                 in Triangle triB,
+    private static void BuildNonCoplanarFeatures(in Triangle triangleA,
+                                                 in Triangle triangleB,
                                                  IntersectionType type,
                                                  List<PairVertex> vertices,
                                                  List<PairSegment> segments)
     {
-        var rawPoints = PairIntersectionMath.ComputeNonCoplanarIntersectionPoints(in triA, in triB);
+        var rawPoints = PairIntersectionMath.ComputeNonCoplanarIntersectionPoints(in triangleA, in triangleB);
 
         if (rawPoints.Count == 0)
         {
@@ -178,27 +177,27 @@ public static class PairFeaturesFactory
         }
 
         var baryVertices = new BaryVertices();
-        var realTriA = new RealTriangle(triA);
-        var realTriB = new RealTriangle(triB);
+        var realTriangleA = new RealTriangle(triangleA);
+        var realTriangleB = new RealTriangle(triangleB);
 
         for (int i = 0; i < uniquePoints.Count; i++)
         {
             RealPoint p = uniquePoints[i];
-            var baryA = realTriA.ComputeBarycentric(in p, out double denomA);
-            if (denomA == 0.0)
+            var barycentricA = realTriangleA.ComputeBarycentric(in p, out double denominatorA);
+            if (denominatorA == 0.0)
             {
                 System.Diagnostics.Debug.Assert(false, "Degenerate triangle in ToBarycentric.");
-                baryA = new Barycentric(0.0, 0.0, 0.0);
+                barycentricA = new Barycentric(0.0, 0.0, 0.0);
             }
 
-            var baryB = realTriB.ComputeBarycentric(in p, out double denomB);
-            if (denomB == 0.0)
+            var barycentricB = realTriangleB.ComputeBarycentric(in p, out double denominatorB);
+            if (denominatorB == 0.0)
             {
                 System.Diagnostics.Debug.Assert(false, "Degenerate triangle in ToBarycentric.");
-                baryB = new Barycentric(0.0, 0.0, 0.0);
+                barycentricB = new Barycentric(0.0, 0.0, 0.0);
             }
 
-            int idx = AddOrGetVertex(vertices, baryA, baryB);
+            int idx = AddOrGetVertex(vertices, barycentricA, barycentricB);
             baryVertices.Add(idx, in p);
         }
 
@@ -258,13 +257,13 @@ public static class PairFeaturesFactory
         }
     }
 
-    private static void BuildCoplanarFeatures(in Triangle triA,
-                                              in Triangle triB,
+    private static void BuildCoplanarFeatures(in Triangle triangleA,
+                                              in Triangle triangleB,
                                               IntersectionType type,
                                               List<PairVertex> vertices,
                                               List<PairSegment> segments)
     {
-        var candidates = PairIntersectionMath.ComputeCoplanarIntersectionPoints(in triA, in triB);
+        var candidates = PairIntersectionMath.ComputeCoplanarIntersectionPoints(in triangleA, in triangleB);
 
         if (candidates.Count == 0)
         {
@@ -274,20 +273,20 @@ public static class PairFeaturesFactory
         }
 
         // Map 2D intersection samples to barycentric coordinates on A and B.
-        int axis = TriangleProjection2D.ChooseProjectionAxis(triA.Normal);
-        TriangleProjection2D.ProjectTriangleTo2D(in triA, axis, out var a0, out var a1, out var a2);
-        TriangleProjection2D.ProjectTriangleTo2D(in triB, axis, out var b0, out var b1, out var b2);
+        var plane = TriangleProjection2D.ChooseProjectionAxis(triangleA.Normal);
+        TriangleProjection2D.ProjectTriangleTo2D(in triangleA, plane, out var a0, out var a1, out var a2);
+        TriangleProjection2D.ProjectTriangleTo2D(in triangleB, plane, out var b0, out var b1, out var b2);
 
-        var baryVertices2D = new BaryVertices2D();
+        var barycentricVertices2D = new BaryVertices2D();
         for (int i = 0; i < candidates.Count; i++)
         {
             var p = candidates[i];
             var p2d = new TriangleProjection2D.Point2D(p.X, p.Y);
-            var baryA = TriangleProjection2D.ToBarycentric2D(in p2d, in a0, in a1, in a2);
-            var baryB = TriangleProjection2D.ToBarycentric2D(in p2d, in b0, in b1, in b2);
+            var barycentricA = TriangleProjection2D.ToBarycentric2D(in p2d, in a0, in a1, in a2);
+            var barycentricB = TriangleProjection2D.ToBarycentric2D(in p2d, in b0, in b1, in b2);
 
-            int idx = AddOrGetVertex(vertices, baryA, baryB);
-            baryVertices2D.Add(idx, in p);
+            int idx = AddOrGetVertex(vertices, barycentricA, barycentricB);
+            barycentricVertices2D.Add(idx, in p);
         }
 
         if (vertices.Count == 0)
@@ -329,7 +328,7 @@ public static class PairFeaturesFactory
             }
 
             // Find the two farthest 2D samples and connect them.
-            baryVertices2D.FindFarthestPair(out int startIndex, out int endIndex);
+            barycentricVertices2D.FindFarthestPair(out int startIndex, out int endIndex);
 
             segments.Clear();
             if (startIndex != endIndex)
@@ -340,7 +339,7 @@ public static class PairFeaturesFactory
         if (type == IntersectionType.Area)
         {
             // Area intersection: build a convex boundary loop from all samples.
-            var orderedVertexIndices = baryVertices2D.BuildOrderedUniqueLoop();
+            var orderedVertexIndices = barycentricVertices2D.BuildOrderedUniqueLoop();
             int uniqueCount = orderedVertexIndices.Count;
             if (uniqueCount < 3)
             {

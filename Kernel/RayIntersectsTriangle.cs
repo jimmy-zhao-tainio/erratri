@@ -18,11 +18,11 @@ internal static class RayIntersectsTriangleHelper
         var e1 = RealVector.FromPoints(in v0, in v1);
         var e2 = RealVector.FromPoints(in v0, in v2);
 
-        var dirVec = new RealVector(direction.X, direction.Y, direction.Z);
-        var pvec = dirVec.Cross(in e2);
+        var directionVector = new RealVector(direction.X, direction.Y, direction.Z);
+        var pvec = directionVector.Cross(in e2);
         double det = e1.Dot(in pvec);
-        double eps = Tolerances.TrianglePredicateEpsilon;
-        if (Math.Abs(det) < eps)
+        double epsilon = Tolerances.TrianglePredicateEpsilon;
+        if (Math.Abs(det) < epsilon)
         {
             return false; // Parallel or degenerate.
         }
@@ -31,20 +31,20 @@ internal static class RayIntersectsTriangleHelper
         var tvec = RealVector.FromPoints(in v0, in origin);
 
         double u = tvec.Dot(in pvec) * invDet;
-        if (u < -eps || u > 1.0 + eps)
+        if (u < -epsilon || u > 1.0 + epsilon)
         {
             return false;
         }
 
         var qvec = tvec.Cross(in e1);
-        double v = dirVec.Dot(in qvec) * invDet;
-        if (v < -eps || u + v > 1.0 + eps)
+        double v = directionVector.Dot(in qvec) * invDet;
+        if (v < -epsilon || u + v > 1.0 + epsilon)
         {
             return false;
         }
 
         double t = e2.Dot(in qvec) * invDet;
-        if (t <= eps || t > maxRayLength)
+        if (t <= epsilon || t > maxRayLength)
         {
             return false;
         }

@@ -5,6 +5,13 @@ namespace Geometry.Predicates.Internal;
 
 internal static class TriangleProjection2D
 {
+    internal enum ProjectionPlane
+    {
+        YZ, // drop X
+        XZ, // drop Y
+        XY  // drop Z
+    }
+
     internal readonly struct Point2D
     {
         public readonly double X;
@@ -17,35 +24,44 @@ internal static class TriangleProjection2D
         }
     }
 
-    internal static int ChooseProjectionAxis(in RealNormal normal)
+    internal static ProjectionPlane ChooseProjectionAxis(in RealNormal normal)
     {
         var ax = Math.Abs(normal.X);
         var ay = Math.Abs(normal.Y);
         var az = Math.Abs(normal.Z);
 
-        if (ax >= ay && ax >= az) return 0; // drop X, keep (Y,Z)
-        if (ay >= ax && ay >= az) return 1; // drop Y, keep (X,Z)
-        return 2;                            // drop Z, keep (X,Y)
+        if (ax >= ay && ax >= az) return ProjectionPlane.YZ; // drop X, keep (Y,Z)
+        if (ay >= ax && ay >= az) return ProjectionPlane.XZ; // drop Y, keep (X,Z)
+        return ProjectionPlane.XY;                           // drop Z, keep (X,Y)
     }
 
-    internal static Point2D ProjectTo2D(in Point p, int axis) =>
-        axis switch
+    internal static Point2D ProjectPointTo2D(in Point p, ProjectionPlane plane) =>
+        plane switch
         {
-            0 => new Point2D(p.Y, p.Z),
-            1 => new Point2D(p.X, p.Z),
+            ProjectionPlane.YZ => new Point2D(p.Y, p.Z),
+            ProjectionPlane.XZ => new Point2D(p.X, p.Z),
             _ => new Point2D(p.X, p.Y),
         };
 
     internal static void ProjectTriangleTo2D(
-        in Triangle tri,
-        int axis,
+        in Triangle triangle,
+        ProjectionPlane plane,
         out Point2D t0,
         out Point2D t1,
         out Point2D t2)
     {
-        t0 = ProjectTo2D(in tri.P0, axis);
-        t1 = ProjectTo2D(in tri.P1, axis);
-        t2 = ProjectTo2D(in tri.P2, axis);
+        t0 = ProjectPointTo2D(in triangle.P0, plane);
+        t1 = ProjectPointTo2D(in triangle.P1, plane);
+        t2 = ProjectPointTo2D(in triangle.P2, plane);
+
+        // Sanity check: projected triangle must have non-zero area in 2D.
+        var v0 = new Point2D(t1.X - t0.X, t1.Y - t0.Y);
+        var v1 = new Point2D(t2.X - t0.X, t2.Y - t0.Y);
+        double epsilon = Tolerances.TrianglePredicateEpsilon;
+        if (Math.Abs(Cross(in v0, in v1)) <= epsilon)
+        {
+            throw new System.Exception();
+        }
     }
 
     internal static void AddIfInsideTriangle(
@@ -77,18 +93,18 @@ internal static class TriangleProjection2D
         double dX02 = x0 - x2;
         double dY02 = y0 - y2;
 
-        double denom = dY12 * dX02 + dX21 * dY02;
+        double denominator = dY12 * dX02 + dX21 * dY02;
         double s = dY12 * dX + dX21 * dY;
         double t = (y2 - y0) * dX + (x0 - x2) * dY;
 
-        if (denom < 0)
+        if (denominator < 0)
         {
-            denom = -denom;
+            denominator = -denominator;
             s = -s;
             t = -t;
         }
 
-        return s >= 0 && t >= 0 && (s + t) <= denom;
+        return s >= 0 && t >= 0 && (s + t) <= denominator;
     }
 
     internal static Barycentric ToBarycentric2D(
@@ -110,20 +126,18 @@ internal static class TriangleProjection2D
         double dX02 = x0 - x2;
         double dY02 = y0 - y2;
 
-        double denom = dY12 * dX02 + dX21 * dY02;
-        if (denom == 0.0)
+        double denominator = dY12 * dX02 + dX21 * dY02;
+        if (denominator == 0.0)
         {
-            // Degenerate projected triangle; mirrors the 3D barycentric
-            // fallback and should not occur for well-formed input.
-            System.Diagnostics.Debug.Assert(false, "Degenerate triangle in ToBarycentric2D.");
-            return new Barycentric(0.0, 0.0, 0.0);
+            // Degenerate projected triangle; should not occur for well-formed input.
+            throw new System.Exception();
         }
 
         double s = dY12 * dX + dX21 * dY;
         double t = (y2 - y0) * dX + (x0 - x2) * dY;
 
-        double u = s / denom;
-        double v = t / denom;
+        double u = s / denominator;
+        double v = t / denominator;
         double w = 1.0 - u - v;
 
         return new Barycentric(u, v, w);
