@@ -125,7 +125,7 @@ public class PslgTriangulationTests
         double vOnEdge)
     {
         var bary = new Barycentric(0.0, vOnEdge, 1.0 - vOnEdge);
-        var pos = triangle.FromBarycentric(bary);
+        var pos = Barycentric.ToRealPointOnTriangle(in triangle, in bary);
         return new TriangleSubdivision.IntersectionPoint(bary, pos);
     }
 }

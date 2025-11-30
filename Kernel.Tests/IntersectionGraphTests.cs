@@ -332,7 +332,7 @@ public class IntersectionGraphTests
                 Assert.True(globalPositions.TryGetValue(v.VertexId.Value, out var global));
 
                 var bary = v.Barycentric;
-                var world = tri.FromBarycentric(in bary);
+                var world = Barycentric.ToRealPointOnTriangle(in tri, in bary);
                 var dist2 = world.DistanceSquared(in global);
                 Assert.True(dist2 <= tol * tol);
             }
@@ -348,7 +348,7 @@ public class IntersectionGraphTests
                 Assert.True(globalPositions.TryGetValue(v.VertexId.Value, out var global));
 
                 var bary = v.Barycentric;
-                var world = tri.FromBarycentric(in bary);
+                var world = Barycentric.ToRealPointOnTriangle(in tri, in bary);
                 var dist2 = world.DistanceSquared(in global);
                 Assert.True(dist2 <= tol * tol);
             }

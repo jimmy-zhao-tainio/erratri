@@ -363,7 +363,7 @@ internal static class Program
         {
             var v = features.Vertices[i];
             var bary = useTriangleA ? v.OnTriangleA : v.OnTriangleB;
-            var pos = tri.FromBarycentric(in bary);
+            var pos = Barycentric.ToRealPointOnTriangle(in tri, in bary);
             int mapped = AddOrGetPoint(points, pos, bary);
             indexMap[v.VertexId.Value] = mapped;
         }

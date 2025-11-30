@@ -1650,7 +1650,7 @@ public static class PslgBuilder
             double v = vertices[idx].Y;
             double w = 1.0 - u - v;
             var bary = new Barycentric(u, v, w);
-            return triangle.FromBarycentric(in bary);
+            return Barycentric.ToRealPointOnTriangle(in triangle, in bary);
         }
 
         foreach (var face in selection.InteriorFaces)

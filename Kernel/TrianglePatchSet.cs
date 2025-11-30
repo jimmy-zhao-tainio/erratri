@@ -103,7 +103,7 @@ public sealed class TrianglePatchSet
             {
                 var tiv = vertices[v];
                 var bary = tiv.Barycentric;
-                var world = triangle.FromBarycentric(in bary);
+                var world = Barycentric.ToRealPointOnTriangle(in triangle, in bary);
                 pointIndexByVertexId[tiv.VertexId.Value] = points.Count;
                 points.Add(new TriangleSubdivision.IntersectionPoint(tiv.Barycentric, world));
             }

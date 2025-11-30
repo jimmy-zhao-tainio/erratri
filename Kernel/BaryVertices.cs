@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Geometry;
-using Geometry.Internal;
+using Geometry.Predicates.Internal;
 
 namespace Kernel;
 
@@ -25,7 +25,7 @@ internal sealed class BaryVertices
 
     // Remember that "vertexIndex" in the PairFeatures.Vertices list
     // has a 3D position "point" in world space.
-    public void Add(int vertexIndex, in RealVector point)
+    public void Add(int vertexIndex, in RealPoint point)
     {
         _samples.Add(new PairVertexSample3D(vertexIndex, point));
     }
@@ -45,9 +45,9 @@ internal sealed class BaryVertices
 internal readonly struct PairVertexSample3D
 {
     public int VertexIndex { get; }
-    public RealVector Point { get; }
+    public RealPoint Point { get; }
 
-    public PairVertexSample3D(int vertexIndex, RealVector point)
+    public PairVertexSample3D(int vertexIndex, RealPoint point)
     {
         VertexIndex = vertexIndex;
         Point = point;
@@ -69,15 +69,14 @@ internal readonly struct PairVertexSample3D
 
         for (int i = 0; i < samples.Count - 1; i++)
         {
-                var pi = samples[i].Point;
-                for (int j = i + 1; j < samples.Count; j++)
+            var pi = samples[i].Point;
+            for (int j = i + 1; j < samples.Count; j++)
+            {
+                var pj = samples[j].Point;
+                double d2 = pj.DistanceSquared(pi);
+                if (d2 > maxSqDist)
                 {
-                    var pj = samples[j].Point;
-                    double d2 = new RealPoint(pj.X, pj.Y, pj.Z).DistanceSquared(
-                        new RealPoint(pi.X, pi.Y, pi.Z));
-                    if (d2 > maxSqDist)
-                    {
-                        maxSqDist = d2;
+                    maxSqDist = d2;
                     startVertexIndex = samples[i].VertexIndex;
                     endVertexIndex = samples[j].VertexIndex;
                 }
@@ -102,7 +101,7 @@ internal sealed class BaryVertices2D
     public int Count => _samples.Count;
     public IReadOnlyList<PairVertexSample2D> Samples => _samples;
 
-    public void Add(int vertexIndex, in PairIntersectionMath.Point2D point)
+    public void Add(int vertexIndex, in RealPoint2D point)
     {
         _samples.Add(new PairVertexSample2D(vertexIndex, point));
     }
@@ -139,7 +138,7 @@ internal sealed class BaryVertices2D
         }
 
         double invCount = 1.0 / _samples.Count;
-        var centroid = new PairIntersectionMath.Point2D(sumX * invCount, sumY * invCount);
+        var centroid = new RealPoint2D(sumX * invCount, sumY * invCount);
 
         // Sort samples around the centroid by polar angle.
         _samples.Sort((a, b) =>
@@ -171,9 +170,9 @@ internal sealed class BaryVertices2D
 internal readonly struct PairVertexSample2D
 {
     public int VertexIndex { get; }
-    public PairIntersectionMath.Point2D Point { get; }
+    public RealPoint2D Point { get; }
 
-    public PairVertexSample2D(int vertexIndex, PairIntersectionMath.Point2D point)
+    public PairVertexSample2D(int vertexIndex, RealPoint2D point)
     {
         VertexIndex = vertexIndex;
         Point = point;

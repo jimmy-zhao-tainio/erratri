@@ -16,6 +16,45 @@ public readonly struct Barycentric
         W = w;
     }
 
+    // Compute barycentric coordinates for an integer-grid point on a triangle.
+    // This uses the same dot-product scheme and degeneracy handling as the
+    // former Triangle.ToBarycentric(Point) helper.
+    public static Barycentric FromPointOnTriangle(in Triangle triangle, in Point point)
+    {
+        var realTriangle = new RealTriangle(
+            new RealPoint(triangle.P0.X, triangle.P0.Y, triangle.P0.Z),
+            new RealPoint(triangle.P1.X, triangle.P1.Y, triangle.P1.Z),
+            new RealPoint(triangle.P2.X, triangle.P2.Y, triangle.P2.Z));
+
+        var asPoint = new RealPoint(point.X, point.Y, point.Z);
+        var barycentric = realTriangle.ComputeBarycentric(in asPoint, out double denom);
+        if (denom == 0.0)
+        {
+            // Degenerate triangle metric; should not happen for valid input.
+            // Callers should treat this as an error path and expect the
+            // resulting barycentric to be aggressively merged.
+            System.Diagnostics.Debug.Assert(false, "Degenerate triangle in ToBarycentric.");
+            return new Barycentric(0.0, 0.0, 0.0);
+        }
+
+        return barycentric;
+    }
+
+    // Reconstruct a real-valued point from barycentric coordinates with
+    // respect to a triangle in integer grid space.
+    public static RealPoint ToRealPointOnTriangle(in Triangle triangle, in Barycentric barycentric)
+    {
+        var u = barycentric.U;
+        var v = barycentric.V;
+        var w = barycentric.W;
+
+        var x = u * triangle.P0.X + v * triangle.P1.X + w * triangle.P2.X;
+        var y = u * triangle.P0.Y + v * triangle.P1.Y + w * triangle.P2.Y;
+        var z = u * triangle.P0.Z + v * triangle.P1.Z + w * triangle.P2.Z;
+
+        return new RealPoint(x, y, z);
+    }
+
     // Inclusive test for being inside or on the boundary of the
     // reference triangle, with a small tolerance on the barycentric
     // constraints U, V, W >= 0 and U + V + W == 1.

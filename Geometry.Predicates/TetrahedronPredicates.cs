@@ -5,7 +5,7 @@ public static class TetrahedronPredicates
     public static bool IsPointInsideStrict(in Tetrahedron tetrahedron, in Point point)
     {
         static bool IsOnNegativeSide(in Triangle triangle, in Point q)
-            => Plane.FromTriangle(triangle).Side(q, Tolerances.PlaneSideEpsilon) < 0;
+            => Plane.FromTriangle(triangle).Side(q) < 0;
 
         return IsOnNegativeSide(tetrahedron.ABC, point)
             && IsOnNegativeSide(tetrahedron.ABD, point)

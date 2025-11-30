@@ -83,9 +83,9 @@ internal static class TriangleNonCoplanarIntersection
     {
         double epsilon = Tolerances.TrianglePredicateEpsilon;
 
-        double distance0 = plane.Evaluate(triangle.P0);
-        double distance1 = plane.Evaluate(triangle.P1);
-        double distance2 = plane.Evaluate(triangle.P2);
+        double distance0 = plane.SignedDistance(triangle.P0);
+        double distance1 = plane.SignedDistance(triangle.P1);
+        double distance2 = plane.SignedDistance(triangle.P2);
 
         bool allPositive = distance0 > epsilon && distance1 > epsilon && distance2 > epsilon;
         bool allNegative = distance0 < -epsilon && distance1 < -epsilon && distance2 < -epsilon;
@@ -111,8 +111,8 @@ internal static class TriangleNonCoplanarIntersection
             var start = vertices[i];
             var end = vertices[(i + 1) % 3];
 
-            double distanceStart = targetPlane.Evaluate(start);
-            double distanceEnd = targetPlane.Evaluate(end);
+            double distanceStart = targetPlane.SignedDistance(start);
+            double distanceEnd = targetPlane.SignedDistance(end);
 
             // If both endpoints are on the same side of the plane and not within
             // epsilon of it, the segment does not cross the plane.
@@ -139,7 +139,8 @@ internal static class TriangleNonCoplanarIntersection
                 startVector.Y + t * (endVector.Y - startVector.Y),
                 startVector.Z + t * (endVector.Z - startVector.Z));
 
-            if (IsPointInTriangle(intersectionPoint, in targetTriangle))
+            var intersectionPointReal = new RealPoint(intersectionPoint.X, intersectionPoint.Y, intersectionPoint.Z);
+            if (IsPointInTriangle(in intersectionPointReal, in targetTriangle))
             {
                 AddUniqueIntersectionPoint(intersectionPoints, in intersectionPoint);
             }
@@ -154,14 +155,15 @@ internal static class TriangleNonCoplanarIntersection
     {
         double epsilon = Tolerances.TrianglePredicateEpsilon;
 
-        double distance = targetPlane.Evaluate(vertex);
+        double distance = targetPlane.SignedDistance(vertex);
         if (Math.Abs(distance) > epsilon)
         {
             return;
         }
 
         var vertexVector = ToVector(vertex);
-        if (IsPointInTriangle(vertexVector, in targetTriangle))
+        var vertexPoint = new RealPoint(vertexVector.X, vertexVector.Y, vertexVector.Z);
+        if (IsPointInTriangle(in vertexPoint, in targetTriangle))
         {
             AddUniqueIntersectionPoint(intersectionPoints, in vertexVector);
         }
@@ -171,7 +173,7 @@ internal static class TriangleNonCoplanarIntersection
         => new RealVector(point.X, point.Y, point.Z);
 
     private static bool IsPointInTriangle(
-        in RealVector point,
+        in RealPoint point,
         in Triangle triangle)
     {
         double epsilon = Tolerances.TrianglePredicateEpsilon;

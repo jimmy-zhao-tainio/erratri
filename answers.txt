@@ -1,0 +1,273 @@
+Erratri geometry/predicates/barycentric analysis
+==============================================
+
+1. Layering & dependencies
+--------------------------
+
+Projects and key types
+- Geometry (Geometry/Geometry.csproj)
+  - Namespace Geometry
+  - Types: PairIntersectionMath (Geometry/Internal/PairIntersectionMath.cs),
+    Barycentric (Geometry/Barycentric.cs), RealTriangle (Geometry/RealTriangle.cs),
+    RealPoint (Geometry/RealPoint.cs), RealPoint2D (Geometry/RealPoint2D.cs),
+    Point (Geometry/Point.cs), Tolerances (Geometry/Tolerances.cs).
+- Geometry.Predicates (Geometry.Predicates/Geometry.Predicates.csproj)
+  - Namespace Geometry.Predicates and Geometry.Predicates.Internal
+  - Types: TriangleNonCoplanarIntersection
+    (Geometry.Predicates/Internal/TriangleNonCoplanarIntersection.cs),
+    TriangleProjection2D (Geometry.Predicates/Internal/TriangleProjection2D.cs)
+    with nested Point2D.
+- Kernel (Kernel/Kernel.csproj)
+  - Namespace Kernel
+  - Types: BaryVertices and BaryVertices2D (Kernel/BaryVertices.cs),
+    PairFeatures / PairFeaturesFactory (Kernel/PairFeatures.cs).
+
+Project references (core libs)
+- Geometry: no project references (root math library).
+- Geometry.Predicates -> Geometry.
+- Topology -> Geometry, Geometry.Predicates.
+- IO -> Geometry, Topology.
+- Kernel -> Geometry, Geometry.Predicates, Topology.
+- World -> Geometry, Topology, Geometry.Predicates, IO, Kernel.
+
+Assumptions check
+- Geometry.Predicates can reference Geometry: TRUE.
+- Geometry does not reference Geometry.Predicates or Kernel: TRUE.
+- Kernel can reference Geometry and Geometry.Predicates: TRUE.
+
+Barycentric summary
+- Defined in Geometry/Barycentric.cs, namespace Geometry.
+- Signature: public readonly struct Barycentric { public double U,V,W; ... }.
+- Methods:
+  - IsInsideInclusive(): uses Tolerances.BarycentricInsideEpsilon.
+  - IsCloseTo(in Barycentric other): uses Tolerances.FeatureBarycentricEpsilon.
+- Used by: Geometry (Triangle, PairIntersectionMath), Geometry.Tests,
+  Demo.Intersections, Kernel (PairFeatures, TriangleIntersectionIndex,
+  TrianglePatchSet, TriangleSubdivision, PslgCore), Kernel.Tests,
+  Kernel.Fuzz.BoxTetFuzz.
+- Geometry.Predicates does not use the Barycentric type (only the tolerances).
+
+2. Barycentric & point-in-triangle helpers
+-----------------------------------------
+
+Geometry.Internal.PairIntersectionMath (Geometry/Internal/PairIntersectionMath.cs)
+- IsPointInTriangle(in RealVector point, in Triangle triangle)
+  - 3D yes/no point-in-triangle using barycentric dot-product form.
+  - Core math:
+    - a = P0, b = P1, c = P2; v0 = b-a; v1 = c-a; v2 = point-a.
+    - d00 = v0·v0; d01 = v0·v1; d11 = v1·v1; d20 = v2·v0; d21 = v2·v1.
+    - denom = d00*d11 - d01*d01.
+    - if |denom| < Tolerances.TrianglePredicateEpsilon -> false.
+    - v = (d11*d20 - d01*d21)/denom; w = (d00*d21 - d01*d20)/denom; u = 1 - v - w.
+    - epsilon = Tolerances.TrianglePredicateEpsilon.
+    - Inside iff u,v,w >= -epsilon.
+- ToBarycentric(in Triangle tri, in RealVector point)
+  - Computes explicit Barycentric(u,v,w) in 3D.
+  - Same dot-product system as above; denom == 0.0 treated as degenerate
+    (Debug.Assert, returns Barycentric(0,0,0)); no epsilon.
+- ToBarycentric2D(in RealPoint2D p, in RealPoint2D t0, in RealPoint2D t1, in RealPoint2D t2)
+  - 2D barycentric computation using s,t,denom form:
+    - dX, dY relative to t2; dX21, dY12, dX02, dY02.
+    - denom = dY12*dX02 + dX21*dY02; if denom == 0.0 -> degenerate, returns (0,0,0).
+    - s = dY12*dX + dX21*dY; t = (y2 - y0)*dX + (x0 - x2)*dY.
+    - u = s/denom; v = t/denom; w = 1-u-v.
+- IsPointInTriangle2D(in RealPoint2D p, ...)
+  - Same s,t,denom pattern as TriangleProjection2D.IsPointInTriangle.
+  - If denom < 0, flip signs; inside iff s >= 0, t >= 0, s+t <= denom (no epsilon).
+- TrySegmentIntersection(in RealPoint2D p0, p1, q0, q1, out RealPoint2D)
+  - 2D segment/segment intersection with barycentric-like t,u parameters.
+  - Denominator |Cross| < Tolerances.TrianglePredicateEpsilon -> parallel/collinear.
+  - Accepts t,u in [-epsilon, 1+epsilon] using TrianglePredicateEpsilon.
+
+Geometry.Predicates.Internal.TriangleNonCoplanarIntersection
+- IsPointInTriangle(in RealVector point, in Triangle triangle)
+  - 3D yes/no predicate; algebraically equivalent to PairIntersectionMath version.
+  - Uses edgeAC, edgeAB, fromAToPoint; builds same denom and solves for U,V.
+  - epsilon = Tolerances.TrianglePredicateEpsilon.
+  - Inside iff U >= -epsilon, V >= -epsilon, U+V <= 1+epsilon.
+
+Geometry.Predicates.Internal.TriangleProjection2D
+- IsPointInTriangle(in Point2D p, in Point2D t0, t1, t2)
+  - 2D barycentric test; same s,t,denom pattern as PairIntersectionMath.IsPointInTriangle2D.
+  - Inside iff s >= 0, t >= 0, s+t <= denom (no epsilon).
+- TrySegmentIntersection(in Point2D p0,p1,q0,q1, out Point2D)
+  - Same structure and tolerances as PairIntersectionMath.TrySegmentIntersection,
+    using Tolerances.TrianglePredicateEpsilon.
+
+Other barycentric helpers
+- Geometry.Triangle.ToBarycentric(Point point)
+  - Public wrapper: calls PairIntersectionMath.ToBarycentric(this, RealVector(point)).
+- Geometry.Barycentric.IsInsideInclusive()
+  - Uses Tolerances.BarycentricInsideEpsilon.
+  - Inside iff U,V,W >= -epsilon and |U+V+W - 1| <= epsilon.
+- Geometry.Barycentric.IsCloseTo(in Barycentric other)
+  - Uses Tolerances.FeatureBarycentricEpsilon.
+  - Component-wise |?U|,|?V|,|?W| <= epsilon for feature-level merge.
+
+3. Barycentric usage patterns
+-----------------------------
+
+Barycentric members (Geometry/Barycentric.cs)
+- Fields: U, V, W (readonly doubles).
+- Ctor: Barycentric(double u, double v, double w).
+- IsInsideInclusive():
+  - epsilon = Tolerances.BarycentricInsideEpsilon.
+  - Reject if any of U,V,W < -epsilon.
+  - Require |U+V+W - 1| <= epsilon.
+- IsCloseTo(in Barycentric other):
+  - epsilon = Tolerances.FeatureBarycentricEpsilon.
+  - Require |U-other.U|, |V-other.V|, |W-other.W| <= epsilon.
+
+Call sites of IsInsideInclusive
+- Geometry.Tests/BarycentricTests.cs
+  - Validates basic inside/outside cases and triangle round-trip for grid points
+    via Triangle.ToBarycentric + FromBarycentric + GridRounding.Snap.
+- Geometry.Tests/PairIntersectionMathTests.cs
+  - After ToBarycentric on both triangles in a pair, asserts baryA/B are inside.
+- Kernel.Tests/PairFeaturesTests.cs
+  - Asserts that PairVertex.OnTriangleA/B barycentrics produced by
+    PairFeaturesFactory are inside their triangles.
+- No production code uses IsInsideInclusive to gate behavior; it is validation
+  around numerics rather than the core predicate layer.
+
+Call sites of IsCloseTo
+- Kernel/PairFeatures.cs, AddOrGetVertex(List<PairVertex> vertices, Barycentric onA, Barycentric onB)
+  - For each existing v in vertices:
+    - if v.OnTriangleA.IsCloseTo(onA) && v.OnTriangleB.IsCloseTo(onB) -> reuse index.
+  - Otherwise creates new PairVertex(id, onA, onB).
+  - This is the sole feature-layer barycentric merge rule for PairVertex.
+
+4. PairIntersectionMath and BaryVertices interaction
+----------------------------------------------------
+
+PairIntersectionMath barycentric producers
+- ToBarycentric(in Triangle tri, in RealVector point)
+  - Used by:
+    - Geometry.Triangle.ToBarycentric(Point).
+    - Geometry.Tests/PairIntersectionMathTests (validation).
+    - Kernel/PairFeatures.BuildNonCoplanarFeatures:
+      - For each unique RealPoint p on the intersection curve, constructs
+        RealVector baryInput from p and computes baryA/B on triA/triB.
+- ToBarycentric2D(in RealPoint2D p, in RealPoint2D t0,t1,t2)
+  - Used by Kernel/PairFeatures.BuildCoplanarFeatures:
+    - For each 2D candidate point p, computes baryA/B for triA/triB in 2D.
+
+BaryVertices (Kernel/BaryVertices.cs)
+- BaryVertices (3D)
+  - Add(int vertexIndex, in RealPoint point): store (vertexIndex, world point).
+  - FindFarthestPair(out startIndex, out endIndex): brute-force O(n^2) search
+    on squared distances between stored RealPoints.
+  - Used only in PairFeatures.BuildNonCoplanarFeatures to choose the pair of
+    vertices that form the non-coplanar segment.
+- BaryVertices2D (2D)
+  - Add(int vertexIndex, in RealPoint2D point): store 2D sample.
+  - FindFarthestPair(...): same idea in 2D.
+  - BuildOrderedUniqueLoop(): centroid + angle sort + unique VertexIndex collapse
+    to generate a simple convex loop of PairVertex indices.
+  - Used only in PairFeatures.BuildCoplanarFeatures for segment and area cases.
+
+Dataflow summary (triangle pair -> features)
+- Input: Triangle A and Triangle B (Geometry.Triangle) from IntersectionSet.
+- Non-coplanar path:
+  1) PairIntersectionMath.ComputeNonCoplanarIntersectionPoints(triangleA, triangleB)
+     - Uses IsPointInTriangle (3D) and FeatureWorldDistanceEpsilonSquared to
+       collect and deduplicate RealVector samples in world space.
+  2) PairFeatures.BuildNonCoplanarFeatures:
+     - Converts RealVector -> RealPoint, dedups again in world space.
+     - For each unique RealPoint p:
+       - ToBarycentric(triA, p) and ToBarycentric(triB, p) -> Barycentric onA/onB.
+       - AddOrGetVertex(vertices, onA, onB) using Barycentric.IsCloseTo.
+       - BaryVertices.Add(vertexIndex, p) records world-space position.
+     - For segment/area types, BaryVertices.FindFarthestPair chooses the
+       endpoints of the representative segment.
+- Coplanar path:
+  1) PairIntersectionMath.ComputeCoplanarIntersectionPoints(triangleA, triangleB, out axis)
+     - Projects to RealPoint2D and uses IsPointInTriangle2D + TrySegmentIntersection.
+  2) PairFeatures.BuildCoplanarFeatures:
+     - ProjectTriangleTo2D(triA/triB) -> RealPoint2D a0,a1,a2,b0,b1,b2.
+     - For each candidate p (RealPoint2D):
+       - ToBarycentric2D(p, a0,a1,a2) and ToBarycentric2D(p, b0,b1,b2).
+       - AddOrGetVertex(vertices, onA, onB) with IsCloseTo.
+       - BaryVertices2D.Add(vertexIndex, p).
+     - For type=Segment: BaryVertices2D.FindFarthestPair chooses segment endpoints.
+     - For type=Area: BaryVertices2D.BuildOrderedUniqueLoop returns ordered
+       vertex indices for the convex boundary; segments connect consecutive indices.
+
+Inside tests along this path
+- Non-coplanar: PairIntersectionMath.IsPointInTriangle (3D, TrianglePredicateEpsilon).
+- Coplanar: PairIntersectionMath.IsPointInTriangle2D (RealPoint2D) and the
+  predicate-layer TriangleProjection2D.IsPointInTriangle (Point2D).
+- Barycentric.IsInsideInclusive is used only in tests, not in the production
+  intersection pipeline.
+
+5. Constraints, invariants, and manual checks
+---------------------------------------------
+
+Invariants and comments
+- PairIntersectionMath.IsPointInTriangle (Geometry/Internal/PairIntersectionMath.cs)
+  - Comment: "3D barycentric point-in-triangle test aligned with
+    Geometry.Predicates.Internal.TriangleNonCoplanarIntersection... so feature
+    construction does not diverge from the predicate layer."  Indicates
+    intentional alignment with predicate math.
+- TriangleNonCoplanarIntersection.IsPointInTriangle
+  - Comment: "Degenerate triangle in the chosen metric; should not happen for
+    well-formed input."  Degeneracy returns false.
+- PairIntersectionMath.ToBarycentric / ToBarycentric2D
+  - Comments state degenerate metric should not occur for valid input and that
+    callers should treat the (0,0,0) fallback as an error path subject to
+    aggressive merging.
+- Barycentric (Geometry/Barycentric.cs)
+  - Top-level comment: "Used only for parametrization; robust predicates and
+    intersection classification remain in the integer grid layer."  This
+    explicitly separates feature-level barycentric use from predicate logic.
+- TriangleSubdivision.ClassifyEdge (Kernel/TriangleSubdivision.cs)
+  - Comment: "Sum-to-one and non-negativity constraints are assumed to be
+    enforced by upstream code."  Assumes barycentrics are already valid.
+- TriangleProjection2D.IsPointInTriangle
+  - Comment: "Barycentric test with edge-inclusive containment."  Matches the
+    s >= 0, t >= 0, s+t <= denom semantics used in PairIntersectionMath.
+
+Public APIs tied to barycentric semantics
+- Geometry.Barycentric
+  - Public; semantics defined via BarycentricInsideEpsilon and
+    FeatureBarycentricEpsilon. No external doc pins exact inequalities beyond
+    "inclusive inside" and "component-wise closeness".
+- Geometry.Triangle.ToBarycentric / FromBarycentric
+  - Public; tests rely on these to encode/decode grid points. They implicitly
+    assume standard barycentric behavior (sum˜1, nonnegative), but not a
+    specific epsilon model beyond what IsInsideInclusive verifies in tests.
+
+Manual barycentric checks outside helpers
+- Search for typical patterns (u >= 0, s >= 0 && t >= 0 && s+t <= denom, u < -epsilon)
+  shows:
+  - All s,t,denom checks live in PairIntersectionMath.IsPointInTriangle2D and
+    TriangleProjection2D.IsPointInTriangle.
+  - All u,v,w >= -epsilon checks live in PairIntersectionMath.IsPointInTriangle
+    and TriangleNonCoplanarIntersection.IsPointInTriangle.
+  - A comment in Kernel/PslgCore.cs mentions u >= 0, v >= 0, u+v <= 1, but no
+    production code implements that inequality directly.
+  - No other ad-hoc barycentric "inside triangle" checks were found.
+
+Performance-related notes
+- Kernel/BaryVertices.FindFarthestPair O(n^2) search is explicitly justified
+  via a comment as acceptable because per-pair sample counts are small.
+- No explicit "hot path" comments on IsPointInTriangle helpers, but by role:
+  - TriangleNonCoplanarIntersection.Classify and PairIntersectionMath
+    (ComputeNonCoplanarIntersectionPoints / ComputeCoplanarIntersectionPoints,
+    IsPointInTriangle, IsPointInTriangle2D) are called for many triangle pairs
+    in the boolean meshing pipeline and are effectively core inner-loop code.
+- Any refactor of these functions should preserve:
+  - Use of Tolerances.TrianglePredicateEpsilon in predicate and low-level
+    intersection tests.
+  - Use of BarycentricInsideEpsilon and FeatureBarycentricEpsilon only at the
+    feature/parametrization layer (Barycentric and feature merging).
+
+Overall, the layering today is:
+- Geometry.Predicates: robust predicates and classification, no dependency on
+  Kernel, depends only on Geometry.
+- Geometry.Internal.PairIntersectionMath: numeric layer aligned with predicates
+  but returning Barycentric values and rich sample sets.
+- Kernel (BaryVertices, PairFeatures, TriangleSubdivision, PslgCore): feature
+  and topology layer, consuming Barycentric and world/projection points, using
+  feature-level tolerances for merging but relying on the predicate layer for
+  core yes/no geometric decisions.

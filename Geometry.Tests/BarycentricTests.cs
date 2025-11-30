@@ -42,10 +42,10 @@ public class BarycentricTests
 
         foreach (var p in points)
         {
-            var bary = tri.ToBarycentric(p);
+            var bary = Barycentric.FromPointOnTriangle(in tri, in p);
             Assert.True(bary.IsInsideInclusive());
 
-            var real = tri.FromBarycentric(in bary);
+            var real = Barycentric.ToRealPointOnTriangle(in tri, in bary);
             var snapped = GridRounding.Snap(real);
 
             Assert.Equal(p.X, snapped.X);

@@ -15,6 +15,9 @@ public readonly struct Triangle
     // so that it points away from that missing point.
     public Triangle(Point p0, Point p1, Point p2, Point missing)
     {
+        if (HasZeroArea(in p0, in p1, in p2))
+            throw new System.Exception();
+
         P0 = p0;
         P1 = p1;
         P2 = p2;
@@ -40,6 +43,9 @@ public readonly struct Triangle
     // Normal is computed directly from P0->P1 and P0->P2.
     public static Triangle FromWinding(Point p0, Point p1, Point p2)
     {
+        if (HasZeroArea(in p0, in p1, in p2))
+            throw new System.Exception();
+
         var e1 = new RealVector((double)p1.X - p0.X, (double)p1.Y - p0.Y, (double)p1.Z - p0.Z);
         var e2 = new RealVector((double)p2.X - p0.X, (double)p2.Y - p0.Y, (double)p2.Z - p0.Z);
         var n = e1.Cross(e2).Normalized();
@@ -52,29 +58,22 @@ public readonly struct Triangle
         P0 = p0; P1 = p1; P2 = p2; Normal = RealNormal.FromVector(unitNormal);
     }
 
-    // Convert a point in the plane of this triangle to barycentric
-    // coordinates (U,V,W) such that P = U*P0 + V*P1 + W*P2 and
-    // U + V + W = 1. Uses double precision; intended for parametrization
-    // only, not for robust geometric classification.
-    public Barycentric ToBarycentric(Point point)
-        => Internal.PairIntersectionMath.ToBarycentric(
-            in this,
-            new RealVector(point.X, point.Y, point.Z));
-
-    // Reconstruct a real-valued point from barycentric coordinates
-    // with respect to this triangle: P = U*P0 + V*P1 + W*P2.
-    // Returns RealPoint; any snapping back to integer grid should be
-    // done via GridRounding.
-    public RealPoint FromBarycentric(in Barycentric barycentric)
+    internal static bool HasZeroArea(in Point p0, in Point p1, in Point p2)
     {
-        var u = barycentric.U;
-        var v = barycentric.V;
-        var w = barycentric.W;
+        long v0x = p1.X - p0.X;
+        long v0y = p1.Y - p0.Y;
+        long v0z = p1.Z - p0.Z;
 
-        var x = u * P0.X + v * P1.X + w * P2.X;
-        var y = u * P0.Y + v * P1.Y + w * P2.Y;
-        var z = u * P0.Z + v * P1.Z + w * P2.Z;
+        long v1x = p2.X - p0.X;
+        long v1y = p2.Y - p0.Y;
+        long v1z = p2.Z - p0.Z;
 
-        return new RealPoint(x, y, z);
+        long cx = v0y * v1z - v0z * v1y;
+        long cy = v0z * v1x - v0x * v1z;
+        long cz = v0x * v1y - v0y * v1x;
+
+        long lenSq = cx * cx + cy * cy + cz * cz;
+        return lenSq == 0;
     }
+
 }

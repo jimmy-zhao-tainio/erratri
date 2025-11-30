@@ -89,11 +89,11 @@ public class TriangleSubdivisionTests
 
         // P on edge V0-V1 (Edge0).
         var baryP = new Barycentric(0.75, 0.25, 0.0);
-        var posP = tri.FromBarycentric(in baryP);
+        var posP = Barycentric.ToRealPointOnTriangle(in tri, in baryP);
 
         // Q on edge V1-V2 (Edge1).
         var baryQ = new Barycentric(0.0, 0.7, 0.3);
-        var posQ = tri.FromBarycentric(in baryQ);
+        var posQ = Barycentric.ToRealPointOnTriangle(in tri, in baryQ);
 
         var points = new List<TriangleSubdivision.IntersectionPoint>
         {
@@ -150,11 +150,11 @@ public class TriangleSubdivisionTests
 
         // P exactly at vertex V0.
         var baryP = new Barycentric(1.0, 0.0, 0.0);
-        var posP = tri.FromBarycentric(in baryP);
+        var posP = Barycentric.ToRealPointOnTriangle(in tri, in baryP);
 
         // Q on edge V1-V2 (Edge1), away from vertices.
         var baryQ = new Barycentric(0.0, 0.4, 0.6);
-        var posQ = tri.FromBarycentric(in baryQ);
+        var posQ = Barycentric.ToRealPointOnTriangle(in tri, in baryQ);
 
         var points = new List<TriangleSubdivision.IntersectionPoint>
         {

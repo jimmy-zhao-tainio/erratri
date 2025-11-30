@@ -296,7 +296,7 @@ internal static class Program
 
     private static int GetOrAddPoint(TriAccum acc, Barycentric bary, Triangle tri)
     {
-        var pos = tri.FromBarycentric(in bary);
+        var pos = Barycentric.ToRealPointOnTriangle(in tri, in bary);
         for (int i = 0; i < acc.WorldPoints.Count; i++)
         {
             var wp = acc.WorldPoints[i];

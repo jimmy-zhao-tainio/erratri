@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Geometry;
-using Geometry.Internal;
+using Geometry.Predicates;
+using Geometry.Predicates.Internal;
 using Geometry.Predicates;
 using Topology;
 
@@ -44,11 +45,12 @@ public readonly struct PairVertex
     }
 }
 
-// Simple undirected edge between two PairVertex indices.
+// Simple undirected edge between two PairVertex instances.
 //
-// Start/End are indexes (ed: vertices?) into the PairFeatures.Vertices array. The same segment
-// lives on both triangles A and B; which triangle you care about is handled
-// when we later convert barycentric coords to world positions.
+// Start/End are the PairVertex instances for this segment; they correspond
+// to entries in the PairFeatures.Vertices list. The same segment lives on
+// both triangles A and B; which triangle you care about is handled when we
+// later convert barycentric coords to world positions.
 public readonly struct PairSegment
 {
     public PairVertex Start { get; }
@@ -161,9 +163,10 @@ public static class PairFeaturesFactory
         // Apply an additional feature-layer dedup in world space so
         // downstream barycentric merging operates on a stable set of
         // samples.
-        var uniquePoints = new List<RealVector>(rawPoints.Count);
-        foreach (var p in rawPoints)
+        var uniquePoints = new List<RealPoint>(rawPoints.Count);
+        foreach (var v in rawPoints)
         {
+            var p = new RealPoint(v.X, v.Y, v.Z);
             AddUniqueWorldPoint(uniquePoints, in p);
         }
 
@@ -175,15 +178,28 @@ public static class PairFeaturesFactory
         }
 
         var baryVertices = new BaryVertices();
+        var realTriA = new RealTriangle(triA);
+        var realTriB = new RealTriangle(triB);
 
         for (int i = 0; i < uniquePoints.Count; i++)
         {
-            var v = uniquePoints[i];
-            var baryA = PairIntersectionMath.ToBarycentric(in triA, in v);
-            var baryB = PairIntersectionMath.ToBarycentric(in triB, in v);
+            RealPoint p = uniquePoints[i];
+            var baryA = realTriA.ComputeBarycentric(in p, out double denomA);
+            if (denomA == 0.0)
+            {
+                System.Diagnostics.Debug.Assert(false, "Degenerate triangle in ToBarycentric.");
+                baryA = new Barycentric(0.0, 0.0, 0.0);
+            }
+
+            var baryB = realTriB.ComputeBarycentric(in p, out double denomB);
+            if (denomB == 0.0)
+            {
+                System.Diagnostics.Debug.Assert(false, "Degenerate triangle in ToBarycentric.");
+                baryB = new Barycentric(0.0, 0.0, 0.0);
+            }
 
             int idx = AddOrGetVertex(vertices, baryA, baryB);
-            baryVertices.Add(idx, in v);
+            baryVertices.Add(idx, in p);
         }
 
         if (vertices.Count == 0)
@@ -248,7 +264,7 @@ public static class PairFeaturesFactory
                                               List<PairVertex> vertices,
                                               List<PairSegment> segments)
     {
-        var candidates = PairIntersectionMath.ComputeCoplanarIntersectionPoints(in triA, in triB, out int axis);
+        var candidates = PairIntersectionMath.ComputeCoplanarIntersectionPoints(in triA, in triB);
 
         if (candidates.Count == 0)
         {
@@ -258,15 +274,17 @@ public static class PairFeaturesFactory
         }
 
         // Map 2D intersection samples to barycentric coordinates on A and B.
-        PairIntersectionMath.ProjectTriangleTo2D(in triA, axis, out var a0, out var a1, out var a2);
-        PairIntersectionMath.ProjectTriangleTo2D(in triB, axis, out var b0, out var b1, out var b2);
+        int axis = TriangleProjection2D.ChooseProjectionAxis(triA.Normal);
+        TriangleProjection2D.ProjectTriangleTo2D(in triA, axis, out var a0, out var a1, out var a2);
+        TriangleProjection2D.ProjectTriangleTo2D(in triB, axis, out var b0, out var b1, out var b2);
 
         var baryVertices2D = new BaryVertices2D();
         for (int i = 0; i < candidates.Count; i++)
         {
             var p = candidates[i];
-            var baryA = PairIntersectionMath.ToBarycentric2D(in p, in a0, in a1, in a2);
-            var baryB = PairIntersectionMath.ToBarycentric2D(in p, in b0, in b1, in b2);
+            var p2d = new TriangleProjection2D.Point2D(p.X, p.Y);
+            var baryA = TriangleProjection2D.ToBarycentric2D(in p2d, in a0, in a1, in a2);
+            var baryB = TriangleProjection2D.ToBarycentric2D(in p2d, in b0, in b1, in b2);
 
             int idx = AddOrGetVertex(vertices, baryA, baryB);
             baryVertices2D.Add(idx, in p);
@@ -374,14 +392,12 @@ public static class PairFeaturesFactory
         return vertices.Count - 1;
     }
 
-    private static void AddUniqueWorldPoint(List<RealVector> points, in RealVector candidate)
+    private static void AddUniqueWorldPoint(List<RealPoint> points, in RealPoint candidate)
     {
-        var candidatePoint = new RealPoint(candidate.X, candidate.Y, candidate.Z);
         for (int i = 0; i < points.Count; i++)
         {
             var existing = points[i];
-            var existingPoint = new RealPoint(existing.X, existing.Y, existing.Z);
-            double squaredDistance = existingPoint.DistanceSquared(in candidatePoint);
+            double squaredDistance = existing.DistanceSquared(in candidate);
 
             if (squaredDistance <= Tolerances.FeatureWorldDistanceEpsilonSquared)
                 return;

@@ -36,6 +36,18 @@ internal static class TriangleProjection2D
             _ => new Point2D(p.X, p.Y),
         };
 
+    internal static void ProjectTriangleTo2D(
+        in Triangle tri,
+        int axis,
+        out Point2D t0,
+        out Point2D t1,
+        out Point2D t2)
+    {
+        t0 = ProjectTo2D(in tri.P0, axis);
+        t1 = ProjectTo2D(in tri.P1, axis);
+        t2 = ProjectTo2D(in tri.P2, axis);
+    }
+
     internal static void AddIfInsideTriangle(
         in Point2D candidate,
         in Point2D t0,
@@ -77,6 +89,44 @@ internal static class TriangleProjection2D
         }
 
         return s >= 0 && t >= 0 && (s + t) <= denom;
+    }
+
+    internal static Barycentric ToBarycentric2D(
+        in Point2D p,
+        in Point2D t0,
+        in Point2D t1,
+        in Point2D t2)
+    {
+        double x = p.X, y = p.Y;
+
+        double x0 = t0.X, y0 = t0.Y;
+        double x1 = t1.X, y1 = t1.Y;
+        double x2 = t2.X, y2 = t2.Y;
+
+        double dX = x - x2;
+        double dY = y - y2;
+        double dX21 = x2 - x1;
+        double dY12 = y1 - y2;
+        double dX02 = x0 - x2;
+        double dY02 = y0 - y2;
+
+        double denom = dY12 * dX02 + dX21 * dY02;
+        if (denom == 0.0)
+        {
+            // Degenerate projected triangle; mirrors the 3D barycentric
+            // fallback and should not occur for well-formed input.
+            System.Diagnostics.Debug.Assert(false, "Degenerate triangle in ToBarycentric2D.");
+            return new Barycentric(0.0, 0.0, 0.0);
+        }
+
+        double s = dY12 * dX + dX21 * dY;
+        double t = (y2 - y0) * dX + (x0 - x2) * dY;
+
+        double u = s / denom;
+        double v = t / denom;
+        double w = 1.0 - u - v;
+
+        return new Barycentric(u, v, w);
     }
 
     internal static bool TrySegmentIntersection(

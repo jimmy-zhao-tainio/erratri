@@ -101,7 +101,7 @@ public sealed class TriangleIntersectionIndex
                 // the shared world-space point, then map back to the global
                 // IntersectionVertexId via the quantized lookup.
                 var baryOnA = v.OnTriangleA;
-                var world = triA.FromBarycentric(in baryOnA);
+                var world = Barycentric.ToRealPointOnTriangle(in triA, in baryOnA);
                 var key = Quantize(world, invEpsilon);
 
                 if (!globalVertexLookup.TryGetValue(key, out var globalId))

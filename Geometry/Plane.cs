@@ -16,9 +16,9 @@ public readonly struct Plane
     public static Plane FromTriangle(in Triangle tri)
         => new Plane(tri.Normal, tri.P0);
 
-    // Signed evaluation of point relative to plane.
+    // Signed distance of point relative to plane.
     // >0: positive side (along normal), <0: negative side (inside for outward-oriented faces)
-    public double Evaluate(in Point p)
+    public double SignedDistance(in Point p)
     {
         var dx = (double)p.X - Point.X;
         var dy = (double)p.Y - Point.Y;
@@ -26,13 +26,13 @@ public readonly struct Plane
         return Normal.X * dx + Normal.Y * dy + Normal.Z * dz;
     }
 
-    // Classify point side using Geometry.Tolerances.PlaneSideEpsilon.
+    // Classify point side.
     // Returns 1 (positive), -1 (negative), or 0 (on plane)
-    public int Side(in Point p, double eps = Tolerances.PlaneSideEpsilon)
+    public int Side(in Point p)
     {
-        var s = Evaluate(p);
-        if (s > eps) return 1;
-        if (s < -eps) return -1;
+        var s = SignedDistance(p);
+        if (s > Tolerances.PlaneSideEpsilon) return 1;
+        if (s < -Tolerances.PlaneSideEpsilon) return -1;
         return 0;
     }
 }

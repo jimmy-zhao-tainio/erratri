@@ -106,7 +106,7 @@ public sealed class IntersectionGraph
             {
                 var v = localVertices[i];
                 var baryOnA = v.OnTriangleA;
-                var world = triA.FromBarycentric(in baryOnA);
+                var world = Barycentric.ToRealPointOnTriangle(in triA, in baryOnA);
 
                 var key = QuantizedPointKey.FromRealPoint(world);
                 if (!vertexLookup.TryGetValue(key, out var globalId))

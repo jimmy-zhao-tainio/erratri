@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Geometry;
-using Geometry.Internal;
+using Geometry.Predicates.Internal;
 using Topology;
 using Xunit;
 
@@ -27,10 +27,14 @@ public class PairIntersectionMathTests
 
         Assert.Equal(2, points.Count);
 
+        var realTriA = new RealTriangle(triA);
+        var realTriB = new RealTriangle(triB);
+
         foreach (var p in points)
         {
-            var baryA = PairIntersectionMath.ToBarycentric(in triA, in p);
-            var baryB = PairIntersectionMath.ToBarycentric(in triB, in p);
+            var rp = new RealPoint(p.X, p.Y, p.Z);
+            var baryA = realTriA.ComputeBarycentric(in rp, out _);
+            var baryB = realTriB.ComputeBarycentric(in rp, out _);
 
             Assert.True(baryA.IsInsideInclusive(), "Point not inside triangle A.");
             Assert.True(baryB.IsInsideInclusive(), "Point not inside triangle B.");
@@ -54,12 +58,9 @@ public class PairIntersectionMathTests
 
         var points = PairIntersectionMath.ComputeCoplanarIntersectionPoints(
             in triA,
-            in triB,
-            out int axis);
+            in triB);
 
         Assert.True(points.Count >= 3);
-
-        PairIntersectionMath.ProjectTriangleTo2D(in triA, axis, out var a0, out var a1, out var a2);
 
         var trianglePoints = new List<(long X, long Y)>
         {
@@ -70,6 +71,7 @@ public class PairIntersectionMathTests
 
         bool HasCorner(long x, long y)
         {
+            int axis = TriangleProjection2D.ChooseProjectionAxis(triA.Normal);
             foreach (var p in points)
             {
                 // Simple projection-aware check: map the 3D grid points

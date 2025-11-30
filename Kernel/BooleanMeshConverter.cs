@@ -19,11 +19,11 @@ public static class BooleanMeshConverter
             var p1 = realMesh.Vertices[b];
             var p2 = realMesh.Vertices[c];
 
-            var q0 = RoundPoint(p0);
-            var q1 = RoundPoint(p1);
-            var q2 = RoundPoint(p2);
+            var q0 = GridRounding.Snap(p0);
+            var q1 = GridRounding.Snap(p1);
+            var q2 = GridRounding.Snap(p2);
 
-            if (IsDegenerate(q0, q1, q2))
+            if (Triangle.HasZeroArea(in q0, in q1, in q2))
             {
                 continue;
             }
@@ -51,33 +51,6 @@ public static class BooleanMeshConverter
         }
 
         return new RealMesh(vertices, tris);
-    }
-
-    private static Point RoundPoint(in RealPoint p)
-    {
-        long x = (long)Math.Round(p.X);
-        long y = (long)Math.Round(p.Y);
-        long z = (long)Math.Round(p.Z);
-        return new Point(x, y, z);
-    }
-
-    private static bool IsDegenerate(Point p0, Point p1, Point p2)
-    {
-        long v0x = p1.X - p0.X;
-        long v0y = p1.Y - p0.Y;
-        long v0z = p1.Z - p0.Z;
-
-        long v1x = p2.X - p0.X;
-        long v1y = p2.Y - p0.Y;
-        long v1z = p2.Z - p0.Z;
-
-        long cx = v0y * v1z - v0z * v1y;
-        long cy = v0z * v1x - v0x * v1z;
-        long cz = v0x * v1y - v0y * v1x;
-
-        double lenSq = (double)cx * cx + (double)cy * cy + (double)cz * cz;
-        const double epsSq = 1e-12;
-        return lenSq < epsSq;
     }
 
     private static int GetOrAdd(List<RealPoint> vertices, Dictionary<Point, int> map, Point p)

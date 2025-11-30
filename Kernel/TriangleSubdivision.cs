@@ -328,8 +328,8 @@ public static class TriangleSubdivision
         var v1 = new RealPoint(triangle.P1);
         var v2 = new RealPoint(triangle.P2);
 
-        var rp = triangle.FromBarycentric(in baryP);
-        var rq = triangle.FromBarycentric(in baryQ);
+        var rp = Barycentric.ToRealPointOnTriangle(in triangle, in baryP);
+        var rq = Barycentric.ToRealPointOnTriangle(in triangle, in baryQ);
 
         var patches = new List<RealTriangle>(3);
 
