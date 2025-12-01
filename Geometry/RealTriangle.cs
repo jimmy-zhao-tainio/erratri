@@ -63,6 +63,24 @@ public readonly struct RealTriangle
         P2 = new RealPoint(triangle.P2.X, triangle.P2.Y, triangle.P2.Z);
     }
 
+    internal static bool HasZeroArea(in RealPoint p0, in RealPoint p1, in RealPoint p2)
+    {
+        double v0x = p1.X - p0.X;
+        double v0y = p1.Y - p0.Y;
+        double v0z = p1.Z - p0.Z;
+
+        double v1x = p2.X - p0.X;
+        double v1y = p2.Y - p0.Y;
+        double v1z = p2.Z - p0.Z;
+
+        double cx = v0y * v1z - v0z * v1y;
+        double cy = v0z * v1x - v0x * v1z;
+        double cz = v0x * v1y - v0y * v1x;
+
+        double lenSq = cx * cx + cy * cy + cz * cz;
+        return lenSq < Tolerances.DegenerateTriangleAreaEpsilonSquared;
+    }
+
     // Compute barycentric coordinates (U, V, W) for a real-valued point in
     // the plane of this triangle, together with the raw denominator used by
     // the dot-product system.

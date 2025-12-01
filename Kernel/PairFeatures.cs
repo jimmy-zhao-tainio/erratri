@@ -176,7 +176,7 @@ public static class PairFeaturesFactory
             return;
         }
 
-        var baryVertices = new BaryVertices();
+        var barycentricVertices = new BarycentricVertices();
         var realTriangleA = new RealTriangle(triangleA);
         var realTriangleB = new RealTriangle(triangleB);
 
@@ -198,7 +198,7 @@ public static class PairFeaturesFactory
             }
 
             int idx = AddOrGetVertex(vertices, barycentricA, barycentricB);
-            baryVertices.Add(idx, in p);
+            barycentricVertices.Add(idx, in p);
         }
 
         if (vertices.Count == 0)
@@ -248,7 +248,7 @@ public static class PairFeaturesFactory
 
             // Genuine segment: connect the two farthest vertices using
             // the 3D samples as distance metric.
-            baryVertices.FindFarthestPair(out int startIndex, out int endIndex);
+            barycentricVertices.FindFarthestPair(out int startIndex, out int endIndex);
 
             segments.Clear();
             if (startIndex != endIndex)
@@ -277,7 +277,7 @@ public static class PairFeaturesFactory
         TriangleProjection2D.ProjectTriangleTo2D(in triangleA, plane, out var a0, out var a1, out var a2);
         TriangleProjection2D.ProjectTriangleTo2D(in triangleB, plane, out var b0, out var b1, out var b2);
 
-        var barycentricVertices2D = new BaryVertices2D();
+        var barycentricVertices2D = new BarycentricVertices2D();
         for (int i = 0; i < candidates.Count; i++)
         {
             var p = candidates[i];

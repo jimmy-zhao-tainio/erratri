@@ -15,7 +15,7 @@ namespace Kernel;
 //
 // The actual PairVertex list lives in PairFeatures; this type just
 // helps decide *which* vertex indices to connect with a segment.
-internal sealed class BaryVertices
+internal sealed class BarycentricVertices
 {
     private readonly List<PairVertexSample3D> _samples = new();
 
@@ -85,7 +85,7 @@ internal readonly struct PairVertexSample3D
     }
 }
 
-// Same idea as BaryVertices, but for the 2D projected coplanar case.
+// Same idea as BarycentricVertices, but for the 2D projected coplanar case.
 //
 // Each entry is:
 //   - a PairVertex index, and
@@ -95,7 +95,7 @@ internal readonly struct PairVertexSample3D
 //   - find the farthest-apart vertices in 2D (for "segment" cases)
 //   - build a simple ordered polygon loop from the unique vertices
 //     (for "area" overlap cases).
-internal sealed class BaryVertices2D
+internal sealed class BarycentricVertices2D
 {
     private readonly List<PairVertexSample2D> _samples = new();
     public int Count => _samples.Count;
@@ -206,3 +206,4 @@ internal readonly struct PairVertexSample2D
         }
     }
 }
+

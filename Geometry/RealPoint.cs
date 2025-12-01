@@ -27,4 +27,7 @@ public readonly struct RealPoint
         double dz = Z - other.Z;
         return dx * dx + dy * dy + dz * dz;
     }
+
+    public double Distance(in RealPoint other)
+        => Math.Sqrt(DistanceSquared(in other));
 }

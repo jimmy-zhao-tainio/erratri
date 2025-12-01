@@ -10,13 +10,31 @@ namespace Kernel.Tests;
 
 public class PslgCoreTests
 {
+    private static Triangle MakeCanonicalTriangle()
+        => Triangle.FromWinding(
+            new Point(0, 0, 0),
+            new Point(1, 0, 0),
+            new Point(0, 1, 0));
+
+    private static PslgResult RunPslg(
+        Triangle triangle,
+        IReadOnlyList<TriangleSubdivision.IntersectionPoint> points,
+        IReadOnlyList<TriangleSubdivision.IntersectionSegment> segments)
+    {
+        var input = new PslgInput(in triangle, points, segments);
+        return PslgBuilder.Run(in input);
+    }
+
     [Fact]
     public void Build_NoSegments_AddsTriangleCornersAndBoundaryEdges()
     {
         var points = new List<TriangleSubdivision.IntersectionPoint>();
         var segments = new List<TriangleSubdivision.IntersectionSegment>();
 
-        PslgBuilder.Build(points, segments, out var vertices, out var edges);
+        var triangle = MakeCanonicalTriangle();
+        var result = RunPslg(triangle, points, segments);
+        var vertices = result.Vertices;
+        var edges = result.Edges;
 
         Assert.Equal(3, vertices.Count);
         Assert.Equal(3, edges.Count);
@@ -67,7 +85,10 @@ public class PslgCoreTests
             new TriangleSubdivision.IntersectionSegment(0, 1)
         };
 
-        PslgBuilder.Build(points, segments, out var vertices, out var edges);
+        var triangle = MakeCanonicalTriangle();
+        var result = RunPslg(triangle, points, segments);
+        var vertices = result.Vertices;
+        var edges = result.Edges;
 
         // 3 triangle corners + 2 intersection poinTriangleSubdivision.
         Assert.Equal(5, vertices.Count);
@@ -110,7 +131,9 @@ public class PslgCoreTests
 
         var segments = new List<TriangleSubdivision.IntersectionSegment>();
 
-        PslgBuilder.Build(points, segments, out var vertices, out var edges);
+        var triangle = MakeCanonicalTriangle();
+        var result = RunPslg(triangle, points, segments);
+        var vertices = result.Vertices;
 
         // 3 triangle corners + 1 merged intersection vertex.
         Assert.Equal(4, vertices.Count);
@@ -146,7 +169,9 @@ public class PslgCoreTests
 
         var segments = new List<TriangleSubdivision.IntersectionSegment>();
 
-        PslgBuilder.Build(points, segments, out var vertices, out var edges);
+        var triangle = MakeCanonicalTriangle();
+        var result = RunPslg(triangle, points, segments);
+        var vertices = result.Vertices;
 
         // All near-corner vertices snap into the existing triangle-corner vertices.
         Assert.Equal(3, vertices.Count);
@@ -200,7 +225,11 @@ public class PslgCoreTests
         };
 
         var ex = Assert.Throws<InvalidOperationException>(
-            () => PslgBuilder.Build(points, segments, out var _, out var _));
+            () =>
+            {
+                var triangle = MakeCanonicalTriangle();
+                RunPslg(triangle, points, segments);
+            });
 
         Assert.Contains("PSLG requires no crossings without vertices", ex.Message);
     }
@@ -248,10 +277,11 @@ public class PslgCoreTests
             new TriangleSubdivision.IntersectionSegment(4, 3)
         };
 
-        PslgBuilder.Build(points, segments, out var vertices, out var edges);
+        var triangle = MakeCanonicalTriangle();
+        var result = RunPslg(triangle, points, segments);
 
-        Assert.NotEmpty(vertices);
-        Assert.NotEmpty(edges);
+        Assert.NotEmpty(result.Vertices);
+        Assert.NotEmpty(result.Edges);
     }
 
     [Fact]
@@ -287,17 +317,18 @@ public class PslgCoreTests
 
         var segments = new List<TriangleSubdivision.IntersectionSegment>();
 
-        PslgBuilder.Build(points, segments, out var vertices, out var edges);
+        var triangle = MakeCanonicalTriangle();
+        var result = RunPslg(triangle, points, segments);
 
         // 3 corners + 6 boundary points (no dedup).
-        Assert.Equal(9, vertices.Count);
+        Assert.Equal(9, result.Vertices.Count);
 
         // Expect 9 boundary edges (split along each side), all marked boundary.
-        Assert.Equal(9, edges.Count);
-        Assert.All(edges, e => Assert.True(e.IsBoundary));
+        Assert.Equal(9, result.Edges.Count);
+        Assert.All(result.Edges, e => Assert.True(e.IsBoundary));
 
         var edgeSet = new HashSet<(int, int)>();
-        foreach (var e in edges)
+        foreach (var e in result.Edges)
         {
             edgeSet.Add((e.Start, e.End));
         }
@@ -344,7 +375,9 @@ public class PslgCoreTests
             new TriangleSubdivision.IntersectionSegment(2, 0)
         };
 
-        PslgBuilder.Build(points, segments, out var vertices, out var edges);
+        var triangle = MakeCanonicalTriangle();
+        var result = RunPslg(triangle, points, segments);
+        var edges = result.Edges;
 
         // Count boundary vs intersection edges.
         int boundaryCount = 0;
@@ -378,10 +411,9 @@ public class PslgCoreTests
         var points = new List<TriangleSubdivision.IntersectionPoint>();
         var segments = new List<TriangleSubdivision.IntersectionSegment>();
 
-        PslgBuilder.Build(points, segments, out var vertices, out var edges);
-        PslgBuilder.BuildHalfEdges(vertices, edges, out var halfEdges);
-
-        var faces = PslgBuilder.ExtractFaces(vertices, halfEdges);
+        var triangle = MakeCanonicalTriangle();
+        var result = RunPslg(triangle, points, segments);
+        var faces = result.Faces;
 
         Assert.Single(faces);
         double area = Math.Abs(faces[0].SignedAreaUV);
@@ -407,13 +439,11 @@ public class PslgCoreTests
             new TriangleSubdivision.IntersectionSegment(0, 1)
         };
 
-        PslgBuilder.Build(points, segments, out var vertices, out var edges);
-        PslgBuilder.BuildHalfEdges(vertices, edges, out var halfEdges);
+        var triangle = MakeCanonicalTriangle();
+        var result = RunPslg(triangle, points, segments);
 
-        var faces = PslgBuilder.ExtractFaces(vertices, halfEdges);
-
-        Assert.Equal(2, faces.Count); // two bounded regions
-        double areaSum = faces.Sum(f => Math.Abs(f.SignedAreaUV));
+        Assert.Equal(2, result.Faces.Count); // two bounded regions
+        double areaSum = result.Faces.Sum(f => Math.Abs(f.SignedAreaUV));
         Assert.InRange(areaSum, 0.5 - 1e-6, 0.5 + 1e-6);
     }
 
@@ -437,35 +467,14 @@ public class PslgCoreTests
             new TriangleSubdivision.IntersectionSegment(0, 1)
         };
 
-        PslgBuilder.Build(points, segments, out var vertices, out var edges);
-        PslgBuilder.BuildHalfEdges(vertices, edges, out var halfEdges);
-        var faces = PslgBuilder.ExtractFaces(vertices, halfEdges);
+        var triangle = MakeCanonicalTriangle();
+        var result = RunPslg(triangle, points, segments);
 
-        var interiors = PslgBuilder.SelectInteriorFaces(faces);
+        var interiors = result.Selection.InteriorFaces;
 
         Assert.Equal(2, interiors.Count);
         double areaSum = interiors.Sum(f => Math.Abs(f.SignedAreaUV));
         Assert.InRange(areaSum, 0.5 - 1e-6, 0.5 + 1e-6);
-    }
-
-    [Fact]
-    public void ExtractFaces_ThrowsOnBrokenCycle()
-    {
-        var vertices = new List<PslgVertex>
-        {
-            new PslgVertex(0.0, 0.0, false, -1),
-            new PslgVertex(1.0, 0.0, false, -1),
-            new PslgVertex(0.0, 1.0, false, -1)
-        };
-
-        var halfEdges = new List<HalfEdge>
-        {
-            new HalfEdge { From = 0, To = 1, Twin = 1, Next = 1 },
-            new HalfEdge { From = 1, To = 2, Twin = 0, Next = 1 }
-        };
-
-        Assert.Throws<InvalidOperationException>(
-            () => PslgBuilder.ExtractFaces(vertices, halfEdges));
     }
 
     [Fact]
@@ -486,28 +495,11 @@ public class PslgCoreTests
             new TriangleSubdivision.IntersectionSegment(0, 1)
         };
 
-        PslgBuilder.Build(points, segments, out var vertices, out var edges);
-        PslgBuilder.BuildHalfEdges(vertices, edges, out var halfEdges);
-        var faces = PslgBuilder.ExtractFaces(vertices, halfEdges);
+        var triangle = MakeCanonicalTriangle();
+        var result = RunPslg(triangle, points, segments);
 
-        var selection = PslgBuilder.SelectInteriorFacesWithAreaCheck(faces);
-
-        Assert.Equal(2, selection.InteriorFaces.Count);
-        Assert.InRange(selection.InteriorFaces.Sum(f => Math.Abs(f.SignedAreaUV)), 0.5 - 1e-6, 0.5 + 1e-6);
-    }
-
-    [Fact]
-    public void SelectInteriorFaces_AcceptsMismatchedAreasNow()
-    {
-        var faces = new List<PslgFace>
-        {
-            new PslgFace(new [] { 0, 1, 2 }, 1.0),  // outer (largest abs area)
-            new PslgFace(new [] { 0, 1, 2 }, 0.1),  // interior 1
-            new PslgFace(new [] { 0, 1, 2 }, 0.1)   // interior 2 (sum 0.2, expect 0.5)
-        };
-
-        Assert.Throws<InvalidOperationException>(
-            () => PslgBuilder.SelectInteriorFacesWithAreaCheck(faces));
+        Assert.Equal(2, result.Selection.InteriorFaces.Count);
+        Assert.InRange(result.Selection.InteriorFaces.Sum(f => Math.Abs(f.SignedAreaUV)), 0.5 - 1e-6, 0.5 + 1e-6);
     }
 
     [Fact]
@@ -530,7 +522,7 @@ public class PslgCoreTests
         }).SignedArea;
         var face = new PslgFace(new[] { 0, 1, 2, 3 }, signedArea: faceArea);
 
-        var tris = PslgBuilder.TriangulateFace(face, vertices);
+        var tris = PslgBuilder.TriangulateSimple(face.OuterVertices, vertices, faceArea);
         Assert.Equal(2, tris.Count);
 
         double areaSum = 0.0;
@@ -567,7 +559,7 @@ public class PslgCoreTests
         }).SignedArea;
         var face = new PslgFace(new[] { 0, 1, 2, 3, 4 }, signedArea: faceArea);
 
-        var tris = PslgBuilder.TriangulateFace(face, vertices);
+        var tris = PslgBuilder.TriangulateSimple(face.OuterVertices, vertices, faceArea);
         Assert.Equal(3, tris.Count);
 
         double areaSum = 0.0;
@@ -597,7 +589,7 @@ public class PslgCoreTests
         var face = new PslgFace(new[] { 0, 1, 2, 3 }, signedArea: 0.0);
 
         Assert.Throws<InvalidOperationException>(
-            () => PslgBuilder.TriangulateFace(face, vertices));
+            () => PslgBuilder.TriangulateSimple(face.OuterVertices, vertices, expectedArea: 0.0));
     }
 
     [Fact]
@@ -622,14 +614,10 @@ public class PslgCoreTests
             new TriangleSubdivision.IntersectionSegment(2, 3)
         };
 
-        PslgBuilder.Build(points, segments, out var vertices, out var edges);
-        PslgBuilder.BuildHalfEdges(vertices, edges, out var halfEdges);
-        var faces = PslgBuilder.ExtractFaces(vertices, halfEdges);
-        var selectionList = PslgBuilder.SelectInteriorFaces(faces);
-        var selection = new PslgFaceSelection(selectionList);
+        var result = RunPslg(tri, points, segments);
 
         // Triangulate and map to patches.
-        var patches = PslgBuilder.TriangulateInteriorFaces(tri, vertices, selection);
+        var patches = result.Patches;
 
         // Area check.
         double patchArea = patches.Sum(p => Math.Abs(new RealTriangle(p.P0, p.P1, p.P2).SignedArea));
@@ -637,23 +625,59 @@ public class PslgCoreTests
 
         // Every non-boundary PSLG edge should appear as a patch edge.
         var triangleEdges = new HashSet<(int, int)>();
-        var allTris = new List<(int A, int B, int C)>();
-        foreach (var face in selection.InteriorFaces)
+
+        // Map PSLG vertices back to world-space points using the same
+        // barycentric mapping as the PSLG pipeline.
+        var vertexWorld = new List<RealPoint>(result.Vertices.Count);
+        for (int i = 0; i < result.Vertices.Count; i++)
         {
-            allTris.AddRange(PslgBuilder.TriangulateFace(face, vertices));
+            var v = result.Vertices[i];
+            double u = v.X;
+            double vCoord = v.Y;
+            double w = 1.0 - u - vCoord;
+            var barycentric = new Barycentric(u, vCoord, w);
+            vertexWorld.Add(Barycentric.ToRealPointOnTriangle(in tri, in barycentric));
         }
 
-        foreach (var t in allTris)
+        // For each patch triangle, recover the underlying PSLG vertex indices
+        // by nearest-neighbour search in world space, then record its edges.
+        for (int i = 0; i < patches.Count; i++)
         {
-            AddEdge(triangleEdges, t.A, t.B);
-            AddEdge(triangleEdges, t.B, t.C);
-            AddEdge(triangleEdges, t.C, t.A);
+            var patch = patches[i];
+            int ia = FindNearestVertexIndex(patch.P0, vertexWorld);
+            int ib = FindNearestVertexIndex(patch.P1, vertexWorld);
+            int ic = FindNearestVertexIndex(patch.P2, vertexWorld);
+
+            AddEdge(triangleEdges, ia, ib);
+            AddEdge(triangleEdges, ib, ic);
+            AddEdge(triangleEdges, ic, ia);
         }
 
-        foreach (var e in edges.Where(e => !e.IsBoundary))
+        foreach (var e in result.Edges.Where(e => !e.IsBoundary))
         {
             Assert.Contains(NormalizeEdge(e.Start, e.End), triangleEdges);
         }
+    }
+
+    private static int FindNearestVertexIndex(RealPoint point, IReadOnlyList<RealPoint> vertices)
+    {
+        if (vertices is null || vertices.Count == 0)
+            throw new ArgumentException("Vertex list must be non-empty.", nameof(vertices));
+
+        int bestIndex = 0;
+        double bestDistSq = point.DistanceSquared(vertices[0]);
+
+        for (int i = 1; i < vertices.Count; i++)
+        {
+            double distSq = point.DistanceSquared(vertices[i]);
+            if (distSq < bestDistSq)
+            {
+                bestDistSq = distSq;
+                bestIndex = i;
+            }
+        }
+
+        return bestIndex;
     }
 
     private static (int, int) NormalizeEdge(int a, int b) => a < b ? (a, b) : (b, a);

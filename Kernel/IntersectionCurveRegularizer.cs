@@ -181,10 +181,7 @@ public static class IntersectionCurveRegularizer
                         if (positions.TryGetValue(endpointA, out var pA) &&
                             positions.TryGetValue(endpointB, out var pB))
                         {
-                            double dx = pB.X - pA.X;
-                            double dy = pB.Y - pA.Y;
-                            double dz = pB.Z - pA.Z;
-                            double distance = Math.Sqrt(dx * dx + dy * dy + dz * dz);
+                            double distance = pA.Distance(in pB);
 
                             double median = stats.MedianEdgeLength;
                             double total = stats.TotalLength;
@@ -363,10 +360,7 @@ public static class IntersectionCurveRegularizer
                 continue;
             }
 
-            double dx = p1.X - p0.X;
-            double dy = p1.Y - p0.Y;
-            double dz = p1.Z - p0.Z;
-            double length = Math.Sqrt(dx * dx + dy * dy + dz * dz);
+            double length = p0.Distance(in p1);
 
             if (length > 0.0)
             {
@@ -375,7 +369,7 @@ public static class IntersectionCurveRegularizer
             }
         }
 
-        double medianEdgeLength = ComputeMedian(edgeLengths);
+        double medianEdgeLength = edgeLengths.Median();
 
         ComponentClassification classification;
 
@@ -406,23 +400,6 @@ public static class IntersectionCurveRegularizer
             totalLength,
             medianEdgeLength,
             classification);
-    }
-
-    private static double ComputeMedian(List<double> values)
-    {
-        if (values is null) throw new ArgumentNullException(nameof(values));
-        if (values.Count == 0) return 0.0;
-
-        values.Sort();
-        int n = values.Count;
-        int mid = n / 2;
-
-        if ((n & 1) == 1)
-        {
-            return values[mid];
-        }
-
-        return 0.5 * (values[mid - 1] + values[mid]);
     }
 
     private static bool TryBuildCurveFromTwoRegularComponent(
@@ -575,10 +552,7 @@ public static class IntersectionCurveRegularizer
                 continue;
             }
 
-            double dx = p1.X - p0.X;
-            double dy = p1.Y - p0.Y;
-            double dz = p1.Z - p0.Z;
-            totalLength += Math.Sqrt(dx * dx + dy * dy + dz * dz);
+            totalLength += p0.Distance(in p1);
         }
 
         var verticesArray = ImmutableArray.Create(vertexLoop.ToArray());

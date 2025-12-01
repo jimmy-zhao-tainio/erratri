@@ -10,6 +10,10 @@ public static class Tolerances
     // (2D barycentric checks, segment intersection, collinearity, uniqueness).
     public const double TrianglePredicateEpsilon = 1e-12;
 
+    // Epsilon for detecting degenerate triangles based on squared area
+    // (squared magnitude of the cross product of two edges).
+    public const double DegenerateTriangleAreaEpsilonSquared = 1e-12;
+
     // Epsilon for world-space vertex merging in mesh assembly/auditing.
     public const double MergeEpsilon = 1e-12;
     public const double MergeEpsilonSquared = MergeEpsilon * MergeEpsilon;

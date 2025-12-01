@@ -219,17 +219,11 @@ public static class TriangleSubdivision
                     "TriangleSubdivision.Subdivide: Pattern.None with non-empty segment list.");
 
             default:
-                // General PSLG-based subdivision path: build the PSLG core,
-                // derive faces, select interior faces, and triangulate.
-                PslgBuilder.Build(points, filteredSegments, out var pslgVertices, out var pslgEdges);
-                PslgBuilder.BuildHalfEdges(pslgVertices, pslgEdges, out var halfEdges);
-                var faces = PslgBuilder.ExtractFaces(pslgVertices, halfEdges);
-
-                // Use chart-space face classification only; world-space area
-                // conservation is checked by the caller/fuzz harness.
-                var selection = PslgBuilder.SelectInteriorFacesWithAreaCheck(faces);
-                PslgBuilder.SetDebugSnapshot(triangle, pslgVertices, pslgEdges, halfEdges, faces, selection);
-                return PslgBuilder.TriangulateInteriorFaces(triangle, pslgVertices, selection);
+                // General PSLG-based subdivision path: run the full PSLG pipeline
+                // for this triangle and use the resulting patches.
+                var pslgInput = new PslgInput(in triangle, points, filteredSegments);
+                var pslgResult = PslgBuilder.Run(in pslgInput);
+                return pslgResult.Patches;
         }
     }
 

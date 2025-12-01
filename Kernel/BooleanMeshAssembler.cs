@@ -19,7 +19,7 @@ public static class BooleanMeshAssembler
 
         void AddPatch(in RealTriangle triangle)
         {
-            if (IsDegenerate(triangle.P0, triangle.P1, triangle.P2))
+            if (RealTriangle.HasZeroArea(triangle.P0, triangle.P1, triangle.P2))
             {
                 // Drop degenerate triangle
                 return;
@@ -82,7 +82,7 @@ public static class BooleanMeshAssembler
         IReadOnlyList<(int A, int B, int C)> triangles)
     {
         var edgeUse = new Dictionary<(int, int), int>();
-        var idToPos = new Dictionary<int, RealPoint>();
+        var idToPosition = new Dictionary<int, RealPoint>();
         var voxelToIds = new Dictionary<(int, int, int), List<int>>();
 
         void AddEdge(int a, int b)
@@ -98,9 +98,9 @@ public static class BooleanMeshAssembler
             var pb = vertices[bIdx];
             var pc = vertices[cIdx];
 
-            int ca = VertexCanonicalizer.GetOrAddCanonicalId(pa, idToPos, voxelToIds);
-            int cb = VertexCanonicalizer.GetOrAddCanonicalId(pb, idToPos, voxelToIds);
-            int cc = VertexCanonicalizer.GetOrAddCanonicalId(pc, idToPos, voxelToIds);
+            int ca = VertexCanonicalizer.GetOrAddCanonicalId(pa, idToPosition, voxelToIds);
+            int cb = VertexCanonicalizer.GetOrAddCanonicalId(pb, idToPosition, voxelToIds);
+            int cc = VertexCanonicalizer.GetOrAddCanonicalId(pc, idToPosition, voxelToIds);
 
             AddEdge(ca, cb);
             AddEdge(cb, cc);
@@ -127,38 +127,20 @@ public static class BooleanMeshAssembler
 
             string summary = string.Join("; ", parts);
             string message =
-                $"Non-manifold edges detected in boolean mesh assembly ({nonManifold.Count}). " +
-                $"Expected every edge to be used exactly 2 times, but found: {summary}.";
+                $"Non-manifold edges detected in boolean mesh assembly ({nonManifold.Count}). ";
+        //        $"Expected every edge to be used exactly 2 times, but found: {summary}.";
 
             throw new InvalidOperationException(message);
         }
     }
 
-    private static bool IsDegenerate(in RealPoint p0, in RealPoint p1, in RealPoint p2)
-    {
-        double v0x = p1.X - p0.X;
-        double v0y = p1.Y - p0.Y;
-        double v0z = p1.Z - p0.Z;
-
-        double v1x = p2.X - p0.X;
-        double v1y = p2.Y - p0.Y;
-        double v1z = p2.Z - p0.Z;
-
-        double cx = v0y * v1z - v0z * v1y;
-        double cy = v0z * v1x - v0x * v1z;
-        double cz = v0x * v1y - v0y * v1x;
-
-        double lenSq = cx * cx + cy * cy + cz * cz;
-        const double epsSq = 1e-12;
-        return lenSq < epsSq;
-    }
 }
 
 internal static class VertexCanonicalizer
 {
     public static int GetOrAddCanonicalId(
         RealPoint p,
-        Dictionary<int, RealPoint> idToPos,
+        Dictionary<int, RealPoint> idToPosition,
         Dictionary<(int, int, int), List<int>> voxelToIds)
     {
         double inv = 1.0 / Tolerances.MergeEpsilon;
@@ -180,7 +162,7 @@ internal static class VertexCanonicalizer
 
                     foreach (var id in candidates)
                     {
-                        var c = idToPos[id];
+                        var c = idToPosition[id];
 
                         if (p.DistanceSquared(in c) <= Tolerances.MergeEpsilonSquared)
                         {
@@ -191,8 +173,8 @@ internal static class VertexCanonicalizer
             }
         }
 
-        int newId = idToPos.Count;
-        idToPos[newId] = p;
+        int newId = idToPosition.Count;
+        idToPosition[newId] = p;
         var home = (vx, vy, vz);
         if (!voxelToIds.TryGetValue(home, out var list))
         {

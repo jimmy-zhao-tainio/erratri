@@ -33,21 +33,21 @@ public class PslgTriangulationTests
             new(startIndex: 0, endIndex: 2)
         };
 
-        PslgBuilder.Build(onEdgePoints, segments, out var vertices, out var edges);
-        PslgBuilder.BuildHalfEdges(vertices, edges, out var halfEdges);
-        var faces = PslgBuilder.ExtractFaces(vertices, halfEdges);
-        var interior = PslgBuilder.SelectInteriorFaces(faces);
+        var input = new PslgInput(in triangle, onEdgePoints, segments);
+        var result = PslgBuilder.Run(in input);
 
-        Assert.NotEmpty(interior);
+        Assert.NotEmpty(result.Selection.InteriorFaces);
 
-        var largest = interior.OrderByDescending(f => Math.Abs(f.SignedAreaUV)).First();
+        var largest = result.Selection.InteriorFaces
+            .OrderByDescending(f => Math.Abs(f.SignedAreaUV))
+            .First();
 
         Assert.Contains(0, largest.OuterVertices); // V0
         Assert.Contains(1, largest.OuterVertices); // V1
         Assert.Contains(2, largest.OuterVertices); // V2
 
         var outer = largest.OuterVertices
-            .Select(i => new RealPoint(vertices[i].X, vertices[i].Y, 0.0))
+            .Select(i => new RealPoint(result.Vertices[i].X, result.Vertices[i].Y, 0.0))
             .ToList();
         double polygonArea = new RealPolygon(outer).SignedArea;
 

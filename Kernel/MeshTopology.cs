@@ -1,0 +1,250 @@
+using System;
+using System.Collections.Generic;
+using Geometry;
+
+namespace Kernel;
+
+// Shared mesh-local intersection topology between a mesh and the global
+// intersection graph. MeshATopology and MeshBTopology are thin wrappers
+// over this base; they differ only in which triangle set (A or B) they
+// are built from.
+public abstract class MeshTopology
+{
+    // For each triangle in the corresponding IntersectionSet.Triangles*,
+    // the set of global intersection edges that lie on it (both endpoints
+    // lie on that triangle).
+    public IReadOnlyList<IntersectionEdgeId[]> TriangleEdges { get; }
+
+    // All global edges that touch at least one triangle in this mesh.
+    public IReadOnlyList<IntersectionEdgeId> Edges { get; }
+
+    // Vertex-edge adjacency restricted to this mesh: for each global
+    // intersection vertex, the list of incident edges that lie on
+    // triangles of this mesh.
+    public IReadOnlyDictionary<IntersectionVertexId, IReadOnlyList<IntersectionEdgeId>> VertexEdges { get; }
+
+    // Per-component vertex chains on this mesh, expressed as sequences of
+    // global IntersectionVertexId. Some components form closed cycles,
+    // others may be open chains when local degeneracies are present.
+    public IReadOnlyList<IntersectionVertexId[]> Loops { get; }
+
+    protected MeshTopology(
+        IntersectionEdgeId[][] triangleEdges,
+        IntersectionEdgeId[] edges,
+        Dictionary<IntersectionVertexId, IReadOnlyList<IntersectionEdgeId>> vertexEdges,
+        IntersectionVertexId[][] loops)
+    {
+        TriangleEdges = triangleEdges ?? throw new ArgumentNullException(nameof(triangleEdges));
+        Edges = edges ?? throw new ArgumentNullException(nameof(edges));
+        VertexEdges = vertexEdges ?? throw new ArgumentNullException(nameof(vertexEdges));
+        Loops = loops ?? throw new ArgumentNullException(nameof(loops));
+    }
+
+    // Core builder shared between MeshATopology and MeshBTopology. The caller
+    // supplies the per-triangle intersection vertices coming from the
+    // TriangleIntersectionIndex for its side (A or B).
+    protected static (
+        IntersectionEdgeId[][] TriangleEdges,
+        IntersectionEdgeId[] Edges,
+        Dictionary<IntersectionVertexId, IReadOnlyList<IntersectionEdgeId>> VertexEdges,
+        IntersectionVertexId[][] Loops)
+        BuildCore(
+            IntersectionGraph graph,
+            IReadOnlyList<TriangleIntersectionVertex[]> perTriangleVertices)
+    {
+        if (graph is null) throw new ArgumentNullException(nameof(graph));
+        if (perTriangleVertices is null) throw new ArgumentNullException(nameof(perTriangleVertices));
+
+        int triangleCount = perTriangleVertices.Count;
+
+        // Per-triangle sets of global vertex ids.
+        var perTriangleVertexIds = new HashSet<int>[triangleCount];
+        for (int i = 0; i < triangleCount; i++)
+        {
+            var verts = perTriangleVertices[i];
+            var set = new HashSet<int>();
+            for (int j = 0; j < verts.Length; j++)
+            {
+                set.Add(verts[j].VertexId.Value);
+            }
+            perTriangleVertexIds[i] = set;
+        }
+
+        // Map each edge id to its endpoints.
+        var edgeById = new Dictionary<int, (IntersectionVertexId Start, IntersectionVertexId End)>();
+        foreach (var (id, start, end) in graph.Edges)
+        {
+            edgeById[id.Value] = (start, end);
+        }
+
+        // For each triangle, collect the edges whose endpoints both lie
+        // on that triangle.
+        var triangleEdgeLists = new List<IntersectionEdgeId>[triangleCount];
+        for (int i = 0; i < triangleCount; i++)
+        {
+            triangleEdgeLists[i] = new List<IntersectionEdgeId>();
+        }
+
+        foreach (var (id, start, end) in graph.Edges)
+        {
+            int sId = start.Value;
+            int eId = end.Value;
+
+            for (int triIndex = 0; triIndex < triangleCount; triIndex++)
+            {
+                var vertexSet = perTriangleVertexIds[triIndex];
+                if (vertexSet.Contains(sId) && vertexSet.Contains(eId))
+                {
+                    triangleEdgeLists[triIndex].Add(id);
+                }
+            }
+        }
+
+        // Build vertex-edge adjacency restricted to edges that lie on this mesh.
+        var vertexAdjacency = new Dictionary<IntersectionVertexId, List<IntersectionEdgeId>>();
+        var meshEdgesSet = new HashSet<int>();
+
+        for (int triIndex = 0; triIndex < triangleCount; triIndex++)
+        {
+            var edgesOnTriangle = triangleEdgeLists[triIndex];
+            for (int i = 0; i < edgesOnTriangle.Count; i++)
+            {
+                var edgeId = edgesOnTriangle[i];
+                if (!meshEdgesSet.Add(edgeId.Value))
+                {
+                    continue; // Already accounted for this edge in adjacency.
+                }
+
+                var endpoints = edgeById[edgeId.Value];
+                AddEdgeToAdjacency(vertexAdjacency, endpoints.Start, edgeId);
+                AddEdgeToAdjacency(vertexAdjacency, endpoints.End, edgeId);
+            }
+        }
+
+        // Convert adjacency lists to read-only views.
+        var vertexEdges = new Dictionary<IntersectionVertexId, IReadOnlyList<IntersectionEdgeId>>(vertexAdjacency.Count);
+        foreach (var kvp in vertexAdjacency)
+        {
+            vertexEdges.Add(kvp.Key, kvp.Value.AsReadOnly());
+        }
+
+        // Convert per-triangle edges to arrays.
+        var triangleEdges = new IntersectionEdgeId[triangleCount][];
+        for (int i = 0; i < triangleCount; i++)
+        {
+            var list = triangleEdgeLists[i];
+            triangleEdges[i] = list.Count == 0 ? Array.Empty<IntersectionEdgeId>() : list.ToArray();
+        }
+
+        // Flatten mesh edge ids into a list.
+        var meshEdges = new List<IntersectionEdgeId>(meshEdgesSet.Count);
+        foreach (var edgeValue in meshEdgesSet)
+        {
+            meshEdges.Add(new IntersectionEdgeId(edgeValue));
+        }
+
+        // Extract closed loops over this mesh.
+        var loops = ExtractLoops(vertexAdjacency, edgeById, meshEdgesSet);
+
+        return (
+            triangleEdges,
+            meshEdges.ToArray(),
+            vertexEdges,
+            loops.ToArray());
+    }
+
+    private static void AddEdgeToAdjacency(
+        Dictionary<IntersectionVertexId, List<IntersectionEdgeId>> adjacency,
+        IntersectionVertexId vertex,
+        IntersectionEdgeId edge)
+    {
+        if (!adjacency.TryGetValue(vertex, out var list))
+        {
+            list = new List<IntersectionEdgeId>();
+            adjacency[vertex] = list;
+        }
+
+        list.Add(edge);
+    }
+
+    private static List<IntersectionVertexId[]> ExtractLoops(
+        Dictionary<IntersectionVertexId, List<IntersectionEdgeId>> adjacency,
+        Dictionary<int, (IntersectionVertexId Start, IntersectionVertexId End)> edgeById,
+        HashSet<int> meshEdges)
+    {
+        var remainingEdges = new HashSet<int>(meshEdges);
+        var loops = new List<IntersectionVertexId[]>();
+
+        while (remainingEdges.Count > 0)
+        {
+            // Pick an arbitrary remaining edge to seed the next loop.
+            int seedEdgeValue = 0;
+            foreach (var value in remainingEdges)
+            {
+                seedEdgeValue = value;
+                break;
+            }
+
+            var endpoints = edgeById[seedEdgeValue];
+            var startVertex = endpoints.Start;
+            var currentVertex = endpoints.End;
+
+            var loop = new List<IntersectionVertexId>
+            {
+                startVertex,
+                currentVertex
+            };
+
+            remainingEdges.Remove(seedEdgeValue);
+
+            while (true)
+            {
+                if (!adjacency.TryGetValue(currentVertex, out var incidentEdges))
+                {
+                    break;
+                }
+
+                IntersectionEdgeId nextEdge = default;
+                bool foundNext = false;
+
+                for (int i = 0; i < incidentEdges.Count; i++)
+                {
+                    var candidate = incidentEdges[i];
+                    if (remainingEdges.Contains(candidate.Value))
+                    {
+                        nextEdge = candidate;
+                        foundNext = true;
+                        break;
+                    }
+                }
+
+                if (!foundNext)
+                {
+                    // No unused incident edge from this vertex; loop should be closed.
+                    break;
+                }
+
+                remainingEdges.Remove(nextEdge.Value);
+                var nextEndpoints = edgeById[nextEdge.Value];
+                var nextVertex = nextEndpoints.Start.Value == currentVertex.Value
+                    ? nextEndpoints.End
+                    : nextEndpoints.Start;
+
+                if (nextVertex.Value == startVertex.Value)
+                {
+                    // Close the cycle.
+                    loop.Add(startVertex);
+                    break;
+                }
+
+                loop.Add(nextVertex);
+                currentVertex = nextVertex;
+            }
+
+            loops.Add(loop.ToArray());
+        }
+
+        return loops;
+    }
+}
+
