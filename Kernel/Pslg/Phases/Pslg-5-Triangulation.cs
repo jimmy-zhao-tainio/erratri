@@ -253,24 +253,31 @@ internal static class PslgTriangulationPhase
             return polygon;
         }
 
-        var simplified = new List<int>(polygon.Count);
-        int n = polygon.Count;
-
-        for (int i = 0; i < n; i++)
+        // Normalize an explicit closing vertex (last == first) by dropping the last.
+        if (polygon.Count > 0 && polygon[0] == polygon[^1])
         {
-            int prev = polygon[(i - 1 + n) % n];
-            int curr = polygon[i];
-            int next = polygon[(i + 1) % n];
+            polygon = new List<int>(polygon.GetRange(0, polygon.Count - 1));
+        }
 
-            if (curr == prev || curr == next)
+        var simplified = new List<int>(polygon.Count);
+
+        for (int i = 0; i < polygon.Count; i++)
+        {
+            int curr = polygon[i];
+            if (simplified.Count > 0 && simplified[^1] == curr)
             {
-                continue;
+                continue; // remove immediate duplicates
             }
 
             simplified.Add(curr);
         }
 
-        return simplified.Count >= 3 ? simplified : polygon;
+        if (simplified.Count < 3)
+        {
+            throw new InvalidOperationException("Polygon ring degenerated during simplification.");
+        }
+
+        return simplified;
     }
 
     private static bool IsConvexOrCollinear(List<int> polyList, IReadOnlyList<PslgVertex> vertices)
