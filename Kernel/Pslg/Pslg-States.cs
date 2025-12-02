@@ -17,7 +17,6 @@ internal readonly struct PslgBuildState
 
     internal void Validate()
     {
-#if DEBUG
         System.Diagnostics.Debug.Assert(Vertices != null, "Vertices should not be null.");
         System.Diagnostics.Debug.Assert(Edges != null, "Edges should not be null.");
 
@@ -32,7 +31,6 @@ internal readonly struct PslgBuildState
         }
 
         // TODO: add a duplicate-vertex proximity check if needed (already enforced during normalization).
-#endif
     }
 }
 
@@ -55,7 +53,6 @@ internal readonly struct PslgHalfEdgeState
 
     internal void Validate()
     {
-#if DEBUG
         System.Diagnostics.Debug.Assert(Vertices != null, "Vertices should not be null.");
         System.Diagnostics.Debug.Assert(Edges != null, "Edges should not be null.");
         System.Diagnostics.Debug.Assert(HalfEdges != null, "HalfEdges should not be null.");
@@ -80,7 +77,6 @@ internal readonly struct PslgHalfEdgeState
         }
 
         // TODO: cycle completeness/consistency checks could be added if needed.
-#endif
     }
 }
 
@@ -106,7 +102,6 @@ internal readonly struct PslgFaceState
 
     internal void Validate()
     {
-#if DEBUG
         System.Diagnostics.Debug.Assert(Vertices != null, "Vertices should not be null.");
         System.Diagnostics.Debug.Assert(Faces != null, "Faces should not be null.");
 
@@ -127,7 +122,6 @@ internal readonly struct PslgFaceState
 
             // TODO: consider asserting non-zero area if appropriate tolerance logic exists.
         }
-#endif
     }
 }
 
@@ -156,7 +150,6 @@ internal readonly struct PslgSelectionState
 
     internal void Validate()
     {
-#if DEBUG
         System.Diagnostics.Debug.Assert(Selection.InteriorFaces != null, "Interior faces should not be null.");
         if (Selection.InteriorFaces is null || Faces is null) return;
 
@@ -169,7 +162,6 @@ internal readonly struct PslgSelectionState
         }
 
         // TODO: area consistency checks could be added here if needed.
-#endif
     }
 }
 
@@ -201,12 +193,10 @@ internal readonly struct PslgTriangulationState
 
     internal void Validate()
     {
-#if DEBUG
         System.Diagnostics.Debug.Assert(Patches != null, "Patches should not be null.");
         if (Patches is null) return;
 
         // Optional: ensure positive area for patches.
         // TODO: add area checks if desired (requires RealTriangle access in debug assertions).
-#endif
     }
 }

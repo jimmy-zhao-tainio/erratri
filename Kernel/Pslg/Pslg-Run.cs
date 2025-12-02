@@ -22,8 +22,7 @@ public static partial class PslgBuilder
     // phases directly.
     public static PslgResult Run(in PslgInput input)
     {
-        if (input.Points is null) throw new ArgumentNullException(nameof(input.Points));
-        if (input.Segments is null) throw new ArgumentNullException(nameof(input.Segments));
+        input.Validate();
 
         var buildState = PslgBuildPhase.Run(in input);
         buildState.Validate();
