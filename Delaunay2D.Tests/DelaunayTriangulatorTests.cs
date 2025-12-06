@@ -93,7 +93,12 @@ namespace Delaunay2D.Tests
             bool hasDiagonal = false;
             foreach (var tri in result.Triangles)
             {
-                if ((tri.A == 0 && tri.B == 2) || (tri.B == 0 && tri.C == 2) || (tri.C == 0 && tri.A == 2))
+                if ((tri.A == 0 && tri.B == 2) ||
+                    (tri.B == 0 && tri.C == 2) ||
+                    (tri.C == 0 && tri.A == 2) ||
+                    (tri.A == 2 && tri.B == 0) ||
+                    (tri.B == 2 && tri.C == 0) ||
+                    (tri.C == 2 && tri.A == 0))
                 {
                     hasDiagonal = true;
                     break;
@@ -101,6 +106,50 @@ namespace Delaunay2D.Tests
             }
 
             Assert.True(hasDiagonal, "Constraint diagonal (0,2) was not present in the triangulation.");
+        }
+
+        [Fact]
+        public void Run_RespectsMultipleConstraintsSharingEndpoint()
+        {
+            var points = new List<RealPoint2D>
+            {
+                new RealPoint2D(0, 0),
+                new RealPoint2D(2, 0),
+                new RealPoint2D(2, 1),
+                new RealPoint2D(0, 1)
+            };
+
+            var segments = new List<(int A, int B)> { (0, 2), (2, 3) };
+            var input = new Delaunay2DInput(points, segments);
+            var result = Delaunay2DTriangulator.Run(in input);
+
+            bool has02 = false;
+            bool has23 = false;
+            foreach (var tri in result.Triangles)
+            {
+                if ((tri.A == 0 && tri.B == 2) ||
+                    (tri.B == 0 && tri.C == 2) ||
+                    (tri.C == 0 && tri.A == 2) ||
+                    (tri.A == 2 && tri.B == 0) ||
+                    (tri.B == 2 && tri.C == 0) ||
+                    (tri.C == 2 && tri.A == 0))
+                {
+                    has02 = true;
+                }
+
+                if ((tri.A == 2 && tri.B == 3) ||
+                    (tri.B == 2 && tri.C == 3) ||
+                    (tri.C == 2 && tri.A == 3) ||
+                    (tri.A == 3 && tri.B == 2) ||
+                    (tri.B == 3 && tri.C == 2) ||
+                    (tri.C == 3 && tri.A == 2))
+                {
+                    has23 = true;
+                }
+            }
+
+            Assert.True(has02, "Constrained edge (0,2) not found in final triangulation.");
+            Assert.True(has23, "Constrained edge (2,3) not found in final triangulation.");
         }
     }
 }

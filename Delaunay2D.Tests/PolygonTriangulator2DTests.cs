@@ -91,5 +91,51 @@ namespace Delaunay2D.Tests
 
             Assert.Throws<InvalidOperationException>(() => PolygonTriangulator2D.TriangulateSimpleRing(ring, points));
         }
+
+        [Fact]
+        public void SelfIntersectingRing_Throws()
+        {
+            var points = new List<RealPoint2D>
+            {
+                new RealPoint2D(0, 0),
+                new RealPoint2D(1, 1),
+                new RealPoint2D(0, 1),
+                new RealPoint2D(1, 0)
+            };
+
+            var ring = new List<int> { 0, 1, 2, 3 };
+
+            Assert.Throws<InvalidOperationException>(() => PolygonTriangulator2D.TriangulateSimpleRing(ring, points));
+        }
+
+        [Fact]
+        public void NonDegenerateSelfIntersectingRing_Throws()
+        {
+            var points = new List<RealPoint2D>
+            {
+                new RealPoint2D(0, 0),   // 0
+                new RealPoint2D(4, 0),   // 1
+                new RealPoint2D(5, 3),   // 2
+                new RealPoint2D(2, 5),   // 3
+                new RealPoint2D(-1, 3)   // 4
+            };
+
+            // Star order creates non-adjacent edge crossings.
+            var ring = new List<int> { 0, 2, 4, 1, 3 };
+
+            // Sanity: area should be non-zero so we fail on self-intersection, not degeneracy.
+            double area = 0.0;
+            for (int i = 0; i < ring.Count; i++)
+            {
+                var p0 = points[ring[i]];
+                var p1 = points[ring[(i + 1) % ring.Count]];
+                area += p0.X * p1.Y - p1.X * p0.Y;
+            }
+            area *= 0.5;
+            Assert.True(Math.Abs(area) > 1e-6);
+
+            var ex = Assert.Throws<InvalidOperationException>(() => PolygonTriangulator2D.TriangulateSimpleRing(ring, points));
+            Assert.Contains("self-intersecting", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
     }
 }

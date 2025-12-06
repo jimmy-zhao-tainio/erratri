@@ -30,6 +30,49 @@ namespace Delaunay2D
             return on1 || on2 || on3 || on4;
         }
 
+        internal static bool SegmentsIntersectProper(
+            in RealPoint2D p1,
+            in RealPoint2D q1,
+            in RealPoint2D p2,
+            in RealPoint2D q2)
+        {
+            var o1 = Geometry2DPredicates.Orientation(in p1, in q1, in p2);
+            var o2 = Geometry2DPredicates.Orientation(in p1, in q1, in q2);
+            var o3 = Geometry2DPredicates.Orientation(in p2, in q2, in p1);
+            var o4 = Geometry2DPredicates.Orientation(in p2, in q2, in q1);
+
+            bool general = o1 != o2 && o3 != o4;
+            if (general)
+            {
+                return true;
+            }
+
+            bool allCollinear = o1 == OrientationKind.Collinear &&
+                                o2 == OrientationKind.Collinear &&
+                                o3 == OrientationKind.Collinear &&
+                                o4 == OrientationKind.Collinear;
+            if (allCollinear)
+            {
+                double min1X = Math.Min(p1.X, q1.X);
+                double max1X = Math.Max(p1.X, q1.X);
+                double min2X = Math.Min(p2.X, q2.X);
+                double max2X = Math.Max(p2.X, q2.X);
+
+                double min1Y = Math.Min(p1.Y, q1.Y);
+                double max1Y = Math.Max(p1.Y, q1.Y);
+                double min2Y = Math.Min(p2.Y, q2.Y);
+                double max2Y = Math.Max(p2.Y, q2.Y);
+
+                double overlapX = Math.Min(max1X, max2X) - Math.Max(min1X, min2X);
+                double overlapY = Math.Min(max1Y, max2Y) - Math.Max(min1Y, min2Y);
+                double overlap = Math.Max(overlapX, overlapY);
+
+                return overlap > Geometry2DPredicates.Epsilon;
+            }
+
+            return false;
+        }
+
         internal static bool HasSelfIntersection(IReadOnlyList<int> ring, IReadOnlyList<RealPoint2D> points)
         {
             int n = ring.Count;
@@ -41,18 +84,13 @@ namespace Delaunay2D
 
                 for (int j = i + 1; j < n; j++)
                 {
+                    // Skip adjacent edges: (i, i+1) and (0, n-1)
+                    if (j == i + 1 || (i == 0 && j == n - 1))
+                    {
+                        continue;
+                    }
+
                     int jNext = (j + 1) % n;
-
-                    // Skip adjacent edges and the wrap-around adjacency.
-                    if (i == j || iNext == j || i == jNext || iNext == jNext)
-                    {
-                        continue;
-                    }
-                    if (i == 0 && jNext == n - 1)
-                    {
-                        continue;
-                    }
-
                     var b1 = points[ring[j]];
                     var b2 = points[ring[jNext]];
 
@@ -66,11 +104,35 @@ namespace Delaunay2D
             return false;
         }
 
-        internal static bool EdgeMatchesTriangle(Edge2D edge, Triangle2D triangle)
+        internal static bool HasSelfIntersectionProper(IReadOnlyList<int> ring, IReadOnlyList<RealPoint2D> points)
         {
-            return (edge.A == triangle.A && edge.B == triangle.B) ||
-                   (edge.A == triangle.B && edge.B == triangle.C) ||
-                   (edge.A == triangle.C && edge.B == triangle.A);
+            int n = ring.Count;
+            for (int i = 0; i < n; i++)
+            {
+                int iNext = (i + 1) % n;
+                var a1 = points[ring[i]];
+                var a2 = points[ring[iNext]];
+
+                for (int j = i + 1; j < n; j++)
+                {
+                    // Skip adjacent edges: (i, i+1) and (0, n-1)
+                    if (j == i + 1 || (i == 0 && j == n - 1))
+                    {
+                        continue;
+                    }
+
+                    int jNext = (j + 1) % n;
+                    var b1 = points[ring[j]];
+                    var b2 = points[ring[jNext]];
+
+                    if (SegmentsIntersectProper(in a1, in a2, in b1, in b2))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         internal static bool SegmentIntersectsTriangle(
@@ -114,6 +176,16 @@ namespace Delaunay2D
             bool hasNeg = w0 == OrientationKind.Clockwise || w1 == OrientationKind.Clockwise || w2 == OrientationKind.Clockwise;
             bool hasPos = w0 == OrientationKind.CounterClockwise || w1 == OrientationKind.CounterClockwise || w2 == OrientationKind.CounterClockwise;
             return !(hasNeg && hasPos);
+        }
+
+        internal static bool TriangleHasUndirectedEdge(Triangle2D triangle, int a, int b)
+        {
+            return (triangle.A == a && triangle.B == b) ||
+                   (triangle.B == a && triangle.C == b) ||
+                   (triangle.C == a && triangle.A == b) ||
+                   (triangle.A == b && triangle.B == a) ||
+                   (triangle.B == b && triangle.C == a) ||
+                   (triangle.C == b && triangle.A == a);
         }
 
         private static bool OnSegmentInclusive(in RealPoint2D p, in RealPoint2D q, in RealPoint2D r)

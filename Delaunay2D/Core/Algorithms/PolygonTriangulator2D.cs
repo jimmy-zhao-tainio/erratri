@@ -6,6 +6,10 @@ namespace Delaunay2D
 {
     internal static class PolygonTriangulator2D
     {
+        // Epsilon policy: all degeneracy/orientation checks in this triangulator use Geometry2DPredicates.Epsilon.
+        // A polygon with |area| <= epsilon is treated as too small/degenerate to triangulate reliably.
+        // Ear acceptance also uses this epsilon to filter near-collinear ears.
+
         /// <summary>
         /// Triangulate a single simple polygon ring given as a sequence of vertex indices.
         /// The ring may optionally be closed; a repeated last index is ignored. All indices must be valid.
@@ -20,65 +24,9 @@ namespace Delaunay2D
         {
             if (ring is null) throw new ArgumentNullException(nameof(ring));
             if (points is null) throw new ArgumentNullException(nameof(points));
-            if (ring.Count < 3)
-            {
-                throw new ArgumentException("TriangulateSimpleRing requires at least 3 vertices.", nameof(ring));
-            }
+            var poly = ValidateAndNormalizeRing(ring, points);
 
-            var workingRing = new List<int>(ring.Count);
-            bool hasClosure = ring.Count >= 2 && ring[0] == ring[ring.Count - 1];
-            int limit = hasClosure ? ring.Count - 1 : ring.Count;
-            for (int i = 0; i < limit; i++)
-            {
-                workingRing.Add(ring[i]);
-            }
-
-            if (workingRing.Count < 3)
-            {
-                throw new ArgumentException("TriangulateSimpleRing requires at least 3 vertices after removing closure.", nameof(ring));
-            }
-
-            // Validate indices and duplicates.
-            var seen = new HashSet<int>();
-            for (int i = 0; i < workingRing.Count; i++)
-            {
-                int idx = workingRing[i];
-                if (idx < 0 || idx >= points.Count)
-                {
-                    throw new ArgumentException("TriangulateSimpleRing encountered a vertex index out of range.", nameof(ring));
-                }
-
-                if (!seen.Add(idx))
-                {
-                    throw new InvalidOperationException($"TriangulateSimpleRing requires a simple polygon: vertex index {idx} appears more than once.");
-                }
-            }
-
-            if (Geometry2DIntersections.HasSelfIntersection(workingRing, points))
-            {
-                throw new InvalidOperationException("TriangulateSimpleRing requires a simple polygon: edges self-intersect.");
-            }
-
-            // Compute area via shoelace to ensure non-degenerate and orientation.
-            double area = 0.0;
-            for (int i = 0; i < workingRing.Count; i++)
-            {
-                var p0 = points[workingRing[i]];
-                var p1 = points[workingRing[(i + 1) % workingRing.Count]];
-                area += p0.X * p1.Y - p1.X * p0.Y;
-            }
-            area *= 0.5;
-            if (Math.Abs(area) <= Geometry2DPredicates.Epsilon)
-            {
-                throw new InvalidOperationException("Polygon area is too small or degenerate for triangulation.");
-            }
-            if (area < 0)
-            {
-                workingRing.Reverse();
-            }
-
-            var triangles = new List<Triangle2D>(workingRing.Count - 2);
-            var poly = new List<int>(workingRing);
+            var triangles = new List<Triangle2D>(poly.Count - 2);
 
             while (poly.Count > 3)
             {
@@ -99,6 +47,12 @@ namespace Delaunay2D
                     if (orientation != OrientationKind.CounterClockwise)
                     {
                         continue;
+                    }
+
+                    double earArea = 0.5 * ((pCurr.X - pPrev.X) * (pNext.Y - pPrev.Y) - (pCurr.Y - pPrev.Y) * (pNext.X - pPrev.X));
+                    if (Math.Abs(earArea) <= Geometry2DPredicates.Epsilon)
+                    {
+                        continue; // near-collinear ear, skip
                     }
 
                     bool anyInside = false;
@@ -132,8 +86,8 @@ namespace Delaunay2D
                 if (!earFound)
                 {
                     throw new InvalidOperationException(
-                        "Ear clipping failed: no valid ear found for a non-triangular polygon. " +
-                        "This usually indicates a non-simple or numerically degenerate ring.");
+                        "Ear clipping failed: no valid ear found for a non-degenerate, simple polygon. " +
+                        "This usually indicates severe numeric degeneracy (e.g., nearly collinear vertices) relative to the chosen epsilon.");
                 }
             }
 
@@ -156,5 +110,70 @@ namespace Delaunay2D
                    w2 == OrientationKind.CounterClockwise;
         }
 
+        private static List<int> ValidateAndNormalizeRing(
+            IReadOnlyList<int> ring,
+            IReadOnlyList<RealPoint2D> points)
+        {
+            if (ring.Count < 3)
+            {
+                throw new ArgumentException("TriangulateSimpleRing requires at least 3 vertices.", nameof(ring));
+            }
+
+            var workingRing = new List<int>(ring.Count);
+            bool hasClosure = ring.Count >= 2 && ring[0] == ring[ring.Count - 1];
+            int limit = hasClosure ? ring.Count - 1 : ring.Count;
+            for (int i = 0; i < limit; i++)
+            {
+                workingRing.Add(ring[i]);
+            }
+
+            if (workingRing.Count < 3)
+            {
+                throw new ArgumentException("TriangulateSimpleRing requires at least 3 vertices after removing closure.", nameof(ring));
+            }
+
+            var seen = new HashSet<int>();
+            for (int i = 0; i < workingRing.Count; i++)
+            {
+                int idx = workingRing[i];
+                if (idx < 0 || idx >= points.Count)
+                {
+                    throw new ArgumentException("TriangulateSimpleRing encountered a vertex index out of range.", nameof(ring));
+                }
+
+                if (!seen.Add(idx))
+                {
+                    throw new InvalidOperationException($"TriangulateSimpleRing requires a simple polygon: vertex index {idx} appears more than once.");
+                }
+            }
+
+            double area = 0.0;
+            for (int i = 0; i < workingRing.Count; i++)
+            {
+                var p0 = points[workingRing[i]];
+                var p1 = points[workingRing[(i + 1) % workingRing.Count]];
+                area += p0.X * p1.Y - p1.X * p0.Y;
+            }
+            area *= 0.5;
+            if (Math.Abs(area) <= Geometry2DPredicates.Epsilon)
+            {
+                throw new InvalidOperationException("Polygon area is too small or degenerate for triangulation.");
+            }
+            if (area < 0)
+            {
+                workingRing.Reverse();
+            }
+
+            ValidateRingIsSimple(workingRing, points);
+            return workingRing;
+        }
+
+        private static void ValidateRingIsSimple(IReadOnlyList<int> ring, IReadOnlyList<RealPoint2D> points)
+        {
+            if (Geometry2DIntersections.HasSelfIntersectionProper(ring, points))
+            {
+                throw new InvalidOperationException("TriangulateSimpleRing: polygon ring is self-intersecting and cannot be triangulated.");
+            }
+        }
     }
 }

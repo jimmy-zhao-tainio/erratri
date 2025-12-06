@@ -25,6 +25,7 @@ namespace Delaunay2D
 
             int originalCount = input.Points.Count;
             var triangles = BowyerWatsonTriangulator.Triangulate(input.Points);
+            triangles = FilterOutSuperTriangles(triangles, originalCount);
 
             if (input.Segments.Count > 0)
             {
@@ -43,6 +44,35 @@ namespace Delaunay2D
             }
 
             return new Delaunay2DResult(input.Points, resultTriangles);
+        }
+
+        private static List<Triangle2D> FilterOutSuperTriangles(IReadOnlyList<Triangle2D> triangles, int originalCount)
+        {
+            var filtered = new List<Triangle2D>(triangles.Count);
+            foreach (var triangle in triangles)
+            {
+                if (triangle.A < originalCount && triangle.B < originalCount && triangle.C < originalCount)
+                {
+                    filtered.Add(triangle);
+                }
+            }
+
+            System.Diagnostics.Debug.Assert(AllIndicesInRange(filtered, originalCount));
+            return filtered;
+        }
+
+        private static bool AllIndicesInRange(IEnumerable<Triangle2D> triangles, int originalCount)
+        {
+            foreach (var triangle in triangles)
+            {
+                if (triangle.A >= originalCount || triangle.B >= originalCount || triangle.C >= originalCount ||
+                    triangle.A < 0 || triangle.B < 0 || triangle.C < 0)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static bool ValidateInput(in Delaunay2DInput input)
