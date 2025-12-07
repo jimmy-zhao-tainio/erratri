@@ -112,5 +112,3 @@ All of this is still work in progress: the fast-path classifiers and PSLG triang
 - Build: `dotnet build Erratri.sln -c Release`
 - Run demo: `dotnet run --project Demo -c Release`
 - Output: `Demo/bin/Release/net9.0/clean_system.stl`
-
-The screenshot above is `clean_system.png` generated from that STL.
