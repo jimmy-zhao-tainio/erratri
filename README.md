@@ -98,15 +98,6 @@ This produces the boolean gallery rendered in `boolean_mesh.png`.
 
 All of this is still work in progress: the fast-path classifiers and PSLG triangulation are being iterated, and there are known regression tests (e.g., drilled boxes and "cheese" shapes) that currently fail until the kernel is tightened. The intent is to keep the layering clear and testable while gradually hardening the algorithms.
 
-## Constrained Delaunay Demo (2D)
-
-`Delaunay2D` contains a constrained Delaunay triangulator and a tiny Windows demo that renders constrained edges plus their retriangulated mesh. The demo builds an outer triangle and an inner regular 20-gon, enforces the polygon boundary as constraints, and writes a PNG of the resulting constrained triangulation:
-
-- Run: `dotnet run --project Delaunay2D.Demo -c Release`
-- Output image: `erratriforce_circle.png`
-
-![Constrained Delaunay Demo](erratriforce_circle.png)
-
 ## Building and Running
 
 - Build: `dotnet build Erratri.sln -c Release`
