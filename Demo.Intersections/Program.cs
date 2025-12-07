@@ -20,12 +20,33 @@ internal static class Program
 
     private static void Main()
     {
+        SaveTrianglePatchSetSegmentCase();
         SaveNoneExample();
         SavePointExample();
         SaveSegmentExample();
         SaveAreaExample();
         SaveSphereIntersectionExample();
         SaveTetraPeekExample();
+    }
+
+    private static void SaveTrianglePatchSetSegmentCase()
+    {
+        // Matches TrianglePatchSetTests.Build_SegmentIntersection_CutsBothTriangles:
+        // two non-coplanar triangles intersecting along a segment that cuts both.
+        var triA = new Triangle(
+            new Point(0, 0, 0),
+            new Point(2, 0, 0),
+            new Point(0, 2, 0),
+            new Point(0, 0, 1));
+
+        var triB = new Triangle(
+            new Point(1, 0, -1),
+            new Point(1, 0, 1),
+            new Point(1, 2, 0),
+            new Point(2, 0, 0));
+
+        ValidateIntersection("patchset_segment", in triA, in triB, IntersectionType.Segment);
+        SavePair("triangle_patchset_segment_case.stl", in triA, in triB);
     }
 
     private static void SaveNoneExample()
@@ -274,23 +295,30 @@ internal static class Program
             }
 
             var triVal = acc.Triangle;
-            var patches = TriangleSubdivision.Subdivide(in triVal, acc.Points, acc.Segments);
-            double triArea = Math.Abs(new RealTriangle(
-                new RealPoint(triVal.P0),
-                new RealPoint(triVal.P1),
-                new RealPoint(triVal.P2)).SignedArea);
-
-            double patchSum = 0.0;
-            foreach (var p in patches)
+            try
             {
-                patchSum += Math.Abs(new RealTriangle(p.P0, p.P1, p.P2).SignedArea);
+                var patches = TriangleSubdivision.Subdivide(in triVal, acc.Points, acc.Segments);
+                double triArea = Math.Abs(new RealTriangle(
+                    new RealPoint(triVal.P0),
+                    new RealPoint(triVal.P1),
+                    new RealPoint(triVal.P2)).SignedArea);
+
+                double patchSum = 0.0;
+                foreach (var p in patches)
+                {
+                    patchSum += Math.Abs(new RealTriangle(p.P0, p.P1, p.P2).SignedArea);
+                }
+
+                double diff = Math.Abs(patchSum - triArea);
+                double relTol = Tolerances.BarycentricInsideEpsilon * triArea;
+                bool ok = diff <= Tolerances.EpsArea || diff <= relTol;
+
+                Console.WriteLine($"  {key.mesh}{key.idx}: points={acc.Points.Count}, segments={acc.Segments.Count}, patches={patches.Count}, area orig={triArea}, patches={patchSum}, diff={diff}, ok={ok}");
             }
-
-            double diff = Math.Abs(patchSum - triArea);
-            double relTol = Tolerances.BarycentricInsideEpsilon * triArea;
-            bool ok = diff <= Tolerances.EpsArea || diff <= relTol;
-
-            Console.WriteLine($"  {key.mesh}{key.idx}: points={acc.Points.Count}, segments={acc.Segments.Count}, patches={patches.Count}, area orig={triArea}, patches={patchSum}, diff={diff}, ok={ok}");
+            catch (Exception ex)
+            {
+                Console.WriteLine($"  {key.mesh}{key.idx}: points={acc.Points.Count}, segments={acc.Segments.Count}, subdivision FAILED: {ex.Message}");
+            }
         }
     }
 

@@ -19,17 +19,25 @@ namespace Delaunay2D
         /// Coordinates are in a single 2D plane coordinate system; mapping to/from
         /// world space is handled by other phases, not here.
         /// </summary>
-        public static Delaunay2DResult Run(in Delaunay2DInput input)
+        public static Delaunay2DResult Run(in Delaunay2DInput input, bool validate = false)
         {
             ValidateInput(input);
 
+            var debug = input.Debug;
+            var options = input.Options;
             int originalCount = input.Points.Count;
             var triangles = BowyerWatsonTriangulator.Triangulate(input.Points);
             triangles = FilterOutSuperTriangles(triangles, originalCount);
 
             if (input.Segments.Count > 0)
             {
-                triangles = ConstraintEnforcer2D.EnforceSegments(input.Points, triangles, input.Segments);
+                triangles = ConstraintEnforcer2D.EnforceSegments(input.Points, triangles, input.Segments, debug, options);
+            }
+
+            if (validate)
+            {
+                MeshValidator2D.ValidateLocalMesh(triangles, input.Points, "final triangulation");
+                EnsureAllConstraintsPresent(triangles, input.Segments);
             }
 
             var resultTriangles = new List<(int A, int B, int C)>();
@@ -124,6 +132,29 @@ namespace Delaunay2D
             }
 
             return true;
+        }
+
+        private static void EnsureAllConstraintsPresent(
+            IEnumerable<Triangle2D> triangles,
+            IReadOnlyList<(int A, int B)> segments)
+        {
+            foreach (var seg in segments)
+            {
+                bool found = false;
+                foreach (var tri in triangles)
+                {
+                    if (Geometry2DIntersections.TriangleHasUndirectedEdge(tri, seg.A, seg.B))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    throw new InvalidOperationException($"Final mesh is missing constrained edge ({seg.A},{seg.B}).");
+                }
+            }
         }
     }
 }

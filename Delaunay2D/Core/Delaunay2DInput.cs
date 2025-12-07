@@ -21,6 +21,16 @@ namespace Delaunay2D
         /// </summary>
         public IReadOnlyList<(int A, int B)> Segments { get; }
 
+        /// <summary>
+        /// Optional debug options. If null, debug features are disabled.
+        /// </summary>
+        public Delaunay2DDebugOptions? Debug { get; init; }
+
+        /// <summary>
+        /// Optional constraint enforcer options.
+        /// </summary>
+        public ConstraintEnforcer2DOptions? Options { get; init; }
+
         public Delaunay2DInput(
             IReadOnlyList<RealPoint2D> points,
             IReadOnlyList<(int A, int B)> segments)

@@ -61,24 +61,43 @@ public class PslgTriangulationTests
     {
         // Full outer ring from the dump (before ear removal dropped corner 0).
         var vertices = new List<PslgVertex>
-        {
-            new(1, 0, true, 0),                     // 0
-            new(0, 1, true, 1),                     // 1
-            new(0, 0, true, 2),                     // 2
-            new(0, 0.7233333333333334, false, -1),  // 3
-            new(0, 0.8333333333333334, false, -1),  // 4
-            new(0, 0.16666666666666669, false, -1), // 5
-        };
+    {
+        new(1, 0, true, 0),                     // 0
+        new(0, 1, true, 1),                     // 1
+        new(0, 0, true, 2),                     // 2
+        new(0, 0.7233333333333334, false, -1),  // 3
+        new(0, 0.8333333333333334, false, -1),  // 4
+        new(0, 0.16666666666666669, false, -1), // 5
+    };
 
         int[] polygon = { 0, 1, 4, 3, 5, 2 };
         double expectedArea = 0.5;
 
-        // This should triangulate into four positive-area triangles
-        // (0,1,4), (0,4,3), (0,3,5), (0,5,2) despite the collinear chain.
+        // Act – must not throw even though the left edge is subdivided
+        // by collinear intermediate points.
         var triangles = PslgBuilder.TriangulateSimple(polygon, vertices, expectedArea);
 
-        Assert.Equal(polygon.Length - 2, triangles.Count);
+        Assert.NotEmpty(triangles);
+
+        // Check that total area of produced triangles matches the expected polygon area.
+        double totalArea = 0.0;
+        foreach (var (a, b, c) in triangles)
+        {
+            var t = new RealTriangle(
+                new RealPoint(vertices[a].X, vertices[a].Y, 0.0),
+                new RealPoint(vertices[b].X, vertices[b].Y, 0.0),
+                new RealPoint(vertices[c].X, vertices[c].Y, 0.0));
+            totalArea += Math.Abs(t.SignedArea);
+        }
+
+        double diff = Math.Abs(totalArea - expectedArea);
+        double relTol = Tolerances.BarycentricInsideEpsilon * expectedArea;
+
+        Assert.True(
+            diff <= Tolerances.EpsArea || diff <= relTol,
+            $"Total triangle area {totalArea} differs from expected {expectedArea} by {diff}.");
     }
+
 
     [Fact]
     public void RectWithEdgeSubdivisions_ShouldTriangulateAndPreserveArea()

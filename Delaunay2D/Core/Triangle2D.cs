@@ -5,7 +5,7 @@ using Geometry;
 namespace Delaunay2D
 {
     // Invariant: A,B,C are always stored counter-clockwise in 2D; degenerate (collinear) triangles are never constructed.
-    internal readonly struct Triangle2D
+    public readonly struct Triangle2D
     {
         public int A { get; }
         public int B { get; }

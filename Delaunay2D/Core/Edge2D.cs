@@ -2,7 +2,11 @@ using System;
 
 namespace Delaunay2D
 {
-    internal readonly struct Edge2D : IEquatable<Edge2D>
+    /// <summary>
+    /// Undirected edge between two distinct vertex indices.
+    /// Stored in normalized (min,max) order so (a,b) == (b,a) for equality and hashing.
+    /// </summary>
+    public readonly struct Edge2D : IEquatable<Edge2D>
     {
         public int A { get; }
         public int B { get; }
@@ -11,19 +15,11 @@ namespace Delaunay2D
         {
             if (a == b)
             {
-                throw new ArgumentException("Edge endpoints must be distinct.", nameof(a));
+                throw new ArgumentException("Edge2D requires two distinct vertex indices.", nameof(a));
             }
 
-            if (a < b)
-            {
-                A = a;
-                B = b;
-            }
-            else
-            {
-                A = b;
-                B = a;
-            }
+            A = Math.Min(a, b);
+            B = Math.Max(a, b);
         }
 
         public bool Equals(Edge2D other) => A == other.A && B == other.B;

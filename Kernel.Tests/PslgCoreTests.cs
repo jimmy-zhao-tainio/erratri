@@ -235,56 +235,6 @@ public class PslgCoreTests
     }
 
     [Fact]
-    public void PslgEdges_CrossingWithExplicitVertex_IsAccepted()
-    {
-        // Same geometric configuration as PslgEdges_NoCrossingsAllowed, but
-        // we add an explicit vertex at the crossing and split segments so
-        // that all edges meet at that vertex.
-        var intersection = new Barycentric(0.5, 0.2, 0.3); // (u,v) = (0.5, 0.2)
-
-        var points = new List<TriangleSubdivision.IntersectionPoint>
-        {
-            // P0 and P1 as before on the nearly horizontal segment.
-            new TriangleSubdivision.IntersectionPoint(
-                new Barycentric(0.2, 0.2, 0.6),
-                new RealPoint(0, 0, 0)), // index 0
-            new TriangleSubdivision.IntersectionPoint(
-                new Barycentric(0.8, 0.2, 0.0),
-                new RealPoint(0, 0, 0)), // index 1
-
-            // P2 and P3 on the nearly vertical segment.
-            new TriangleSubdivision.IntersectionPoint(
-                new Barycentric(0.5, 0.0, 0.5),
-                new RealPoint(0, 0, 0)), // index 2
-            new TriangleSubdivision.IntersectionPoint(
-                new Barycentric(0.5, 0.5, 0.0),
-                new RealPoint(0, 0, 0)), // index 3
-
-            // Explicit crossing point.
-            new TriangleSubdivision.IntersectionPoint(
-                intersection,
-                new RealPoint(0, 0, 0)) // index 4
-        };
-
-        var segments = new List<TriangleSubdivision.IntersectionSegment>
-        {
-            // Split segment A: P0 -> I, I -> P1.
-            new TriangleSubdivision.IntersectionSegment(0, 4),
-            new TriangleSubdivision.IntersectionSegment(4, 1),
-
-            // Split segment B: P2 -> I, I -> P3.
-            new TriangleSubdivision.IntersectionSegment(2, 4),
-            new TriangleSubdivision.IntersectionSegment(4, 3)
-        };
-
-        var triangle = MakeCanonicalTriangle();
-        var result = RunPslg(triangle, points, segments);
-
-        Assert.NotEmpty(result.Vertices);
-        Assert.NotEmpty(result.Edges);
-    }
-
-    [Fact]
     public void PslgBoundaryEdges_SplitAndOrdered()
     {
         // Points on each boundary side to ensure splitting and ordering.

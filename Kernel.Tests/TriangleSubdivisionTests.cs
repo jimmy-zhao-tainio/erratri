@@ -283,4 +283,63 @@ public class TriangleSubdivisionTests
         pattern = TriangleSubdivision.ClassifyPattern(points, segments);
         Assert.Equal(TriangleSubdivision.PatternKind.Other, pattern);
     }
+
+    // Same geometric pattern as the base triangle A0 in the TetraPeek example:
+    // a single triangle with three interior intersection points connected in a
+    // closed inner triangle loop. PSLG should treat this as a valid interior
+    // face and subdivision should preserve area and actually split the triangle.
+    [Fact]
+    public void TriangleSubdivision_InteriorTriangleLoop_ShouldPreserveAreaAndSubdivide()
+    {
+        var tri = new Triangle(
+            new Point(0, 0, 0),
+            new Point(4, 0, 0),
+            new Point(0, 4, 0),
+            new Point(0, 0, 1));
+
+        var bary0 = new Barycentric(0.25, 0.25, 0.5);
+        var bary1 = new Barycentric(0.25, 0.5, 0.25);
+        var bary2 = new Barycentric(0.5, 0.25, 0.25);
+
+        var p0 = Barycentric.ToRealPointOnTriangle(in tri, in bary0);
+        var p1 = Barycentric.ToRealPointOnTriangle(in tri, in bary1);
+        var p2 = Barycentric.ToRealPointOnTriangle(in tri, in bary2);
+
+        var points = new List<TriangleSubdivision.IntersectionPoint>
+        {
+            new TriangleSubdivision.IntersectionPoint(bary0, p0),
+            new TriangleSubdivision.IntersectionPoint(bary1, p1),
+            new TriangleSubdivision.IntersectionPoint(bary2, p2)
+        };
+
+        var segments = new List<TriangleSubdivision.IntersectionSegment>
+        {
+            new TriangleSubdivision.IntersectionSegment(0, 1),
+            new TriangleSubdivision.IntersectionSegment(1, 2),
+            new TriangleSubdivision.IntersectionSegment(2, 0)
+        };
+
+        var patches = TriangleSubdivision.Subdivide(in tri, points, segments);
+
+        // Must actually subdivide: inner loop should split the triangle.
+        Assert.True(patches.Count > 1);
+
+        var triArea = TriangleArea(
+            new RealPoint(tri.P0),
+            new RealPoint(tri.P1),
+            new RealPoint(tri.P2));
+
+        double patchArea = 0.0;
+        foreach (var patch in patches)
+        {
+            patchArea += TriangleArea(patch.P0, patch.P1, patch.P2);
+        }
+
+        double diff = Math.Abs(patchArea - triArea);
+        double relTol = Tolerances.BarycentricInsideEpsilon * triArea;
+
+        Assert.True(
+            diff <= Tolerances.EpsArea || diff <= relTol,
+            $"Patch area {patchArea} differs from triangle area {triArea} by {diff}.");
+    }
 }

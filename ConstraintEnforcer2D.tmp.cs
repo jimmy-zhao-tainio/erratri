@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Geometry;
 
 namespace Delaunay2D
@@ -39,7 +38,9 @@ namespace Delaunay2D
                 int b = seg.B;
                 if (a == b || a < 0 || b < 0 || a >= points.Count || b >= points.Count)
                 {
-                    throw new ArgumentException("Constraint segment indices must be distinct and within points range.");
+                    throw new ArgumentException(Delaunay2DError.Format(
+                        Delaunay2DErrorCategory.Input,
+                        $"Constraint segment indices must be distinct and within points range: ({a},{b})."));
                 }
 
                 var edge = new Edge2D(a, b);
@@ -58,18 +59,13 @@ namespace Delaunay2D
 
                 var meshTopology = new ListBackedMeshTopology2D(working);
                 IReadOnlyList<Triangle2D>? meshBeforeDump = null;
-                if (debug?.EnableCorridorDump == true)
+                bool dumpEnabled = debug?.EnableCorridorDump == true || debug?.EnableCorridorDumpsBeforeAfter == true;
+                if (dumpEnabled)
                 {
                     meshBeforeDump = meshTopology.Triangles.ToArray();
                 }
 
                 var (boundary, corridorTriangles) = CorridorBuilder.BuildCorridor(meshTopology, points, edge);
-
-                if (boundary.InnerRings.Count > 0)
-                {
-                    throw new InvalidOperationException(
-                        $"Corridor for constrained edge ({edge.A},{edge.B}) contains internal loops (holes) which are not yet supported.");
-                }
 
                 var corridor = new List<Triangle2D>();
                 var corridorKeys = new HashSet<(int, int, int)>();
@@ -121,8 +117,9 @@ namespace Delaunay2D
                     if (newTriangles.Count != expected)
                     {
                         throw new InvalidOperationException(
-                            $"PolygonTriangulator2D returned {newTriangles.Count} triangles for corridor ring with {ring.Count} vertices " +
-                            $"for constraint edge ({a},{b}); expected {expected}.");
+                            Delaunay2DError.Format(
+                                Delaunay2DErrorCategory.Numeric,
+                                $"PolygonTriangulator2D returned {newTriangles.Count} triangles for corridor ring with {ring.Count} vertices for constraint edge ({a},{b}); expected {expected}."));
                     }
                 }
 
@@ -138,13 +135,14 @@ namespace Delaunay2D
                     }
 
                     var frozen = new HashSet<Edge2D>(constrainedEdges) { edge };
-                    LocalDelaunayRelaxation.Relax(points, working, patchIndices, frozen, log: debug?.EnableCorridorDump == true);
+                    LocalDelaunayRelaxation.Relax(points, working, patchIndices, frozen, log: dumpEnabled);
                 }
 
-                if (debug?.EnableCorridorDump == true)
+                if (dumpEnabled)
                 {
                     var meshAfter = working.ToArray();
                     var dump = new CorridorDump(
+                        "Corridor",
                         new Edge2D(edge.A, edge.B),
                         boundary.OuterRing,
                         boundary.InnerRings,
@@ -165,7 +163,9 @@ namespace Delaunay2D
                     if (corridorKeys.Contains(key))
                     {
                         throw new InvalidOperationException(
-                            $"Corridor triangle was not removed cleanly for constraint edge ({a},{b}): triangle ({tri.A},{tri.B},{tri.C}).");
+                            Delaunay2DError.Format(
+                                Delaunay2DErrorCategory.Corridor,
+                                $"Corridor triangle was not removed cleanly for constraint edge ({a},{b}): triangle ({tri.A},{tri.B},{tri.C})."));
                     }
                 }
 
@@ -241,7 +241,10 @@ namespace Delaunay2D
 
             if (visited.Count != corridor.Count)
             {
-                throw new InvalidOperationException($"Constraint corridor is not a single connected component for edge ({a},{b}).");
+                throw new InvalidOperationException(
+                    Delaunay2DError.Format(
+                        Delaunay2DErrorCategory.Corridor,
+                        $"Constraint corridor is not a single connected component for edge ({a},{b})."));
             }
         }
 
@@ -386,12 +389,15 @@ namespace Delaunay2D
                 }
             }
 
-            throw new InvalidOperationException($"Constrained edge ({a},{b}) is missing after corridor re-triangulation.");
+            throw new InvalidOperationException(
+                Delaunay2DError.Format(
+                    Delaunay2DErrorCategory.Corridor,
+                    $"Constrained edge ({a},{b}) is missing after corridor re-triangulation."));
         }
 
-        private static void DefaultCorridorDumpHandler(CorridorDump dump)
+        internal static void DefaultCorridorDumpHandler(CorridorDump dump)
         {
-            Console.WriteLine($"[CDT] Corridor dump for AB = ({dump.AB.A},{dump.AB.B})");
+            Console.WriteLine($"[CDT] {dump.Context} dump for AB = ({dump.AB.A},{dump.AB.B})");
             Console.WriteLine("Outer ring: " + string.Join(",", dump.OuterRing));
             if (dump.InnerRings.Count > 0)
             {
@@ -406,3 +412,4 @@ namespace Delaunay2D
         }
     }
 }
+

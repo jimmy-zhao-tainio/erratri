@@ -99,29 +99,46 @@ public sealed class TriangleIntersectionIndex
 
                 // Use barycentric coordinates on triangle A to reconstruct
                 // the shared world-space point, then map back to the global
-                // IntersectionVertexId via the quantized lookup.
+                // IntersectionVertexId via the quantized lookup. If the A-side
+                // quantization misses (numerical asymmetry when one endpoint
+                // lies on B's edge/interior), fall back to B-side quantization
+                // so both triangles attach the shared vertex/edge.
                 var barycentricOnA = v.OnTriangleA;
-                var world = Barycentric.ToRealPointOnTriangle(in triangleA, in barycentricOnA);
-                var key = Quantize(world, invEpsilon);
+                var worldA = Barycentric.ToRealPointOnTriangle(in triangleA, in barycentricOnA);
+                var keyA = Quantize(worldA, invEpsilon);
 
-                if (!globalVertexLookup.TryGetValue(key, out var globalId))
+                IntersectionVertexId globalId;
+                if (!globalVertexLookup.TryGetValue(keyA, out globalId))
                 {
-                    System.Diagnostics.Debug.Fail("Global intersection vertex not found for PairVertex.");
-                    continue;
+                    var barycentricOnB = v.OnTriangleB;
+                    var worldB = Barycentric.ToRealPointOnTriangle(in triangleB, in barycentricOnB);
+                    var keyB = Quantize(worldB, invEpsilon);
+
+                    if (!globalVertexLookup.TryGetValue(keyB, out globalId))
+                    {
+                        System.Diagnostics.Debug.Fail("Global intersection vertex not found for PairVertex.");
+                        continue;
+                    }
                 }
 
-                // Attach to triangle A.
-                var listA = perTriangleA[intersection.TriangleIndexA];
-                if (!ContainsVertex(listA, globalId))
+                // Attach to triangle A if the barycentric is inside (inclusive).
+                if (v.OnTriangleA.IsInsideInclusive())
                 {
-                    listA.Add(new TriangleIntersectionVertex(globalId, v.OnTriangleA));
+                    var listA = perTriangleA[intersection.TriangleIndexA];
+                    if (!ContainsVertex(listA, globalId))
+                    {
+                        listA.Add(new TriangleIntersectionVertex(globalId, v.OnTriangleA));
+                    }
                 }
 
-                // Attach to triangle B.
-                var listB = perTriangleB[intersection.TriangleIndexB];
-                if (!ContainsVertex(listB, globalId))
+                // Attach to triangle B if the barycentric is inside (inclusive).
+                if (v.OnTriangleB.IsInsideInclusive())
                 {
-                    listB.Add(new TriangleIntersectionVertex(globalId, v.OnTriangleB));
+                    var listB = perTriangleB[intersection.TriangleIndexB];
+                    if (!ContainsVertex(listB, globalId))
+                    {
+                        listB.Add(new TriangleIntersectionVertex(globalId, v.OnTriangleB));
+                    }
                 }
             }
         }

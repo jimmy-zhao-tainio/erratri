@@ -6,6 +6,20 @@ namespace Delaunay2D
 {
     internal static class Geometry2DIntersections
     {
+        internal enum SegmentTriangleIntersectionKind
+        {
+            None,
+            ProperInterior,
+            EndpointInside,
+            TouchVertex,
+            TouchEdge,
+            CollinearOverlap
+        }
+
+        /// <summary>
+        /// Inclusive segment/segment intersection:
+        /// returns true for proper crossings, endpoint touches, and collinear on-segment contact (within Geometry2DPredicates.Epsilon via OnSegmentInclusive).
+        /// </summary>
         internal static bool SegmentsIntersectInclusive(
             in RealPoint2D p1,
             in RealPoint2D q1,
@@ -30,6 +44,11 @@ namespace Delaunay2D
             return on1 || on2 || on3 || on4;
         }
 
+        /// <summary>
+        /// Proper segment/segment intersection:
+        /// returns true for non-collinear interior crossings, or collinear segments whose projected overlap length exceeds Geometry2DPredicates.Epsilon.
+        /// Endpoint-only touches and zero/epsilon overlap return false.
+        /// </summary>
         internal static bool SegmentsIntersectProper(
             in RealPoint2D p1,
             in RealPoint2D q1,
@@ -44,7 +63,7 @@ namespace Delaunay2D
             bool general = o1 != o2 && o3 != o4;
             if (general)
             {
-                return true;
+                return true; // proper crossing
             }
 
             bool allCollinear = o1 == OrientationKind.Collinear &&
@@ -70,7 +89,7 @@ namespace Delaunay2D
                 return overlap > Geometry2DPredicates.Epsilon;
             }
 
-            return false;
+            return false; // touching at endpoints only
         }
 
         internal static bool HasSelfIntersection(IReadOnlyList<int> ring, IReadOnlyList<RealPoint2D> points)
@@ -135,6 +154,117 @@ namespace Delaunay2D
             return false;
         }
 
+        internal static SegmentTriangleIntersectionKind ClassifySegmentTriangleIntersection(
+            IReadOnlyList<RealPoint2D> points,
+            Edge2D edge,
+            Triangle2D triangle)
+        {
+            // Semantics:
+            // - EndpointInside: at least one endpoint strictly inside the triangle (inclusive test true AND not on any edge).
+            // - CollinearOverlap: segment is collinear with a triangle edge and the projected overlap length exceeds Geometry2DPredicates.Epsilon.
+            // - ProperInterior: inclusive intersection that is not just a shared vertex/endpoint (interior cross).
+            // - TouchVertex: inclusive intersection only at a triangle vertex (within IsSamePoint epsilon).
+            // - TouchEdge: collinear contact with overlap <= Geometry2DPredicates.Epsilon, or non-vertex edge touch.
+            // - None: no contact.
+            // Uses Geometry2DPredicates.Epsilon to distinguish overlap vs touch and relies on inclusive segment tests.
+            var a = points[edge.A];
+            var b = points[edge.B];
+            var p0 = points[triangle.A];
+            var p1 = points[triangle.B];
+            var p2 = points[triangle.C];
+
+            bool aInsideInclusive = PointInTriangleInclusive(in a, in p0, in p1, in p2);
+            bool bInsideInclusive = PointInTriangleInclusive(in b, in p0, in p1, in p2);
+
+            bool aOnEdge = aInsideInclusive && (IsOnTriangleEdge(in a, in p0, in p1) || IsOnTriangleEdge(in a, in p1, in p2) || IsOnTriangleEdge(in a, in p2, in p0));
+            bool bOnEdge = bInsideInclusive && (IsOnTriangleEdge(in b, in p0, in p1) || IsOnTriangleEdge(in b, in p1, in p2) || IsOnTriangleEdge(in b, in p2, in p0));
+
+            bool aStrictInside = aInsideInclusive && !aOnEdge;
+            bool bStrictInside = bInsideInclusive && !bOnEdge;
+
+            var triEdges = new (RealPoint2D P, RealPoint2D Q)[] { (p0, p1), (p1, p2), (p2, p0) };
+            bool touchesVertex = false;
+            bool touchesEdge = false;
+            bool properCross = false;
+            bool collinearOverlap = false;
+
+            foreach (var e in triEdges)
+            {
+                var o1 = Geometry2DPredicates.Orientation(in a, in b, in e.P);
+                var o2 = Geometry2DPredicates.Orientation(in a, in b, in e.Q);
+                var o3 = Geometry2DPredicates.Orientation(in e.P, in e.Q, in a);
+                var o4 = Geometry2DPredicates.Orientation(in e.P, in e.Q, in b);
+
+                bool allCollinear = o1 == OrientationKind.Collinear && o2 == OrientationKind.Collinear && o3 == OrientationKind.Collinear && o4 == OrientationKind.Collinear;
+                if (allCollinear)
+                {
+                    double min1X = Math.Min(a.X, b.X);
+                    double max1X = Math.Max(a.X, b.X);
+                    double min2X = Math.Min(e.P.X, e.Q.X);
+                    double max2X = Math.Max(e.P.X, e.Q.X);
+
+                    double min1Y = Math.Min(a.Y, b.Y);
+                    double max1Y = Math.Max(a.Y, b.Y);
+                    double min2Y = Math.Min(e.P.Y, e.Q.Y);
+                    double max2Y = Math.Max(e.P.Y, e.Q.Y);
+
+                    double overlapX = Math.Min(max1X, max2X) - Math.Max(min1X, min2X);
+                    double overlapY = Math.Min(max1Y, max2Y) - Math.Max(min1Y, min2Y);
+                    double overlap = Math.Max(overlapX, overlapY);
+                    if (overlap > Geometry2DPredicates.Epsilon)
+                    {
+                        collinearOverlap = true;
+                    }
+                    else if (Math.Abs(overlap) <= Geometry2DPredicates.Epsilon)
+                    {
+                        touchesEdge = true;
+                    }
+                    continue;
+                }
+
+                bool intersects = SegmentsIntersectInclusive(in a, in b, in e.P, in e.Q);
+                if (intersects)
+                {
+                    bool vertexTouch = IsSamePoint(in a, in e.P) || IsSamePoint(in a, in e.Q) || IsSamePoint(in b, in e.P) || IsSamePoint(in b, in e.Q);
+                    if (vertexTouch)
+                    {
+                        touchesVertex = true;
+                    }
+                    else
+                    {
+                        properCross = true;
+                    }
+                }
+            }
+
+            if (aStrictInside || bStrictInside)
+            {
+                return SegmentTriangleIntersectionKind.EndpointInside;
+            }
+
+            if (collinearOverlap)
+            {
+                return SegmentTriangleIntersectionKind.CollinearOverlap;
+            }
+
+            if (properCross)
+            {
+                return SegmentTriangleIntersectionKind.ProperInterior;
+            }
+
+            if (touchesVertex)
+            {
+                return SegmentTriangleIntersectionKind.TouchVertex;
+            }
+
+            if (touchesEdge)
+            {
+                return SegmentTriangleIntersectionKind.TouchEdge;
+            }
+
+            return SegmentTriangleIntersectionKind.None;
+        }
+
         internal static bool SegmentIntersectsTriangle(
             IReadOnlyList<RealPoint2D> points,
             Edge2D edge,
@@ -186,6 +316,20 @@ namespace Delaunay2D
                    (triangle.A == b && triangle.B == a) ||
                    (triangle.B == b && triangle.C == a) ||
                    (triangle.C == b && triangle.A == a);
+        }
+
+        private static bool IsOnTriangleEdge(in RealPoint2D p, in RealPoint2D e0, in RealPoint2D e1)
+        {
+            var o = Geometry2DPredicates.Orientation(in e0, in e1, in p);
+            if (o != OrientationKind.Collinear) return false;
+            return OnSegmentInclusive(in e0, in p, in e1);
+        }
+
+        private static bool IsSamePoint(in RealPoint2D p, in RealPoint2D q)
+        {
+            double dx = p.X - q.X;
+            double dy = p.Y - q.Y;
+            return Math.Abs(dx) <= Geometry2DPredicates.Epsilon && Math.Abs(dy) <= Geometry2DPredicates.Epsilon;
         }
 
         private static bool OnSegmentInclusive(in RealPoint2D p, in RealPoint2D q, in RealPoint2D r)

@@ -5,6 +5,11 @@ using Geometry.Predicates;
 
 namespace Kernel.Pslg.Phases;
 
+// PUBLIC CONTRACT:
+//  - TriangulateFace(...) is the only entry point.
+//  - It takes PSLG topology (PslgFace + Vertices) and returns triangles.
+//  - Implementation is free to use simple-polygon triangulation internally.
+
 internal static class PslgTriangulationPhase
 {
     // Phase #5: map triangulated UV faces back to world-space patches.
@@ -102,6 +107,14 @@ internal static class PslgTriangulationPhase
         if (polyList.Count < 3)
         {
             throw new InvalidOperationException("Face must have at least 3 vertices.");
+        }
+
+        if (!IsValidSimpleRing(polyList, out var invalidReason))
+        {
+            throw new InvalidOperationException(
+                "TriangulateSimple cannot triangulate this polygon ring: " +
+                invalidReason +
+                " The face builder must produce a single simple boundary per face before triangulation.");
         }
 
         polyList = SimplifyPolygonRing(polyList, vertices);
@@ -244,6 +257,42 @@ internal static class PslgTriangulationPhase
         }
 
         return triangles;
+    }
+
+    private static bool IsValidSimpleRing(List<int> polyList, out string reason)
+    {
+        if (polyList is null)
+        {
+            reason = "polygon ring is null.";
+            return false;
+        }
+
+        if (polyList.Count < 3)
+        {
+            reason = "polygon ring has fewer than 3 vertices; a face must have at least 3 vertices.";
+            return false;
+        }
+
+        var positionsByVertex = new Dictionary<int, int>();
+
+        for (int i = 0; i < polyList.Count; i++)
+        {
+            int idx = polyList[i];
+
+            if (positionsByVertex.TryGetValue(idx, out int previousPos))
+            {
+                reason =
+                    $"vertex index {idx} occurs more than once in the ring (at positions {previousPos} and {i}); " +
+                    "ear clipping assumes a simple polygon where each vertex index appears at most once. " +
+                    "This usually indicates a pinched or self-intersecting face, or multiple loops combined into a single ring.";
+                return false;
+            }
+
+            positionsByVertex[idx] = i;
+        }
+
+        reason = string.Empty;
+        return true;
     }
 
     private static List<int> SimplifyPolygonRing(List<int> polygon, IReadOnlyList<PslgVertex> vertices)
