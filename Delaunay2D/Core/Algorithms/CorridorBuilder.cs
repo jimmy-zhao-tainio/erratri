@@ -78,11 +78,6 @@ namespace Delaunay2D
                 }
             }
 
-            if (!boundaryEdges.Contains(ab))
-            {
-                boundaryEdges.Add(ab);
-            }
-
             var adjacency = new Dictionary<int, List<int>>();
             foreach (var e in boundaryEdges)
             {
@@ -178,6 +173,34 @@ namespace Delaunay2D
 
                     cycles.Add(cycle);
                 }
+            }
+
+            // Normalize cycles: drop duplicated closing vertex if present
+            for (int i = 0; i < cycles.Count; i++)
+            {
+                var c = cycles[i];
+                if (c.Count > 1 && c[0] == c[c.Count - 1])
+                {
+                    c.RemoveAt(c.Count - 1);
+                }
+            }
+
+            // If there's only one boundary cycle, treat it as the outer ring with no holes.
+            if (cycles.Count == 1)
+            {
+                var cycle = cycles[0];
+
+                double area = SignedArea(points, cycle);
+
+                // Outer ring should be CCW
+                if (area < 0)
+                {
+                    cycle.Reverse();
+                }
+
+                return new CorridorBoundary(
+                    cycle.ToArray(),
+                    Array.Empty<int[]>());
             }
 
             List<int>? outer = null;

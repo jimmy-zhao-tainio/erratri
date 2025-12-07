@@ -12,11 +12,11 @@ namespace Delaunay2D
         /// Cases:
         /// - If an undirected edge (a,b) already exists (strict index match, no epsilon), the constraint is treated as already satisfied.
         /// - Otherwise, triangles are classified via Geometry2DIntersections.ClassifySegmentTriangleIntersection:
-        ///     * ProperInterior / EndpointInside → always enter the corridor.
-        ///     * CollinearOverlap → joins the corridor only if there is at least one ProperInterior/EndpointInside hit.
-        ///     * TouchVertex / TouchEdge → never enter the corridor; touch-only configurations do not build a corridor.
-        /// - Pure collinear chains (no interior hits, at least one collinear overlap) throw with an explicit “collinear chains are not yet supported” message.
-        /// Geometry2DPredicates.Epsilon is used inside the classifier to separate “overlap” vs “touching” for collinear and intersection tests; EnforceSegments itself performs only index-exact edge checks.
+        ///     * ProperInterior / EndpointInside â†’ always enter the corridor.
+        ///     * CollinearOverlap â†’ joins the corridor only if there is at least one ProperInterior/EndpointInside hit.
+        ///     * TouchVertex / TouchEdge â†’ never enter the corridor; touch-only configurations do not build a corridor.
+        /// - Pure collinear chains (no interior hits, at least one collinear overlap) throw with an explicit â€œcollinear chains are not yet supportedâ€ message.
+        /// Geometry2DPredicates.Epsilon is used inside the classifier to separate â€œoverlapâ€ vs â€œtouchingâ€ for collinear and intersection tests; EnforceSegments itself performs only index-exact edge checks.
         /// </summary>
         internal static List<Triangle2D> EnforceSegments(
             IReadOnlyList<RealPoint2D> points,
