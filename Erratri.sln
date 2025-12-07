@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delaunay2D.Tests", "Delauna
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delaunay2D", "Delaunay2D\Delaunay2D.csproj", "{30052B1D-E245-4857-9E31-4AFC9AB1C864}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delaunay2D.Demo", "Delaunay2D.Demo\Delaunay2D.Demo.csproj", "{14914861-229F-472E-AEC5-F0F3BE6FEFCB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -93,6 +95,10 @@ Global
 		{5B0AA0CE-0E44-47DC-8E5C-A35B03A9B8DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5B0AA0CE-0E44-47DC-8E5C-A35B03A9B8DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5B0AA0CE-0E44-47DC-8E5C-A35B03A9B8DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14914861-229F-472E-AEC5-F0F3BE6FEFCB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14914861-229F-472E-AEC5-F0F3BE6FEFCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14914861-229F-472E-AEC5-F0F3BE6FEFCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{14914861-229F-472E-AEC5-F0F3BE6FEFCB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Geometry;
 
 namespace Delaunay2D
@@ -29,11 +30,22 @@ namespace Delaunay2D
             for (int i = 0; i < points.Count; i++)
             {
                 var point = allPoints[i];
-                var boundaryCounts = new Dictionary<Edge2D, int>();
+                var boundary = new Dictionary<(int, int), (int A, int B)>();
                 var updatedTriangles = new List<Triangle2D>();
+                var edgeToTriangles = new Dictionary<Edge2D, List<int>>();
 
-                foreach (var triangle in triangles)
+                for (int t = 0; t < triangles.Count; t++)
                 {
+                    var tri = triangles[t];
+                    AddTriangleEdge(edgeToTriangles, new Edge2D(tri.A, tri.B), t);
+                    AddTriangleEdge(edgeToTriangles, new Edge2D(tri.B, tri.C), t);
+                    AddTriangleEdge(edgeToTriangles, new Edge2D(tri.C, tri.A), t);
+                }
+
+                var candidateBad = new HashSet<int>();
+                for (int t = 0; t < triangles.Count; t++)
+                {
+                    var triangle = triangles[t];
                     var a = allPoints[triangle.A];
                     var b = allPoints[triangle.B];
                     var c = allPoints[triangle.C];
@@ -41,32 +53,92 @@ namespace Delaunay2D
                     double incircle = Geometry2DPredicates.CircumcircleValue(in point, in a, in b, in c);
                     if (incircle < -Geometry2DPredicates.Epsilon)
                     {
-                        AccumulateEdge(boundaryCounts, new Edge2D(triangle.A, triangle.B));
-                        AccumulateEdge(boundaryCounts, new Edge2D(triangle.B, triangle.C));
-                        AccumulateEdge(boundaryCounts, new Edge2D(triangle.C, triangle.A));
-                        continue;
+                        candidateBad.Add(t);
                     }
-
-                    updatedTriangles.Add(triangle);
                 }
 
-                if (boundaryCounts.Count == 0)
+                if (candidateBad.Count == 0)
                 {
                     throw new InvalidOperationException(
                         $"Bowyer-Watson failed to find a cavity for point index {i}. " +
                         "This indicates an inconsistency in circumcircle tests or degeneracy handling.");
                 }
 
-                foreach (var kvp in boundaryCounts)
+                var badTriangles = new HashSet<int>();
+                var stack = new Stack<int>();
+                stack.Push(candidateBad.First());
+                while (stack.Count > 0)
                 {
-                    if (kvp.Value != 1)
+                    int t = stack.Pop();
+                    if (!candidateBad.Contains(t) || !badTriangles.Add(t))
                     {
                         continue;
                     }
 
-                    int a = kvp.Key.A;
-                    int b = kvp.Key.B;
-                    updatedTriangles.Add(new Triangle2D(i, a, b, allPoints));
+                    var tri = triangles[t];
+                    var edges = new[]
+                    {
+                        new Edge2D(tri.A, tri.B),
+                        new Edge2D(tri.B, tri.C),
+                        new Edge2D(tri.C, tri.A)
+                    };
+
+                    foreach (var edge in edges)
+                    {
+                        if (!edgeToTriangles.TryGetValue(edge, out var adj))
+                        {
+                            continue;
+                        }
+
+                        foreach (var neighbor in adj)
+                        {
+                            if (!badTriangles.Contains(neighbor) && candidateBad.Contains(neighbor))
+                            {
+                                stack.Push(neighbor);
+                            }
+                        }
+                    }
+                }
+
+                foreach (var t in badTriangles)
+                {
+                    var tri = triangles[t];
+                    AddOrToggleBoundaryEdge(boundary, tri.A, tri.B);
+                    AddOrToggleBoundaryEdge(boundary, tri.B, tri.C);
+                    AddOrToggleBoundaryEdge(boundary, tri.C, tri.A);
+                }
+
+                for (int t = 0; t < triangles.Count; t++)
+                {
+                    if (badTriangles.Contains(t))
+                    {
+                        continue;
+                    }
+
+                    updatedTriangles.Add(triangles[t]);
+                }
+
+                var edgeUsage = new Dictionary<Edge2D, int>();
+                foreach (var tri in updatedTriangles)
+                {
+                    AccumulateEdge(edgeUsage, new Edge2D(tri.A, tri.B));
+                    AccumulateEdge(edgeUsage, new Edge2D(tri.B, tri.C));
+                    AccumulateEdge(edgeUsage, new Edge2D(tri.C, tri.A));
+                }
+
+                foreach (var kvp in boundary.Values)
+                {
+                    var edge = new Edge2D(kvp.A, kvp.B);
+                    if (edgeUsage.TryGetValue(edge, out int count) && count >= 2)
+                    {
+                        continue;
+                    }
+
+                    var newTriangle = new Triangle2D(i, kvp.A, kvp.B, allPoints);
+                    updatedTriangles.Add(newTriangle);
+                    AccumulateEdge(edgeUsage, new Edge2D(newTriangle.A, newTriangle.B));
+                    AccumulateEdge(edgeUsage, new Edge2D(newTriangle.B, newTriangle.C));
+                    AccumulateEdge(edgeUsage, new Edge2D(newTriangle.C, newTriangle.A));
                 }
 
                 triangles = updatedTriangles;
@@ -88,9 +160,26 @@ namespace Delaunay2D
             }
         }
 
+        private static void AddOrToggleBoundaryEdge(
+            Dictionary<(int, int), (int A, int B)> boundary,
+            int a,
+            int b)
+        {
+            var key = a < b ? (a, b) : (b, a);
+            if (boundary.ContainsKey(key))
+            {
+                boundary.Remove(key);
+            }
+            else
+            {
+                boundary[key] = (a, b);
+            }
+        }
+
         private static void ValidateTriangulation(IReadOnlyList<RealPoint2D> points, IReadOnlyList<Triangle2D> triangles)
         {
             var edgeCounts = new Dictionary<Edge2D, int>();
+            var edgeTriangles = new Dictionary<Edge2D, List<(int A, int B, int C)>>();
 
             foreach (var triangle in triangles)
             {
@@ -107,15 +196,47 @@ namespace Delaunay2D
                 AccumulateEdge(edgeCounts, new Edge2D(triangle.A, triangle.B));
                 AccumulateEdge(edgeCounts, new Edge2D(triangle.B, triangle.C));
                 AccumulateEdge(edgeCounts, new Edge2D(triangle.C, triangle.A));
+
+                TrackEdgeTriangle(edgeTriangles, new Edge2D(triangle.A, triangle.B), triangle);
+                TrackEdgeTriangle(edgeTriangles, new Edge2D(triangle.B, triangle.C), triangle);
+                TrackEdgeTriangle(edgeTriangles, new Edge2D(triangle.C, triangle.A), triangle);
             }
 
             foreach (var kvp in edgeCounts)
             {
                 if (kvp.Value > 2)
                 {
-                    throw new InvalidOperationException($"Edge manifoldness violated: edge ({kvp.Key.A},{kvp.Key.B}) used {kvp.Value} times.");
+                    var tris = edgeTriangles[kvp.Key];
+                    throw new InvalidOperationException(
+                        $"Edge manifoldness violated: edge ({kvp.Key.A},{kvp.Key.B}) used {kvp.Value} times; triangles: " +
+                        string.Join("; ", tris.ConvertAll(t => $"({t.A},{t.B},{t.C})")));
                 }
             }
+        }
+
+        private static void AddTriangleEdge(Dictionary<Edge2D, List<int>> edgeToTriangles, Edge2D edge, int triangleIndex)
+        {
+            if (!edgeToTriangles.TryGetValue(edge, out var list))
+            {
+                list = new List<int>();
+                edgeToTriangles[edge] = list;
+            }
+
+            list.Add(triangleIndex);
+        }
+
+        private static void TrackEdgeTriangle(
+            Dictionary<Edge2D, List<(int A, int B, int C)>> map,
+            Edge2D edge,
+            Triangle2D triangle)
+        {
+            if (!map.TryGetValue(edge, out var list))
+            {
+                list = new List<(int A, int B, int C)>();
+                map[edge] = list;
+            }
+
+            list.Add((triangle.A, triangle.B, triangle.C));
         }
     }
 }
