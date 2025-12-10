@@ -98,6 +98,15 @@ This produces the boolean gallery rendered in `boolean_mesh.png`.
 
 All of this is still work in progress: the fast-path classifiers and PSLG triangulation are being iterated, and there are known regression tests (e.g., drilled boxes and "cheese" shapes) that currently fail until the kernel is tightened. The intent is to keep the layering clear and testable while gradually hardening the algorithms.
 
+## TriangleGarden (2D triangulation demo)
+
+- Deterministic sweep over constraint edges: for each edge, try adjacent neighbors first, then a fallback scan of all vertices; repeat until no new edges are added.
+- Edge legality: existing constraints are always allowed; new edges must not cross existing segments, and any triangle with an interior point is rejected.
+- Triangles are rebuilt from the final edge graph with the same interior-point guard to avoid swallowing vertices.
+- Demo scene: nested scaled “house” polygons rendered in grayscale on black for a technical look.
+
+![TriangleGarden nested houses](triangle_garden.png)
+
 ## Building and Running
 
 - Build: `dotnet build Erratri.sln -c Release`

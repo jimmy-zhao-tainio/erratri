@@ -30,6 +30,18 @@ namespace TriangleGarden
             var points = input.Points;
             var segments = new List<(int A, int B)>(input.Segments);
 
+            var adjacency = new Dictionary<int, HashSet<int>>();
+            for (int i = 0; i < points.Count; i++)
+            {
+                adjacency[i] = new HashSet<int>();
+            }
+
+            foreach (var seg in segments)
+            {
+                adjacency[seg.A].Add(seg.B);
+                adjacency[seg.B].Add(seg.A);
+            }
+
             if (points.Count < 3)
                 return segments;
 
@@ -45,17 +57,51 @@ namespace TriangleGarden
                     int p1 = edge.A;
                     int p2 = edge.B;
 
-                    int n = points.Count;
-                    for (int p3 = 0; p3 < n; p3++)
+                    var candidates = new HashSet<int>();
+                    if (adjacency.TryGetValue(p1, out var n1))
+                    {
+                        foreach (var v in n1) candidates.Add(v);
+                    }
+                    if (adjacency.TryGetValue(p2, out var n2))
+                    {
+                        foreach (var v in n2) candidates.Add(v);
+                    }
+
+                    bool addedForThisEdge = false;
+
+                    foreach (int p3 in candidates)
                     {
                         if (p3 == p1 || p3 == p2)
                             continue;
 
                         if (Enforce.IsLegalTriangle(p1, p2, p3, points, segments))
                         {
-                            if (TriangleGardenEdges.AddTriangleEdges(p1, p2, p3, segments))
+                            if (TriangleGardenEdges.AddTriangleEdges(p1, p2, p3, segments, adjacency))
                             {
                                 changed = true;
+                                addedForThisEdge = true;
+                            }
+                        }
+                    }
+
+                    if (!addedForThisEdge)
+                    {
+                        int n = points.Count;
+                        for (int p3 = 0; p3 < n; p3++)
+                        {
+                            if (p3 == p1 || p3 == p2)
+                                continue;
+                            if (candidates.Contains(p3))
+                                continue;
+
+                            if (Enforce.IsLegalTriangle(p1, p2, p3, points, segments))
+                            {
+                                if (TriangleGardenEdges.AddTriangleEdges(p1, p2, p3, segments, adjacency))
+                                {
+                                    changed = true;
+                                    addedForThisEdge = true;
+                                    break;
+                                }
                             }
                         }
                     }

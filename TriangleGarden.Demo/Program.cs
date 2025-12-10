@@ -32,25 +32,41 @@ namespace TriangleGarden.Demo
 
         private static List<RealPoint2D> BuildPoints()
         {
-            var points = new List<RealPoint2D>
+            // Base "house" shape in local coordinates, roughly [0,100] box.
+            // Simple, non-self-intersecting polygon.
+            var basePoly = new List<RealPoint2D>
             {
-                // Outer big triangle
-                new RealPoint2D(0,   0),   // 0
-                new RealPoint2D(100, 0),   // 1
-                new RealPoint2D(50,  100), // 2
+                new RealPoint2D(0, 0),    // bottom left
+                new RealPoint2D(100, 0),  // bottom right
+                new RealPoint2D(100, 60), // right wall top
+                new RealPoint2D(50, 100), // roof peak
+                new RealPoint2D(0, 60)    // left wall top
             };
 
-            const int    innerCount = 20;
-            const double centerX    = 50.0;
-            const double centerY    = 45.0;
-            const double radius     = 18.0;
-
-            for (int i = 0; i < innerCount; i++)
+            double cx = 0, cy = 0;
+            foreach (var p in basePoly)
             {
-                double angle = 2.0 * Math.PI * i / innerCount;
-                double x = centerX + radius * Math.Cos(angle);
-                double y = centerY + radius * Math.Sin(angle);
-                points.Add(new RealPoint2D(x, y));
+                cx += p.X;
+                cy += p.Y;
+            }
+            cx /= basePoly.Count;
+            cy /= basePoly.Count;
+
+            var points = new List<RealPoint2D>();
+
+            const int    levels     = 6;
+            const double scaleStep  = 0.75;
+
+            for (int level = 0; level < levels; level++)
+            {
+                double s = Math.Pow(scaleStep, level);
+
+                foreach (var p in basePoly)
+                {
+                    double x = cx + (p.X - cx) * s;
+                    double y = cy + (p.Y - cy) * s;
+                    points.Add(new RealPoint2D(x, y));
+                }
             }
 
             return points;
@@ -58,21 +74,21 @@ namespace TriangleGarden.Demo
 
         private static List<(int A, int B)> BuildSegments(int pointCount)
         {
-            var segments = new List<(int A, int B)>
-            {
-                // Outer triangle edges
-                (0, 1),
-                (1, 2),
-                (2, 0)
-            };
+            var segments = new List<(int A, int B)>();
 
-            int firstInner = 3;
-            int lastInner  = pointCount - 1;
+            const int baseVertexCount = 5;  // house polygon vertices
+            int levels = pointCount / baseVertexCount;
 
-            for (int i = firstInner; i <= lastInner; i++)
+            for (int level = 0; level < levels; level++)
             {
-                int j = (i == lastInner) ? firstInner : i + 1;
-                segments.Add((i, j));
+                int first = level * baseVertexCount;
+                int last  = first + baseVertexCount - 1;
+
+                for (int i = first; i <= last; i++)
+                {
+                    int j = (i == last) ? first : i + 1;
+                    segments.Add((i, j));
+                }
             }
 
             return segments;
@@ -84,6 +100,8 @@ namespace TriangleGarden.Demo
             IReadOnlyList<(int A, int B)> constraints,
             string path)
         {
+            // --- Compute bounds and mapping to canvas ---
+
             double minX = points[0].X, maxX = points[0].X;
             double minY = points[0].Y, maxY = points[0].Y;
             for (int i = 1; i < points.Count; i++)
@@ -95,65 +113,92 @@ namespace TriangleGarden.Demo
                 if (p.Y > maxY) maxY = p.Y;
             }
 
-            double scale = (CanvasSize - 2 * Margin) / Math.Max(maxX - minX, maxY - minY);
+            double spanX = maxX - minX;
+            double spanY = maxY - minY;
+            double scale = (CanvasSize - 2 * Margin) / Math.Max(spanX, spanY);
 
             PointF Map(RealPoint2D p) => new(
                 (float)(Margin + (p.X - minX) * scale),
                 (float)(CanvasSize - Margin - (p.Y - minY) * scale));
+
+            double centerX = 0.5 * (minX + maxX);
+            double centerY = 0.5 * (minY + maxY);
 
             using var bmp = new Bitmap(CanvasSize, CanvasSize);
             using var g   = Graphics.FromImage(bmp);
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(Color.Black);
 
-            var lineColor = Color.FromArgb(0xEE, 0xEE, 0xEE);
+            using var triStrokePen  = new Pen(Color.FromArgb(230, 255, 255, 255), 1.0f);
+            using var constraintPen = new Pen(Color.FromArgb(255, 255, 255, 255), 2.0f);
+            using var vertexBrush   = new SolidBrush(Color.FromArgb(255, 255, 255, 255));
 
-            using (var triPen = new Pen(lineColor, 1f))
-            {
-                foreach (var tri in triangles)
-                {
-                    var a = Map(points[tri.A]);
-                    var b = Map(points[tri.B]);
-                    var c = Map(points[tri.C]);
-                    g.DrawPolygon(triPen, new[] { a, b, c });
-                }
-            }
-
-            var rnd = new Random(1234);
+            double maxRadius = 0.0;
             foreach (var tri in triangles)
             {
-                using var brush = new SolidBrush(Color.FromArgb(80,
-                    rnd.Next(50, 255),
-                    rnd.Next(50, 255),
-                    rnd.Next(50, 255)));
+                var pa = points[tri.A];
+                var pb = points[tri.B];
+                var pc = points[tri.C];
 
-                var a = Map(points[tri.A]);
-                var b = Map(points[tri.B]);
-                var c = Map(points[tri.C]);
+                double cxTri = (pa.X + pb.X + pc.X) / 3.0;
+                double cyTri = (pa.Y + pb.Y + pc.Y) / 3.0;
+                double dx = cxTri - centerX;
+                double dy = cyTri - centerY;
+                double r  = Math.Sqrt(dx * dx + dy * dy);
+                if (r > maxRadius) maxRadius = r;
+            }
+            if (maxRadius <= 0) maxRadius = 1.0;
 
+            foreach (var tri in triangles)
+            {
+                var pa = points[tri.A];
+                var pb = points[tri.B];
+                var pc = points[tri.C];
+
+                double cxTri = (pa.X + pb.X + pc.X) / 3.0;
+                double cyTri = (pa.Y + pb.Y + pc.Y) / 3.0;
+
+                double dx = cxTri - centerX;
+                double dy = cyTri - centerY;
+                double r  = Math.Sqrt(dx * dx + dy * dy) / maxRadius;
+
+                double brightness = 0.85 - 0.55 * r;
+                brightness = Math.Clamp(brightness, 0.30, 0.90);
+
+                var fillColor = FromGray(brightness);
+                using var fillBrush = new SolidBrush(fillColor);
+
+                var a = Map(pa);
+                var b = Map(pb);
+                var c = Map(pc);
                 var poly = new[] { a, b, c };
-                g.FillPolygon(brush, poly);
+
+                g.FillPolygon(fillBrush, poly);
+                g.DrawPolygon(triStrokePen, poly);
             }
 
-            using (var segPen = new Pen(lineColor, 2f))
+            foreach (var seg in constraints)
             {
-                foreach (var seg in constraints)
-                {
-                    g.DrawLine(segPen, Map(points[seg.A]), Map(points[seg.B]));
-                }
+                var p1 = Map(points[seg.A]);
+                var p2 = Map(points[seg.B]);
+                g.DrawLine(constraintPen, p1, p2);
             }
 
-            using (var brush = new SolidBrush(lineColor))
+            const float rVertex = 2.5f;
+            foreach (var pt in points)
             {
-                const float r = 2f;
-                foreach (var pt in points)
-                {
-                    var p = Map(pt);
-                    g.FillEllipse(brush, p.X - r, p.Y - r, r * 2, r * 2);
-                }
+                var p = Map(pt);
+                g.FillEllipse(vertexBrush, p.X - rVertex, p.Y - rVertex, rVertex * 2, rVertex * 2);
             }
 
             bmp.Save(path, System.Drawing.Imaging.ImageFormat.Png);
+        }
+
+        private static Color FromGray(double value, int alpha = 255)
+        {
+            value = Math.Clamp(value, 0.0, 1.0);
+            byte c = (byte)Math.Round(value * 255.0);
+            return Color.FromArgb(alpha, c, c, c);
         }
     }
 }

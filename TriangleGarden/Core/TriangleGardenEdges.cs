@@ -26,12 +26,26 @@ namespace TriangleGarden
             int a,
             int b,
             int c,
-            List<(int A, int B)> segments)
+            List<(int A, int B)> segments,
+            Dictionary<int, HashSet<int>> adjacency)
         {
             bool added = false;
-            if (!ContainsEdge(segments, a, b)) { segments.Add((a, b)); added = true; }
-            if (!ContainsEdge(segments, b, c)) { segments.Add((b, c)); added = true; }
-            if (!ContainsEdge(segments, c, a)) { segments.Add((c, a)); added = true; }
+
+            void Add(int x, int y)
+            {
+                if (!ContainsEdge(segments, x, y))
+                {
+                    segments.Add((x, y));
+                    adjacency[x].Add(y);
+                    adjacency[y].Add(x);
+                    added = true;
+                }
+            }
+
+            Add(a, b);
+            Add(b, c);
+            Add(c, a);
+
             return added;
         }
 
