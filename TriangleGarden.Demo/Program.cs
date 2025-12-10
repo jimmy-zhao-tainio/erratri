@@ -4,10 +4,9 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
 using System.Runtime.Versioning;
-using Delaunay2D;
 using Geometry;
 
-namespace Delaunay2D.Demo
+namespace TriangleGarden.Demo
 {
     internal static class Program
     {
@@ -20,10 +19,10 @@ namespace Delaunay2D.Demo
             var points   = BuildPoints();
             var segments = BuildSegments(points.Count);
 
-            var input  = new Delaunay2DInput(points, segments);
-            var result = Delaunay2DTriangulator.Run(in input);
+            var input  = new TriangleGardenInput(points, segments);
+            var result = TriangleGardenTriangulator.Run(in input);
 
-            var imagePath = Path.GetFullPath("erratriforce_circle.png");
+            var imagePath = Path.GetFullPath("triangle_garden.png");
             Render(result.Points, result.Triangles, segments, imagePath);
 
             Console.WriteLine($"Vertices:  {result.Points.Count}");
@@ -41,7 +40,6 @@ namespace Delaunay2D.Demo
                 new RealPoint2D(50,  100), // 2
             };
 
-            // Inner "circle" = regular 20-gon fully inside the outer triangle
             const int    innerCount = 20;
             const double centerX    = 50.0;
             const double centerY    = 45.0;
@@ -68,7 +66,6 @@ namespace Delaunay2D.Demo
                 (2, 0)
             };
 
-            // Inner 20-gon edges: indices 3 .. pointCount-1
             int firstInner = 3;
             int lastInner  = pointCount - 1;
 
@@ -87,7 +84,6 @@ namespace Delaunay2D.Demo
             IReadOnlyList<(int A, int B)> constraints,
             string path)
         {
-            // Bounding box
             double minX = points[0].X, maxX = points[0].X;
             double minY = points[0].Y, maxY = points[0].Y;
             for (int i = 1; i < points.Count; i++)
@@ -103,7 +99,7 @@ namespace Delaunay2D.Demo
 
             PointF Map(RealPoint2D p) => new(
                 (float)(Margin + (p.X - minX) * scale),
-                (float)(CanvasSize - Margin - (p.Y - minY) * scale)); // flip Y
+                (float)(CanvasSize - Margin - (p.Y - minY) * scale));
 
             using var bmp = new Bitmap(CanvasSize, CanvasSize);
             using var g   = Graphics.FromImage(bmp);
@@ -112,7 +108,6 @@ namespace Delaunay2D.Demo
 
             var lineColor = Color.FromArgb(0xEE, 0xEE, 0xEE);
 
-            // Triangles
             using (var triPen = new Pen(lineColor, 1f))
             {
                 foreach (var tri in triangles)
@@ -124,7 +119,6 @@ namespace Delaunay2D.Demo
                 }
             }
 
-            // Triangles – filled, so any holes show up as pure black
             var rnd = new Random(1234);
             foreach (var tri in triangles)
             {
@@ -141,7 +135,6 @@ namespace Delaunay2D.Demo
                 g.FillPolygon(brush, poly);
             }
 
-            // Constrained edges (same color, slightly thicker)
             using (var segPen = new Pen(lineColor, 2f))
             {
                 foreach (var seg in constraints)
@@ -150,7 +143,6 @@ namespace Delaunay2D.Demo
                 }
             }
 
-            // Vertices as small dots (same color)
             using (var brush = new SolidBrush(lineColor))
             {
                 const float r = 2f;

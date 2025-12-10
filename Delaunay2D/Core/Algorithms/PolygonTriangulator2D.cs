@@ -20,19 +20,21 @@ namespace Delaunay2D
         /// </summary>
         internal static List<Triangle2D> TriangulateSimpleRing(
             IReadOnlyList<int> ring,
-            IReadOnlyList<RealPoint2D> points)
+            IReadOnlyList<RealPoint2D> points,
+            IReadOnlyList<(int A, int B)>? segments = null)
         {
             if (ring is null) throw new ArgumentNullException(nameof(ring));
             if (points is null) throw new ArgumentNullException(nameof(points));
             var poly = ValidateAndNormalizeRing(ring, points, allowDuplicateVertices: false);
 
-            return EarClip(poly, points);
+            return EarClip(poly, points, segments);
         }
 
         internal static List<Triangle2D> TriangulateWithHoles(
             int[] outerRing,
             IReadOnlyList<int[]> innerRings,
-            IReadOnlyList<RealPoint2D> points)
+            IReadOnlyList<RealPoint2D> points,
+            IReadOnlyList<(int A, int B)>? segments = null)
         {
             if (outerRing is null) throw new ArgumentNullException(nameof(outerRing));
             if (innerRings is null) throw new ArgumentNullException(nameof(innerRings));
@@ -40,7 +42,7 @@ namespace Delaunay2D
 
             if (innerRings.Count == 0)
             {
-                return TriangulateSimpleRing(outerRing, points);
+                return TriangulateSimpleRing(outerRing, points, segments);
             }
 
             // Normalize orientations: outer CCW, holes CW.
@@ -65,7 +67,7 @@ namespace Delaunay2D
             var merged = BuildBridgedRing(outerRing, normalizedHoles, points);
             // Allow bridge duplicates when validating.
             var poly = ValidateAndNormalizeRing(merged, points, allowDuplicateVertices: true);
-            return EarClip(poly, points);
+            return EarClip(poly, points, segments);
         }
 
         private static bool IsPointInTriangleStrict(
@@ -338,7 +340,10 @@ namespace Delaunay2D
             return 0.5 * area2;
         }
 
-        private static List<Triangle2D> EarClip(List<int> poly, IReadOnlyList<RealPoint2D> points)
+        private static List<Triangle2D> EarClip(
+            List<int> poly,
+            IReadOnlyList<RealPoint2D> points,
+            IReadOnlyList<(int A, int B)>? segments)
         {
             var triangles = new List<Triangle2D>(poly.Count - 2);
 
@@ -361,6 +366,16 @@ namespace Delaunay2D
                     if (orientation != OrientationKind.CounterClockwise)
                     {
                         continue;
+                    }
+
+                    if (segments != null)
+                    {
+                        if (!IsEdgeAllowed(prevIndex, currIndex, segments) ||
+                            !IsEdgeAllowed(currIndex, nextIndex, segments) ||
+                            !IsEdgeAllowed(nextIndex, prevIndex, segments))
+                        {
+                            continue;
+                        }
                     }
 
                     double earArea = 0.5 * ((pCurr.X - pPrev.X) * (pNext.Y - pPrev.Y) - (pCurr.Y - pPrev.Y) * (pNext.X - pPrev.X));
@@ -405,8 +420,79 @@ namespace Delaunay2D
                 }
             }
 
+            if (segments != null &&
+                (!IsEdgeAllowed(poly[0], poly[1], segments) ||
+                 !IsEdgeAllowed(poly[1], poly[2], segments) ||
+                 !IsEdgeAllowed(poly[2], poly[0], segments)))
+            {
+                throw new InvalidOperationException("Ear clipping failed: final triangle violates constrained edge rules.");
+            }
+
             triangles.Add(new Triangle2D(poly[0], poly[1], poly[2], points));
             return triangles;
+        }
+
+        private static bool IsEdgeAllowed(int u, int v, IReadOnlyList<(int A, int B)> segments)
+        {
+            if (EdgeExistsInSegments(u, v, segments))
+            {
+                return true;
+            }
+
+            return CanCreateEdge(u, v, segments);
+        }
+
+        private static bool EdgeExistsInSegments(int u, int v, IReadOnlyList<(int A, int B)> segments)
+        {
+            for (int i = 0; i < segments.Count; i++)
+            {
+                var (a, b) = segments[i];
+                if ((a == u && b == v) || (a == v && b == u))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool CanCreateEdge(
+            int u,
+            int v,
+            IReadOnlyList<(int A, int B)> segments)
+        {
+            if (u == v)
+                return false;
+
+            var neighborsU = new HashSet<int>();
+            var neighborsV = new HashSet<int>();
+
+            for (int i = 0; i < segments.Count; i++)
+            {
+                var (a, b) = segments[i];
+
+                if (a == u) neighborsU.Add(b);
+                else if (b == u) neighborsU.Add(a);
+
+                if (a == v) neighborsV.Add(b);
+                else if (b == v) neighborsV.Add(a);
+            }
+
+            if (neighborsU.Count == 0 || neighborsV.Count == 0)
+                return true;
+
+            if (neighborsU.Count > neighborsV.Count)
+            {
+                (neighborsU, neighborsV) = (neighborsV, neighborsU);
+            }
+
+            foreach (var n in neighborsU)
+            {
+                if (neighborsV.Contains(n))
+                    return true;
+            }
+
+            return false;
         }
     }
 }

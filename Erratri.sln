@@ -33,6 +33,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delaunay2D", "Delaunay2D\De
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delaunay2D.Demo", "Delaunay2D.Demo\Delaunay2D.Demo.csproj", "{14914861-229F-472E-AEC5-F0F3BE6FEFCB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriangleGarden", "TriangleGarden\TriangleGarden.csproj", "{88E5D21E-3BF6-4E94-90C0-9F8CE929FE47}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriangleGarden.Demo", "TriangleGarden.Demo\TriangleGarden.Demo.csproj", "{1F5B93A3-83DD-4771-A61E-4B88FADE7B61}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +103,14 @@ Global
 		{14914861-229F-472E-AEC5-F0F3BE6FEFCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14914861-229F-472E-AEC5-F0F3BE6FEFCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14914861-229F-472E-AEC5-F0F3BE6FEFCB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88E5D21E-3BF6-4E94-90C0-9F8CE929FE47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88E5D21E-3BF6-4E94-90C0-9F8CE929FE47}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88E5D21E-3BF6-4E94-90C0-9F8CE929FE47}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88E5D21E-3BF6-4E94-90C0-9F8CE929FE47}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F5B93A3-83DD-4771-A61E-4B88FADE7B61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F5B93A3-83DD-4771-A61E-4B88FADE7B61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F5B93A3-83DD-4771-A61E-4B88FADE7B61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F5B93A3-83DD-4771-A61E-4B88FADE7B61}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

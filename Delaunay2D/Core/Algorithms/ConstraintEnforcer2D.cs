@@ -25,10 +25,11 @@ namespace Delaunay2D
             Delaunay2DDebugOptions? debug = null,
             ConstraintEnforcer2DOptions? options = null)
         {
-            if (segments.Count == 0)
+            if (segments == null || segments.Count == 0)
             {
                 return triangles;
             }
+            ValidateConstraints(points, segments);
 
             var working = new List<Triangle2D>(triangles);
             var constrainedEdges = new HashSet<Edge2D>();
@@ -109,11 +110,11 @@ namespace Delaunay2D
                 List<Triangle2D> newTriangles;
                 if (boundary.InnerRings.Count == 0)
                 {
-                    newTriangles = PolygonTriangulator2D.TriangulateSimpleRing(ring, points);
+                    newTriangles = PolygonTriangulator2D.TriangulateSimpleRing(ring, points, segments);
                 }
                 else
                 {
-                    newTriangles = PolygonTriangulator2D.TriangulateWithHoles(boundary.OuterRing, boundary.InnerRings, points);
+                    newTriangles = PolygonTriangulator2D.TriangulateWithHoles(boundary.OuterRing, boundary.InnerRings, points, segments);
                 }
                 if (boundary.InnerRings.Count == 0)
                 {
@@ -123,6 +124,14 @@ namespace Delaunay2D
                         throw new InvalidOperationException(
                             $"PolygonTriangulator2D returned {newTriangles.Count} triangles for corridor ring with {ring.Count} vertices " +
                             $"for constraint edge ({a},{b}); expected {expected}.");
+                    }
+                }
+                foreach (var tri in newTriangles)
+                {
+                    if (!TriangleRespectsAngularAdjacency(tri.A, tri.B, tri.C, points, segments))
+                    {
+                        throw new InvalidOperationException(
+                            $"Corridor triangulation produced triangle ({tri.A},{tri.B},{tri.C}) that violates local angular adjacency of constraints.");
                     }
                 }
 
@@ -159,6 +168,7 @@ namespace Delaunay2D
                     working,
                     points,
                     $"after enforcing constraint ({a},{b})");
+
                 foreach (var tri in working)
                 {
                     var key = SortedTriangleKey(tri);
@@ -268,6 +278,291 @@ namespace Delaunay2D
             }
         }
 
+        private static void ValidateConstraints(
+            IReadOnlyList<RealPoint2D> points,
+            IReadOnlyList<(int A, int B)> segments)
+        {
+            // 1. Detect proper crossings between distinct constraints (excluding shared endpoints).
+            for (int i = 0; i < segments.Count; i++)
+            {
+                var (a1, b1) = segments[i];
+                var p1a = points[a1];
+                var p1b = points[b1];
+                for (int j = i + 1; j < segments.Count; j++)
+                {
+                    var (a2, b2) = segments[j];
+                    if (a1 == a2 || a1 == b2 || b1 == a2 || b1 == b2)
+                    {
+                        continue; // shared endpoint is allowed
+                    }
+
+                    var p2a = points[a2];
+                    var p2b = points[b2];
+                    if (Geometry2DIntersections.SegmentsIntersectProper(in p1a, in p1b, in p2a, in p2b))
+                    {
+                        throw new InvalidOperationException("Crossing constraints are not supported (degree-2 boundary).");
+                    }
+                }
+            }
+
+            // 2. Pure collinear chains are unsupported.
+            if (segments.Count == 0)
+            {
+                return;
+            }
+            // 2. "Pure collinear chain only" – narrow, constraint-level check.
+            if (IsPureCollinearChain(points, segments))
+            {
+                throw new InvalidOperationException("Pure collinear constraint chains are not supported.");
+            }
+            /*
+            var first = segments[0];
+            var p0 = points[first.A];
+            var p1 = points[first.B];
+            double vx = p1.X - p0.X;
+            double vy = p1.Y - p0.Y;
+
+            bool allCollinear = true;
+            for (int i = 1; i < segments.Count && allCollinear; i++)
+            {
+                var (a, b) = segments[i];
+                var pa = points[a];
+                var pb = points[b];
+
+                double crossA = vx * (pa.Y - p0.Y) - vy * (pa.X - p0.X);
+                double crossB = vx * (pb.Y - p0.Y) - vy * (pb.X - p0.X);
+
+                if (Math.Abs(crossA) > Geometry2DPredicates.Epsilon ||
+                    Math.Abs(crossB) > Geometry2DPredicates.Epsilon)
+                {
+                    allCollinear = false;
+                }
+            }
+
+            if (allCollinear)
+            {
+                throw new InvalidOperationException("Pure collinear constraint chains are not supported.");
+            }*/
+        }
+
+        private static bool AreAllPointsCollinear(IReadOnlyList<RealPoint2D> points)
+        {
+            if (points.Count <= 2)
+                return true;
+
+            // Find two distinct points.
+            int i0 = 0;
+            int i1 = 1;
+            while (i1 < points.Count &&
+                Math.Abs(points[i1].X - points[i0].X) <= Geometry2DPredicates.Epsilon &&
+                Math.Abs(points[i1].Y - points[i0].Y) <= Geometry2DPredicates.Epsilon)
+            {
+                i1++;
+            }
+
+            if (i1 == points.Count)
+                return true; // all identical
+
+            var p0 = points[i0];
+            var p1 = points[i1];
+            double vx = p1.X - p0.X;
+            double vy = p1.Y - p0.Y;
+
+            for (int i = i1 + 1; i < points.Count; i++)
+            {
+                var p = points[i];
+                double cross = vx * (p.Y - p0.Y) - vy * (p.X - p0.X);
+                if (Math.Abs(cross) > Geometry2DPredicates.Epsilon)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool IsPureCollinearChain(
+            IReadOnlyList<RealPoint2D> points,
+            IReadOnlyList<(int A, int B)> segments)
+        {
+            if (segments == null || segments.Count < 2)
+                return false; // single segment is fine
+
+            // Collect all vertices touched by constraints.
+            var vertices = new HashSet<int>();
+            foreach (var (a, b) in segments)
+            {
+                vertices.Add(a);
+                vertices.Add(b);
+            }
+
+            if (vertices.Count < 3)
+                return false; // two endpoints only, allowed
+
+            // Pick two distinct vertices as a baseline.
+            using var it = vertices.GetEnumerator();
+            it.MoveNext();
+            int i0 = it.Current;
+            int i1 = i0;
+            while (it.MoveNext())
+            {
+                i1 = it.Current;
+                if (!AlmostSame(points[i0], points[i1]))
+                    break;
+            }
+
+            if (i0 == i1 || AlmostSame(points[i0], points[i1]))
+                return false; // degenerate, don't classify as chain
+
+            var p0 = points[i0];
+            var p1 = points[i1];
+            double vx = p1.X - p0.X;
+            double vy = p1.Y - p0.Y;
+
+            // Check all constraint endpoints lie on the same line.
+            foreach (var v in vertices)
+            {
+                var p = points[v];
+                double cross = vx * (p.Y - p0.Y) - vy * (p.X - p0.X);
+                if (Math.Abs(cross) > Geometry2DPredicates.Epsilon)
+                {
+                    return false; // not all collinear → not "collinear chain only"
+                }
+            }
+
+            // Build degree map in the constraint graph.
+            var degree = new Dictionary<int, int>();
+            foreach (var (a, b) in segments)
+            {
+                if (!degree.TryGetValue(a, out var da)) da = 0;
+                if (!degree.TryGetValue(b, out var db)) db = 0;
+                degree[a] = da + 1;
+                degree[b] = db + 1;
+            }
+
+            int deg1 = 0;
+            foreach (var kvp in degree)
+            {
+                var d = kvp.Value;
+                if (d > 2)
+                    return false; // branching → not a simple chain
+                if (d == 1)
+                    deg1++;
+            }
+
+            // A simple open chain has exactly two degree-1 endpoints, all others degree-2.
+            return deg1 == 2;
+        }
+
+        private static bool AlmostSame(RealPoint2D a, RealPoint2D b)
+        {
+            return Math.Abs(a.X - b.X) <= Geometry2DPredicates.Epsilon &&
+                Math.Abs(a.Y - b.Y) <= Geometry2DPredicates.Epsilon;
+        }
+
+        private static bool TriangleRespectsAngularAdjacency(
+            int a,
+            int b,
+            int c,
+            IReadOnlyList<RealPoint2D> points,
+            IReadOnlyList<(int A, int B)> segments)
+        {
+            return VertexHasAngularAdjacency(a, b, c, points, segments) &&
+                   VertexHasAngularAdjacency(b, c, a, points, segments) &&
+                   VertexHasAngularAdjacency(c, a, b, points, segments);
+        }
+
+        private static bool VertexHasAngularAdjacency(
+            int v,
+            int other1,
+            int other2,
+            IReadOnlyList<RealPoint2D> points,
+            IReadOnlyList<(int A, int B)> segments)
+        {
+            var spokes = new List<(double angle, bool side1, bool side2)>();
+            var p = points[v];
+
+            static double AngleTo(RealPoint2D from, RealPoint2D to)
+            {
+                return Math.Atan2(to.Y - from.Y, to.X - from.X);
+            }
+
+            spokes.Add((AngleTo(p, points[other1]), true, false));
+            spokes.Add((AngleTo(p, points[other2]), false, true));
+
+            for (int i = 0; i < segments.Count; i++)
+            {
+                var seg = segments[i];
+                int other = -1;
+                if (seg.A == v) other = seg.B;
+                else if (seg.B == v) other = seg.A;
+                if (other == -1) continue;
+
+                spokes.Add((AngleTo(p, points[other]), false, false));
+            }
+
+            spokes.Sort((x, y) => x.angle.CompareTo(y.angle));
+
+            var merged = new List<(double angle, bool side1, bool side2)>();
+            foreach (var s in spokes)
+            {
+                if (merged.Count == 0)
+                {
+                    merged.Add(s);
+                    continue;
+                }
+
+                var last = merged[merged.Count - 1];
+                if (AnglesCollinear(last.angle, s.angle))
+                {
+                    merged[merged.Count - 1] = (last.angle, last.side1 || s.side1, last.side2 || s.side2);
+                }
+                else
+                {
+                    merged.Add(s);
+                }
+            }
+
+            if (merged.Count > 1 && AnglesCollinear(merged[0].angle, merged[merged.Count - 1].angle))
+            {
+                var first = merged[0];
+                var last = merged[merged.Count - 1];
+                merged[0] = (first.angle, first.side1 || last.side1, first.side2 || last.side2);
+                merged.RemoveAt(merged.Count - 1);
+            }
+
+            int idx1 = -1;
+            int idx2 = -1;
+            for (int i = 0; i < merged.Count; i++)
+            {
+                var m = merged[i];
+                if (m.side1) idx1 = i;
+                if (m.side2) idx2 = i;
+            }
+
+            if (idx1 == -1 || idx2 == -1)
+            {
+                return false;
+            }
+            if (idx1 == idx2)
+            {
+                return true; // collinear sides; treated as adjacent
+            }
+
+            int n = merged.Count;
+            return ((idx1 + 1) % n == idx2) || ((idx2 + 1) % n == idx1);
+        }
+
+        private static bool AnglesCollinear(double a, double b)
+        {
+            double diff = Math.Abs(a - b);
+            if (diff > Math.PI)
+            {
+                diff = 2 * Math.PI - diff;
+            }
+
+            return diff <= 1e-12;
+        }
         private static List<int> BuildBoundaryRingOrThrow(int a, int b, Dictionary<int, List<int>> adjacency, IReadOnlyList<RealPoint2D> points)
         {
             foreach (var kvp in adjacency)
