@@ -28,67 +28,148 @@ namespace TriangleGarden.Demo
             Console.WriteLine($"Vertices:  {result.Points.Count}");
             Console.WriteLine($"Triangles: {result.Triangles.Count}");
             Console.WriteLine($"Image written to: {imagePath}");
+
+            // Second demo: star ring + center hub
+            var starPoints   = BuildPointsStar();
+            var starSegments = BuildSegmentsStar(starPoints.Count);
+            var starInput    = new TriangleGardenInput(starPoints, starSegments);
+            var starResult   = TriangleGardenTriangulator.Run(in starInput);
+
+            var starImagePath = Path.GetFullPath("triangle_garden_star.png");
+            Render(starResult.Points, starResult.Triangles, starSegments, starImagePath);
+
+            Console.WriteLine($"[Star] Vertices:  {starResult.Points.Count}");
+            Console.WriteLine($"[Star] Triangles: {starResult.Triangles.Count}");
+            Console.WriteLine($"[Star] Image written to: {starImagePath}");
         }
 
         private static List<RealPoint2D> BuildPoints()
         {
-            // Base "house" shape in local coordinates, roughly [0,100] box.
-            // Simple, non-self-intersecting polygon.
-            var basePoly = new List<RealPoint2D>
+            var pts = new List<RealPoint2D>();
+            const double cx = 50.0;
+            const double cy = 50.0;
+
+            // OUTER RING (120-gon)
+            const int outerN = 120;
+            const double outerR = 45.0;
+
+            for (int i = 0; i < outerN; i++)
             {
-                new RealPoint2D(0, 0),    // bottom left
-                new RealPoint2D(100, 0),  // bottom right
-                new RealPoint2D(100, 60), // right wall top
-                new RealPoint2D(50, 100), // roof peak
-                new RealPoint2D(0, 60)    // left wall top
-            };
-
-            double cx = 0, cy = 0;
-            foreach (var p in basePoly)
-            {
-                cx += p.X;
-                cy += p.Y;
-            }
-            cx /= basePoly.Count;
-            cy /= basePoly.Count;
-
-            var points = new List<RealPoint2D>();
-
-            const int    levels     = 6;
-            const double scaleStep  = 0.75;
-
-            for (int level = 0; level < levels; level++)
-            {
-                double s = Math.Pow(scaleStep, level);
-
-                foreach (var p in basePoly)
-                {
-                    double x = cx + (p.X - cx) * s;
-                    double y = cy + (p.Y - cy) * s;
-                    points.Add(new RealPoint2D(x, y));
-                }
+                double ang = 2 * Math.PI * i / outerN;
+                pts.Add(new RealPoint2D(cx + outerR * Math.Cos(ang),
+                                        cy + outerR * Math.Sin(ang)));
             }
 
-            return points;
+            // INNER STAR (12-pt)
+            const int starN = 12;
+            const double r1 = 20.0;
+            const double r2 = 8.0;
+
+            for (int i = 0; i < starN; i++)
+            {
+                double ang = 2 * Math.PI * i / starN;
+                double r = (i % 2 == 0) ? r1 : r2;
+                pts.Add(new RealPoint2D(cx + r * Math.Cos(ang),
+                                        cy + r * Math.Sin(ang)));
+            }
+
+            // CENTER
+            pts.Add(new RealPoint2D(cx, cy));
+
+            return pts;
         }
 
         private static List<(int A, int B)> BuildSegments(int pointCount)
         {
+            var seg = new List<(int, int)>();
+
+            const int outerN = 120;
+            const int starN = 12;
+
+            // Outer ring
+            for (int i = 0; i < outerN; i++)
+                seg.Add((i, (i + 1) % outerN));
+
+            // Star cycle
+            int starStart = outerN;
+            for (int i = 0; i < starN; i++)
+                seg.Add((starStart + i,
+                         starStart + ((i + 1) % starN)));
+
+            // Center connections (no cycle — just rays)
+            int center = outerN + starN;
+
+            seg.Add((center, 0));
+            seg.Add((center, outerN / 3));
+            seg.Add((center, (2 * outerN) / 3));
+
+            return seg;
+        }
+
+        private static List<RealPoint2D> BuildPointsStar()
+        {
+            var points = new List<RealPoint2D>();
+
+            const double cx = 50.0;
+            const double cy = 50.0;
+
+            const int    outerCount = 40;
+            const double outerR     = 47.0;
+
+            for (int i = 0; i < outerCount; i++)
+            {
+                double angle = 2.0 * Math.PI * i / outerCount;
+                double x = cx + outerR * Math.Cos(angle);
+                double y = cy + outerR * Math.Sin(angle);
+                points.Add(new RealPoint2D(x, y));
+            }
+
+            const int    starCount   = 20;
+            const double starROuter  = 25.0;
+            const double starRInner  = 18.0;
+
+            for (int i = 0; i < starCount; i++)
+            {
+                double baseAngle = 2.0 * Math.PI * i / starCount;
+                double r = (i % 2 == 0) ? starROuter : starRInner;
+
+                double x = cx + r * Math.Cos(baseAngle);
+                double y = cy + r * Math.Sin(baseAngle);
+                points.Add(new RealPoint2D(x, y));
+            }
+
+            points.Add(new RealPoint2D(cx, cy));
+
+            return points;
+        }
+
+        private static List<(int A, int B)> BuildSegmentsStar(int pointCount)
+        {
             var segments = new List<(int A, int B)>();
 
-            const int baseVertexCount = 5;  // house polygon vertices
-            int levels = pointCount / baseVertexCount;
+            const int outerCount = 40;
+            const int starCount  = 20;
 
-            for (int level = 0; level < levels; level++)
+            int expectedPoints = outerCount + starCount + 1;
+            if (pointCount != expectedPoints)
             {
-                int first = level * baseVertexCount;
-                int last  = first + baseVertexCount - 1;
+                throw new InvalidOperationException($"Point count mismatch: expected {expectedPoints}, got {pointCount}");
+            }
 
-                for (int i = first; i <= last; i++)
-                {
-                    int j = (i == last) ? first : i + 1;
-                    segments.Add((i, j));
-                }
+            int firstOuter = 0;
+            int lastOuter  = outerCount - 1;
+            for (int i = firstOuter; i <= lastOuter; i++)
+            {
+                int j = (i == lastOuter) ? firstOuter : i + 1;
+                segments.Add((i, j));
+            }
+
+            int starFirst = outerCount;
+            int starLast  = starFirst + starCount - 1;
+            for (int i = starFirst; i <= starLast; i++)
+            {
+                int j = (i == starLast) ? starFirst : i + 1;
+                segments.Add((i, j));
             }
 
             return segments;

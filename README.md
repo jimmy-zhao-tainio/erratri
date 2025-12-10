@@ -103,9 +103,10 @@ All of this is still work in progress: the fast-path classifiers and PSLG triang
 - Deterministic sweep over constraint edges: for each edge, try adjacent neighbors first, then a fallback scan of all vertices; repeat until no new edges are added.
 - Edge legality: existing constraints are always allowed; new edges must not cross existing segments, and any triangle with an interior point is rejected.
 - Triangles are rebuilt from the final edge graph with the same interior-point guard to avoid swallowing vertices.
-- Demo scene: nested scaled “house” polygons rendered in grayscale on black for a technical look.
+- Demo scenes: nested scaled “house” polygons and a 120-gon + star ring with center hub, both rendered in grayscale on black for a technical look.
 
 ![TriangleGarden nested houses](triangle_garden.png)
+![TriangleGarden star hub](triangle_garden_star.png)
 
 ## Building and Running
 
