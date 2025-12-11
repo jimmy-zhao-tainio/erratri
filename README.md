@@ -103,7 +103,6 @@ All of this is still work in progress: the fast-path classifiers and PSLG triang
 - Two modes: a slow exhaustive sweep over all edges/vertices, and a fast adjacency-driven pass with a single global completion sweep; both enforce the same legality rules.
 - Legality: constraints are always honored; new edges may not cross existing segments; triangles with interior points are rejected; zero-area triangles are discarded; both orientations are tried per edge to cover both sides.
 - Validation: `TriangleGardenValidator` runs combinatorial checks (edge manifoldness, constraint usage) plus an Euler face count (outer boundary + holes) to ensure the output is a complete triangulation of the input PSLG.
-- Demo scenes: nested "house" rings, a star hub, and orbit-style concentric ellipses, all rendered in grayscale on black for a technical look.
 
 ![TriangleGarden nested houses](triangle_garden.png)
 ![TriangleGarden star hub](triangle_garden_star.png)
