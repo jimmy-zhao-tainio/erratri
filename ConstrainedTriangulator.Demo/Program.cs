@@ -23,11 +23,11 @@ namespace ConstrainedTriangulator.Demo
             var input       = new Input(points, constraints);
 
             //var slowResult = ConstrainedTriangulatorTriangulator.Run(in input, validate: true);
-            //var slowPath   = Path.GetFullPath("triangle_garden_slow.png");
+            //var slowPath   = Path.GetFullPath("constrained_triangulator_slow.png");
             //Render(slowResult.Points, slowResult.Triangles, constraints, slowPath);
 
             var fastResult = Triangulator.RunFast(in input, validate: true);
-            var fastPath   = Path.GetFullPath("triangle_garden_fast.png");
+            var fastPath   = Path.GetFullPath("constrained_triangulator_fast.png");
             Render(fastResult.Points, fastResult.Triangles, constraints, fastPath);
 
             //Console.WriteLine("Slow triangulation:");
