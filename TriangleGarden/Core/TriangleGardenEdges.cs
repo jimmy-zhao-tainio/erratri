@@ -26,6 +26,30 @@ namespace TriangleGarden
             int a,
             int b,
             int c,
+            List<(int A, int B)> segments)
+        {
+            bool added = false;
+
+            void Add(int x, int y)
+            {
+                if (!ContainsEdge(segments, x, y))
+                {
+                    segments.Add((x, y));
+                    added = true;
+                }
+            }
+
+            Add(a, b);
+            Add(b, c);
+            Add(c, a);
+
+            return added;
+        }
+
+        internal static bool AddTriangleEdges(
+            int a,
+            int b,
+            int c,
             List<(int A, int B)> segments,
             Dictionary<int, HashSet<int>> adjacency)
         {
