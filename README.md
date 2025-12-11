@@ -100,7 +100,7 @@ All of this is still work in progress: the fast-path classifiers and PSLG triang
 
 ConstrainedTriangulator is a super simple 2D constrained triangulation library for planar straight-line graphs (PSLG). The input is a set of points together with optional constrained segments, and the output is a set of triangles that forms a complete triangulation of the domain while respecting all constraints.
 
-The library currently implements two algorithms that share the same legality rules: a slow exhaustive sweep over all edges and vertices, and a fast adjacency-driven pass with a single global completion sweep. Both ensure that constrained segments are always honored, new edges do not cross existing segments, triangles containing interior points are rejected, and zero-area triangles are discarded. For each candidate edge, both sides are tested so that no admissible triangle is missed.
+The library currently implements two algorithms that share the same legality rules: a slow exhaustive sweep over all edges and vertices, and a less slow adjacency-driven pass with a single global completion sweep. Both ensure that constrained segments are always honored, new edges do not cross existing segments, triangles containing interior points are rejected, and zero-area triangles are discarded. For each candidate edge, both sides are tested so that no admissible triangle is missed.
 
 Correctness is verified by `Validator.ValidateFullTriangulation`, which runs combinatorial checks (edge manifoldness, constraint usage) together with an Euler face count (outer boundary plus holes) to ensure that the result is a complete triangulation of the input PSLG. 
 
