@@ -17,8 +17,6 @@ namespace ConstrainedTriangulator
             var segments = Triangulate(input);
             var triangles = MeshBuilder.BuildTrianglesFromEdges(segments, input.Points);
 
-            TriangleQualityImprover.RunEdgeFlipPass(input.Points, input.Segments, triangles);
-
             if (validate)
             {
                 Validator.ValidateFullTriangulation(input.Points, segments, triangles);
@@ -33,8 +31,6 @@ namespace ConstrainedTriangulator
 
             var segments = TriangulateFast(input);
             var triangles = MeshBuilder.BuildTrianglesFromEdges(segments, input.Points);
-
-            TriangleQualityImprover.RunEdgeFlipPass(input.Points, input.Segments, triangles);
 
             if (validate)
             {
