@@ -1,11 +1,11 @@
 using System;
 using Geometry;
 
-namespace TriangleGarden
+namespace ConstrainedTriangulator
 {
-    internal static class TriangleGardenInputValidator
+    internal static class InputValidator
     {
-        internal static void Validate(in TriangleGardenInput input)
+        internal static void Validate(in Input input)
         {
             if (input.Points is null)
             {
@@ -34,7 +34,7 @@ namespace TriangleGarden
                     double dist2 = dx * dx + dy * dy;
                     if (dist2 <= Tolerances.EpsVertexSquared)
                     {
-                        throw new ArgumentException("TriangleGardenInput contains duplicate or near-duplicate points.", nameof(input));
+                        throw new ArgumentException("ConstrainedTriangulatorInput contains duplicate or near-duplicate points.", nameof(input));
                     }
                 }
             }

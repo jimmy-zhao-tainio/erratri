@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using Geometry;
 
-namespace TriangleGarden
+namespace ConstrainedTriangulator
 {
     /// <summary>
-    /// Output from the TriangleGarden triangulator.
+    /// Output from the ConstrainedTriangulator triangulator.
     /// </summary>
-    public sealed class TriangleGardenResult
+    public sealed class Result
     {
         /// <summary>
         /// The 2D coordinates of the triangulation vertices.
@@ -21,7 +21,7 @@ namespace TriangleGarden
         /// </summary>
         public IReadOnlyList<(int A, int B, int C)> Triangles { get; }
 
-        public TriangleGardenResult(
+        public Result(
             IReadOnlyList<RealPoint2D> points,
             IReadOnlyList<(int A, int B, int C)> triangles)
         {

@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using Geometry;
 
-namespace TriangleGarden
+namespace ConstrainedTriangulator
 {
     /// <summary>
-    /// Input to the TriangleGarden triangulator.
+    /// Input to the ConstrainedTriangulator triangulator.
     /// Coordinates are expressed in a single 2D plane coordinate system.
     /// </summary>
-    public readonly struct TriangleGardenInput
+    public readonly struct Input
     {
         /// <summary>
         /// 2D coordinates of all points to be triangulated.
@@ -21,7 +21,7 @@ namespace TriangleGarden
         /// </summary>
         public IReadOnlyList<(int A, int B)> Segments { get; }
 
-        public TriangleGardenInput(
+        public Input(
             IReadOnlyList<RealPoint2D> points,
             IReadOnlyList<(int A, int B)> segments)
         {

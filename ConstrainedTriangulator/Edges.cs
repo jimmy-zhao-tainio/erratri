@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace TriangleGarden
+namespace ConstrainedTriangulator
 {
-    internal static class TriangleGardenEdges
+    internal static class Edges
     {
         internal static bool ContainsEdge(
             IReadOnlyList<(int A, int B)> segments,

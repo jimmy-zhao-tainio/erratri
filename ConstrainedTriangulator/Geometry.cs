@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using Geometry;
 
-namespace TriangleGarden
+namespace ConstrainedTriangulator
 {
-    internal static class TriangleGardenGeometry
+    internal static class Geometry
     {
         internal static bool EdgeCrossesExisting(
             int a,

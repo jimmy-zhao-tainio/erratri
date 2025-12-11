@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using Geometry;
 
-namespace TriangleGarden
+namespace ConstrainedTriangulator
 {
-    internal static class TriangleGardenValidator
+    internal static class Validator
     {
         public static void ValidateFullTriangulation(
             IReadOnlyList<RealPoint2D> points,

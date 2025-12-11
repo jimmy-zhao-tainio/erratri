@@ -7,7 +7,7 @@
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TriangleGarden\TriangleGarden.csproj" />
+    <ProjectReference Include="..\ConstrainedTriangulator\ConstrainedTriangulator.csproj" />
     <ProjectReference Include="..\Geometry\Geometry.csproj" />
   </ItemGroup>
 </Project>

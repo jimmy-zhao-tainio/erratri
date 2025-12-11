@@ -6,7 +6,7 @@ using System.IO;
 using System.Runtime.Versioning;
 using Geometry;
 
-namespace TriangleGarden.Demo
+namespace ConstrainedTriangulator.Demo
 {
     internal static class Program
     {
@@ -20,13 +20,13 @@ namespace TriangleGarden.Demo
         {
             var points      = BuildPoints();
             var constraints = BuildSegments(points.Count);
-            var input       = new TriangleGardenInput(points, constraints);
+            var input       = new Input(points, constraints);
 
-            //var slowResult = TriangleGardenTriangulator.Run(in input, validate: true);
+            //var slowResult = ConstrainedTriangulatorTriangulator.Run(in input, validate: true);
             //var slowPath   = Path.GetFullPath("triangle_garden_slow.png");
             //Render(slowResult.Points, slowResult.Triangles, constraints, slowPath);
 
-            var fastResult = TriangleGardenTriangulator.RunFast(in input, validate: true);
+            var fastResult = Triangulator.RunFast(in input, validate: true);
             var fastPath   = Path.GetFullPath("triangle_garden_fast.png");
             Render(fastResult.Points, fastResult.Triangles, constraints, fastPath);
 

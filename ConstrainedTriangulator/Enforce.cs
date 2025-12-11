@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Geometry;
 
-namespace TriangleGarden
+namespace ConstrainedTriangulator
 {
     internal static class Enforce
     {
@@ -34,7 +34,7 @@ namespace TriangleGarden
                     return true;
             }
 
-            if (TriangleGardenGeometry.EdgeCrossesExisting(a, b, points, segments))
+            if (Geometry.EdgeCrossesExisting(a, b, points, segments))
                 return false;
 
             return true;

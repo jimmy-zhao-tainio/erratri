@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using Geometry;
 
-namespace TriangleGarden
+namespace ConstrainedTriangulator
 {
-    internal static class TriangleGardenMeshBuilder
+    internal static class MeshBuilder
     {
         internal static List<(int A, int B, int C)> BuildTrianglesFromEdges(
             IReadOnlyList<(int A, int B)> segments,
@@ -32,7 +32,7 @@ namespace TriangleGarden
                                 adjacency.TryGetValue(c, out var neighborsC) &&
                                 neighborsC.Contains(a))
                             {
-                                if (Math.Abs(TriangleGardenGeometry.TriangleArea(points[a], points[b], points[c])) <= Tolerances.EpsArea)
+                                if (Math.Abs(Geometry.TriangleArea(points[a], points[b], points[c])) <= Tolerances.EpsArea)
                                 {
                                     continue;
                                 }

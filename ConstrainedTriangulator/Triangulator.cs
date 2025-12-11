@@ -2,50 +2,50 @@ using System;
 using System.Collections.Generic;
 using Geometry;
 
-namespace TriangleGarden
+namespace ConstrainedTriangulator
 {
     /// <summary>
     /// 2D constrained triangulator over Geometry.RealPoint2D.
     /// Coordinates are planar; no world-space mapping here.
     /// </summary>
-    public static class TriangleGardenTriangulator
+    public static class Triangulator
     {
-        public static TriangleGardenResult Run(in TriangleGardenInput input, bool validate = false)
+        public static Result Run(in Input input, bool validate = false)
         {
-            TriangleGardenInputValidator.Validate(in input);
+            InputValidator.Validate(in input);
 
             var segments = Triangulate(input);
-            var triangles = TriangleGardenMeshBuilder.BuildTrianglesFromEdges(segments, input.Points);
+            var triangles = MeshBuilder.BuildTrianglesFromEdges(segments, input.Points);
 
             if (validate)
             {
-                TriangleGardenValidator.ValidateFullTriangulation(input.Points, segments, triangles);
+                Validator.ValidateFullTriangulation(input.Points, segments, triangles);
             }
 
-            return new TriangleGardenResult(input.Points, triangles);
+            return new Result(input.Points, triangles);
         }
 
-        public static TriangleGardenResult RunFast(in TriangleGardenInput input, bool validate = false)
+        public static Result RunFast(in Input input, bool validate = false)
         {
-            TriangleGardenInputValidator.Validate(in input);
+            InputValidator.Validate(in input);
 
             var segments = TriangulateFast(input);
-            var triangles = TriangleGardenMeshBuilder.BuildTrianglesFromEdges(segments, input.Points);
+            var triangles = MeshBuilder.BuildTrianglesFromEdges(segments, input.Points);
 
             if (validate)
             {
-                TriangleGardenValidator.ValidateFullTriangulation(input.Points, segments, triangles);
+                Validator.ValidateFullTriangulation(input.Points, segments, triangles);
             }
 
-            return new TriangleGardenResult(input.Points, triangles);
+            return new Result(input.Points, triangles);
         }
 
-        public static List<(int A, int B)> Triangulate(TriangleGardenInput input)
+        public static List<(int A, int B)> Triangulate(Input input)
         {
             return TriangulateSlow(input);
         }
 
-        public static List<(int A, int B)> TriangulateSlow(TriangleGardenInput input)
+        public static List<(int A, int B)> TriangulateSlow(Input input)
         {
             var points = input.Points;
             var segments = new List<(int A, int B)>(input.Segments);
@@ -75,14 +75,14 @@ namespace TriangleGarden
 
                         if (Enforce.IsLegalTriangle(p1, p2, p3, points, segments))
                         {
-                            if (TriangleGardenEdges.AddTriangleEdges(p1, p2, p3, segments))
+                            if (Edges.AddTriangleEdges(p1, p2, p3, segments))
                             {
                                 changed = true;
                             }
                         }
                         else if (Enforce.IsLegalTriangle(p2, p1, p3, points, segments))
                         {
-                            if (TriangleGardenEdges.AddTriangleEdges(p2, p1, p3, segments))
+                            if (Edges.AddTriangleEdges(p2, p1, p3, segments))
                             {
                                 changed = true;
                             }
@@ -95,7 +95,7 @@ namespace TriangleGarden
             return segments;
         }
 
-        public static List<(int A, int B)> TriangulateFast(TriangleGardenInput input)
+        public static List<(int A, int B)> TriangulateFast(Input input)
         {
             var points = input.Points;
             var segments = new List<(int A, int B)>(input.Segments);
@@ -128,7 +128,7 @@ namespace TriangleGarden
         }
 
         private static List<(int A, int B)> TriangulateCore(
-            TriangleGardenInput input,
+            Input input,
             List<(int A, int B)> segments,
             Dictionary<int, HashSet<int>> adjacency)
         {
@@ -163,14 +163,14 @@ namespace TriangleGarden
 
                         if (Enforce.IsLegalTriangle(p1, p2, p3, points, segments))
                         {
-                            if (TriangleGardenEdges.AddTriangleEdges(p1, p2, p3, segments, adjacency))
+                            if (Edges.AddTriangleEdges(p1, p2, p3, segments, adjacency))
                             {
                                 changed = true;
                             }
                         }
                         else if (Enforce.IsLegalTriangle(p2, p1, p3, points, segments))
                         {
-                            if (TriangleGardenEdges.AddTriangleEdges(p2, p1, p3, segments, adjacency))
+                            if (Edges.AddTriangleEdges(p2, p1, p3, segments, adjacency))
                             {
                                 changed = true;
                             }
@@ -220,7 +220,7 @@ namespace TriangleGarden
                         int a = legalForward ? p1 : p2;
                         int b = legalForward ? p2 : p1;
 
-                        if (TriangleGardenEdges.AddTriangleEdges(a, b, p3, segments, adjacency))
+                        if (Edges.AddTriangleEdges(a, b, p3, segments, adjacency))
                         {
                             // Bridge made; move to next edge to avoid overfanning
                             break;
