@@ -2,8 +2,6 @@
 
 Erratri is a small geometry project that builds 3D shapes on the integer grid (Z^3) and exports binary STL. The demo renders a simple solar system with a sun, eight planets, their moons, and thin tilted orbit rings.
 
-Note: This repository is a fully GPT-5 Codex experiment. All code and documentation were produced end-to-end by the agent in Codex CLI (no hands-on coding).
-
 ## Pure Z^3, Mesh-First
 
 - All vertices live on the integer lattice Z^3 (no persistent floats).
