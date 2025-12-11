@@ -98,14 +98,16 @@ This produces the boolean gallery rendered in `boolean_mesh.png`.
 
 All of this is still work in progress: the fast-path classifiers and PSLG triangulation are being iterated, and there are known regression tests (e.g., drilled boxes and "cheese" shapes) that currently fail until the kernel is tightened. The intent is to keep the layering clear and testable while gradually hardening the algorithms.
 
-## ConstrainedTriangulator (2D triangulation demo)
+## ConstrainedTriangulator — 2D constrained triangulation library
 
-- Two modes: a slow exhaustive sweep over all edges/vertices, and a fast adjacency-driven pass with a single global completion sweep; both enforce the same legality rules.
-- Legality: constraints are always honored; new edges may not cross existing segments; triangles with interior points are rejected; zero-area triangles are discarded; both orientations are tried per edge to cover both sides.
-- Validation: `Validator.ValidateFullTriangulation` runs combinatorial checks (edge manifoldness, constraint usage) plus an Euler face count (outer boundary + holes) to ensure the output is a complete triangulation of the input PSLG.
+ConstrainedTriangulator is a 2D constrained triangulation library for planar straight-line graphs (PSLG). The input is a set of points together with optional constrained segments, and the output is a set of triangles that forms a complete triangulation of the domain while respecting all constraints.
+
+The library currently implements two algorithms that share the same legality rules: a slow exhaustive sweep over all edges and vertices, and a fast adjacency-driven pass with a single global completion sweep. Both ensure that constrained segments are always honored, new edges do not cross existing segments, triangles containing interior points are rejected, and zero-area triangles are discarded. For each candidate edge, both sides are tested so that no admissible triangle is missed.
+
+Correctness is verified by `Validator.ValidateFullTriangulation`, which runs combinatorial checks (edge manifoldness, constraint usage) together with an Euler face count (outer boundary plus holes) to ensure that the result is a complete triangulation of the input PSLG. The library is intended to be used as a geometry backend and will be integrated into the kernel.
 
 ![ConstrainedTriangulator fast orbit fill](constrained_triangulator_fast.png)
-Triangles: 1474 • Vertices: 828
+
 ## Building and Running
 
 - Build: `dotnet build Erratri.sln -c Release`
