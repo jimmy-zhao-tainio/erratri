@@ -27,6 +27,7 @@ namespace ConstrainedTriangulator
 
             // Build adjacency: edge -> list of (triangleIndex, oppositeVertex) once
             var edgeMap = BuildEdgeAdjacency(triangles);
+            var touchedTriangles = new HashSet<int>();
 
             // Single pass over this snapshot; edgeMap is not mutated inside this loop
             foreach (var kvp in edgeMap)
@@ -50,6 +51,10 @@ namespace ConstrainedTriangulator
                 {
                     continue;
                 }
+
+                // If either triangle was already flipped via another edge, skip (snapshot is stale for them).
+                if (touchedTriangles.Contains(triIndex0) || touchedTriangles.Contains(triIndex1))
+                    continue;
 
                 int a = edge.U;
                 int b = edge.V;
@@ -78,6 +83,8 @@ namespace ConstrainedTriangulator
                 // Flip: replace edge (a,b) with (c,d)
                 triangles[triIndex0] = (c, d, a);
                 triangles[triIndex1] = (d, c, b);
+                touchedTriangles.Add(triIndex0);
+                touchedTriangles.Add(triIndex1);
             }
         }
 
