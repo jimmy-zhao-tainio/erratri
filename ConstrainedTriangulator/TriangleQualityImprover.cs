@@ -22,91 +22,63 @@ namespace ConstrainedTriangulator
             var constraintEdges = new HashSet<EdgeKey>();
             foreach (var seg in constraints)
             {
-                var key = EdgeKey.From(seg.A, seg.B);
-                constraintEdges.Add(key);
+                constraintEdges.Add(EdgeKey.From(seg.A, seg.B));
             }
 
-            // Build adjacency: edge -> list of (triangleIndex, oppositeVertex)
+            // Build adjacency: edge -> list of (triangleIndex, oppositeVertex) once
             var edgeMap = BuildEdgeAdjacency(triangles);
 
-            bool improved;
-            int safety = 0;
-
-            // A few passes; bail early if no changes
-            do
+            // Single pass over this snapshot; edgeMap is not mutated inside this loop
+            foreach (var kvp in edgeMap)
             {
-                improved = false;
-                safety++;
+                var edge = kvp.Key;
+                var adjList = kvp.Value;
 
-                foreach (var kvp in edgeMap)
+                // Only interior, non-constraint edges with exactly 2 adjacent triangles
+                if (adjList.Count != 2)
+                    continue;
+
+                if (constraintEdges.Contains(edge))
+                    continue;
+
+                int triIndex0 = adjList[0].TriangleIndex;
+                int triIndex1 = adjList[1].TriangleIndex;
+
+                if (triIndex0 < 0 || triIndex0 >= triangles.Count ||
+                    triIndex1 < 0 || triIndex1 >= triangles.Count ||
+                    triIndex0 == triIndex1)
                 {
-                    var edge = kvp.Key;
-                    var adjList = kvp.Value;
-
-                    // Only interior, non-constraint edges with exactly 2 adjacent triangles
-                    if (adjList.Count != 2)
-                        continue;
-
-                    if (constraintEdges.Contains(edge))
-                        continue;
-
-                    int triIndex0 = adjList[0].TriangleIndex;
-                    int triIndex1 = adjList[1].TriangleIndex;
-
-                    // triangles might have been invalidated / overwritten by earlier flips
-                    if (triIndex0 < 0 || triIndex0 >= triangles.Count ||
-                        triIndex1 < 0 || triIndex1 >= triangles.Count ||
-                        triIndex0 == triIndex1)
-                    {
-                        continue;
-                    }
-
-                    var t0 = triangles[triIndex0];
-                    var t1 = triangles[triIndex1];
-
-                    // Recover the four distinct vertices of the quad
-                    int a = edge.U;
-                    int b = edge.V;
-
-                    int c = adjList[0].OppositeVertex;
-                    int d = adjList[1].OppositeVertex;
-
-                    if (c == d)
-                    {
-                        // degeneracy, skip
-                        continue;
-                    }
-
-                    // Ensure convexity of quad (a-c-b-d ordering)
-                    if (!IsConvexQuad(points, a, c, b, d))
-                        continue;
-
-                    // Check if new edge (c,d) is allowed w.r.t constraints
-                    var newEdge = EdgeKey.From(c, d);
-                    if (constraintEdges.Contains(newEdge))
-                        continue;
-
-                    if (EdgeCrossesAnyConstraint(points, c, d, constraints))
-                        continue;
-
-                    // Compute min angle before and after flip
-                    double before = MinAngleOfQuad(points, a, c, b, d, useDiagonalAC: true);
-                    double after = MinAngleOfQuad(points, a, c, b, d, useDiagonalAC: false);
-
-                    if (after <= before + 1e-9)
-                        continue;
-
-                    // Flip: replace edge (a,b) with (c,d)
-                    triangles[triIndex0] = (c, d, a);
-                    triangles[triIndex1] = (d, c, b);
-
-                    // Update adjacency structure
-                    ApplyFlipToAdjacency(edgeMap, edge, newEdge, triIndex0, triIndex1, a, b, c, d);
-
-                    improved = true;
+                    continue;
                 }
 
-            } while (improved && safety < 8);
+                int a = edge.U;
+                int b = edge.V;
+                int c = adjList[0].OppositeVertex;
+                int d = adjList[1].OppositeVertex;
+
+                if (c == d)
+                    continue;
+
+                if (!IsConvexQuad(points, a, c, b, d))
+                    continue;
+
+                var newEdge = EdgeKey.From(c, d);
+                if (constraintEdges.Contains(newEdge))
+                    continue;
+
+                if (EdgeCrossesAnyConstraint(points, c, d, constraints))
+                    continue;
+
+                double before = MinAngleOfQuad(points, a, c, b, d, useDiagonalAC: true);
+                double after = MinAngleOfQuad(points, a, c, b, d, useDiagonalAC: false);
+
+                if (after <= before + 1e-9)
+                    continue;
+
+                // Flip: replace edge (a,b) with (c,d)
+                triangles[triIndex0] = (c, d, a);
+                triangles[triIndex1] = (d, c, b);
+            }
         }
 
         private static Dictionary<EdgeKey, List<Adjacency>> BuildEdgeAdjacency(List<(int A, int B, int C)> triangles)
@@ -297,40 +269,6 @@ namespace ConstrainedTriangulator
             double cos = num / den;
             cos = Math.Clamp(cos, -1.0, 1.0);
             return Math.Acos(cos); // radians
-        }
-
-        private static void ApplyFlipToAdjacency(
-            Dictionary<EdgeKey, List<Adjacency>> edgeMap,
-            EdgeKey oldEdge,
-            EdgeKey newEdge,
-            int triIndex0,
-            int triIndex1,
-            int a, int b, int c, int d)
-        {
-            _ = newEdge; // suppress unused warning (new edges are captured via re-add below)
-            // Rebuild adjacency for the two triangles we just changed.
-            edgeMap.Remove(oldEdge);
-
-            foreach (var kvp in edgeMap)
-            {
-                var list = kvp.Value;
-                for (int i = list.Count - 1; i >= 0; i--)
-                {
-                    if (list[i].TriangleIndex == triIndex0 || list[i].TriangleIndex == triIndex1)
-                    {
-                        list.RemoveAt(i);
-                    }
-                }
-            }
-
-            // Now re-add edges for the two new triangles (c,d,a) and (d,c,b).
-            AddEdge(edgeMap, c, d, a, triIndex0);
-            AddEdge(edgeMap, d, a, c, triIndex0);
-            AddEdge(edgeMap, a, c, d, triIndex0);
-
-            AddEdge(edgeMap, d, c, b, triIndex1);
-            AddEdge(edgeMap, c, b, d, triIndex1);
-            AddEdge(edgeMap, b, d, c, triIndex1);
         }
     }
 }
