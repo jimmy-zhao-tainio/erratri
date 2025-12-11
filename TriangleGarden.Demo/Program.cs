@@ -205,15 +205,11 @@ namespace TriangleGarden.Demo
                 brightness *= (1.0 - 0.25 * rNorm);
                 brightness = Math.Clamp(brightness, 0.0, 1.0);
 
-                var fillColor = FromGray(brightness, alpha: 70);
-                using var fillBrush = new SolidBrush(fillColor);
-
                 var a = Map(pa);
                 var b = Map(pb);
                 var c = Map(pc);
                 var poly = new[] { a, b, c };
 
-                g.FillPolygon(fillBrush, poly);
                 g.DrawPolygon(triWirePen, poly);
             }
 
