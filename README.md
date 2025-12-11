@@ -104,9 +104,8 @@ All of this is still work in progress: the fast-path classifiers and PSLG triang
 - Legality: constraints are always honored; new edges may not cross existing segments; triangles with interior points are rejected; zero-area triangles are discarded; both orientations are tried per edge to cover both sides.
 - Validation: `TriangleGardenValidator` runs combinatorial checks (edge manifoldness, constraint usage) plus an Euler face count (outer boundary + holes) to ensure the output is a complete triangulation of the input PSLG.
 
-![TriangleGarden nested houses](triangle_garden.png)
-![TriangleGarden star hub](triangle_garden_star.png)
 ![TriangleGarden fast orbit fill](triangle_garden_fast.png)
+Triangles: 1474 • Vertices: 828
 ## Building and Running
 
 - Build: `dotnet build Erratri.sln -c Release`
