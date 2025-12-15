@@ -34,7 +34,7 @@ public sealed class MeshBTopology : MeshTopology
             throw new InvalidOperationException("Triangle count mismatch between IntersectionSet and TriangleIntersectionIndex for mesh B.");
         }
 
-        var data = BuildCore(graph, perTriangleVertices);
+        var data = BuildCore(graph, perTriangleVertices, meshA: false);
         return new MeshBTopology(
             data.TriangleEdges,
             data.Edges,
@@ -42,4 +42,3 @@ public sealed class MeshBTopology : MeshTopology
             data.Loops);
     }
 }
-

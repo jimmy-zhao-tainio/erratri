@@ -50,25 +50,13 @@ public abstract class MeshTopology
         IntersectionVertexId[][] Loops)
         BuildCore(
             IntersectionGraph graph,
-            IReadOnlyList<TriangleIntersectionVertex[]> perTriangleVertices)
+            IReadOnlyList<TriangleIntersectionVertex[]> perTriangleVertices,
+            bool meshA)
     {
         if (graph is null) throw new ArgumentNullException(nameof(graph));
         if (perTriangleVertices is null) throw new ArgumentNullException(nameof(perTriangleVertices));
 
         int triangleCount = perTriangleVertices.Count;
-
-        // Per-triangle sets of global vertex ids.
-        var perTriangleVertexIds = new HashSet<int>[triangleCount];
-        for (int i = 0; i < triangleCount; i++)
-        {
-            var verts = perTriangleVertices[i];
-            var set = new HashSet<int>();
-            for (int j = 0; j < verts.Length; j++)
-            {
-                set.Add(verts[j].VertexId.Value);
-            }
-            perTriangleVertexIds[i] = set;
-        }
 
         // Map each edge id to its endpoints.
         var edgeById = new Dictionary<int, (IntersectionVertexId Start, IntersectionVertexId End)>();
@@ -77,26 +65,135 @@ public abstract class MeshTopology
             edgeById[id.Value] = (start, end);
         }
 
-        // For each triangle, collect the edges whose endpoints both lie
-        // on that triangle.
+        // For each triangle, collect the global intersection edges that truly lie on it.
+        //
+        // IMPORTANT:
+        // It is NOT sufficient to attach an edge to a triangle solely because both of the
+        // edge's endpoints are vertices on the triangle. That can incorrectly associate
+        // edges that belong to a different triangle (or even a different pair) and feed
+        // invalid constraint segments into subdivision, producing missing patches/cracks.
         var triangleEdgeLists = new List<IntersectionEdgeId>[triangleCount];
         for (int i = 0; i < triangleCount; i++)
         {
             triangleEdgeLists[i] = new List<IntersectionEdgeId>();
         }
 
+        // Edge lookup by undirected endpoint key.
+        var edgeIdByEndpoints = new Dictionary<(int Min, int Max), IntersectionEdgeId>(graph.Edges.Count);
         foreach (var (id, start, end) in graph.Edges)
         {
-            int sId = start.Value;
-            int eId = end.Value;
+            int a = start.Value;
+            int b = end.Value;
+            if (b < a) (a, b) = (b, a);
+            edgeIdByEndpoints[(a, b)] = id;
+        }
 
-            for (int triIndex = 0; triIndex < triangleCount; triIndex++)
+        // Quantized world-space -> global vertex id lookup (mirrors IntersectionGraph quantization).
+        var globalVertexLookup = new Dictionary<(long X, long Y, long Z), IntersectionVertexId>(graph.Vertices.Count);
+        double invEpsilon = 1.0 / Tolerances.TrianglePredicateEpsilon;
+        foreach (var (id, position) in graph.Vertices)
+        {
+            globalVertexLookup[Quantize(position, invEpsilon)] = id;
+        }
+
+        var trianglesA = graph.IntersectionSet.TrianglesA ?? throw new ArgumentNullException(nameof(graph.IntersectionSet.TrianglesA));
+        var trianglesB = graph.IntersectionSet.TrianglesB ?? throw new ArgumentNullException(nameof(graph.IntersectionSet.TrianglesB));
+
+        var pairs = graph.Pairs;
+
+        var localToGlobalVertex = new Dictionary<(int PairIndex, int LocalVertexId), IntersectionVertexId>();
+        for (int pairIndex = 0; pairIndex < pairs.Count; pairIndex++)
+        {
+            var pair = pairs[pairIndex];
+            var intersection = pair.Intersection;
+            var triangleA = trianglesA[intersection.TriangleIndexA];
+            var triangleB = trianglesB[intersection.TriangleIndexB];
+
+            var localVertices = pair.Vertices;
+            for (int i = 0; i < localVertices.Count; i++)
             {
-                var vertexSet = perTriangleVertexIds[triIndex];
-                if (vertexSet.Contains(sId) && vertexSet.Contains(eId))
+                var v = localVertices[i];
+
+                // Prefer A-side reconstruction; fall back to B-side if needed (mirrors TriangleIntersectionIndex).
+                var baryA = v.OnTriangleA;
+                var worldA = Barycentric.ToRealPointOnTriangle(in triangleA, in baryA);
+                if (!globalVertexLookup.TryGetValue(Quantize(worldA, invEpsilon), out var globalId))
                 {
-                    triangleEdgeLists[triIndex].Add(id);
+                    var baryB = v.OnTriangleB;
+                    var worldB = Barycentric.ToRealPointOnTriangle(in triangleB, in baryB);
+                    if (!globalVertexLookup.TryGetValue(Quantize(worldB, invEpsilon), out globalId))
+                    {
+                        System.Diagnostics.Debug.Fail("Global intersection vertex not found for PairVertex.");
+                        continue;
+                    }
                 }
+
+                localToGlobalVertex[(pairIndex, v.VertexId.Value)] = globalId;
+            }
+        }
+
+        for (int pairIndex = 0; pairIndex < pairs.Count; pairIndex++)
+        {
+            var pair = pairs[pairIndex];
+            var intersection = pair.Intersection;
+            int triIndex = meshA ? intersection.TriangleIndexA : intersection.TriangleIndexB;
+
+            // Some meshes (or intermediate states) can have a topology that doesn't match
+            // this side's triangle count; guard defensively.
+            if ((uint)triIndex >= (uint)triangleCount)
+            {
+                continue;
+            }
+
+            var segments = pair.Segments;
+            var dst = triangleEdgeLists[triIndex];
+
+            for (int i = 0; i < segments.Count; i++)
+            {
+                var s = segments[i];
+
+                if (!localToGlobalVertex.TryGetValue((pairIndex, s.Start.VertexId.Value), out var startId) ||
+                    !localToGlobalVertex.TryGetValue((pairIndex, s.End.VertexId.Value), out var endId))
+                {
+                    continue;
+                }
+
+                int a = startId.Value;
+                int b = endId.Value;
+                if (b < a) (a, b) = (b, a);
+
+                if (!edgeIdByEndpoints.TryGetValue((a, b), out var edgeId))
+                {
+                    System.Diagnostics.Debug.Fail("Edge not found for pair segment endpoints.");
+                    continue;
+                }
+
+                dst.Add(edgeId);
+            }
+        }
+
+        for (int i = 0; i < triangleEdgeLists.Length; i++)
+        {
+            var list = triangleEdgeLists[i];
+            if (list.Count <= 1)
+            {
+                continue;
+            }
+
+            var seen = new HashSet<int>();
+            int write = 0;
+            for (int j = 0; j < list.Count; j++)
+            {
+                var e = list[j];
+                if (seen.Add(e.Value))
+                {
+                    list[write++] = e;
+                }
+            }
+
+            if (write != list.Count)
+            {
+                list.RemoveRange(write, list.Count - write);
             }
         }
 
@@ -151,6 +248,14 @@ public abstract class MeshTopology
             meshEdges.ToArray(),
             vertexEdges,
             loops.ToArray());
+    }
+
+    private static (long X, long Y, long Z) Quantize(RealPoint point, double invEpsilon)
+    {
+        long qx = (long)Math.Round(point.X * invEpsilon);
+        long qy = (long)Math.Round(point.Y * invEpsilon);
+        long qz = (long)Math.Round(point.Z * invEpsilon);
+        return (qx, qy, qz);
     }
 
     private static void AddEdgeToAdjacency(
@@ -247,4 +352,3 @@ public abstract class MeshTopology
         return loops;
     }
 }
-
