@@ -89,7 +89,7 @@ public sealed class IntersectionGraph
         // barycentric coordinates on triangle A, then deduplicate by a
         // quantized world key so that shared endpoints across pairs collapse
         // to a single global IntersectionVertexId.
-        var globalVertices = new List<(IntersectionVertexId, RealPoint)>();
+        var globalVertices = new List<(IntersectionVertexId Id, RealPoint Position)>();
         var vertexLookup = new Dictionary<QuantizedPointKey, IntersectionVertexId>();
         var pairVertexToGlobal = new Dictionary<(int PairIndex, int LocalVertexId), IntersectionVertexId>();
 
@@ -124,7 +124,7 @@ public sealed class IntersectionGraph
         // For each local PairSegment, map its endpoints to global vertices,
         // discard degenerate segments, then normalize as undirected edges and
         // deduplicate across the whole graph.
-        var globalEdges = new List<(IntersectionEdgeId, IntersectionVertexId, IntersectionVertexId)>();
+        var globalEdges = new List<(IntersectionEdgeId Id, IntersectionVertexId Start, IntersectionVertexId End)>();
         var edgeLookup = new Dictionary<(int, int), IntersectionEdgeId>();
 
         for (int pairIndex = 0; pairIndex < pairs.Length; pairIndex++)
@@ -164,7 +164,123 @@ public sealed class IntersectionGraph
             }
         }
 
-        return new IntersectionGraph(intersectionSet, globalVertices, globalEdges, pairs);
+        var splitEdges = SplitEdgesPassingThroughVertices(globalVertices, globalEdges);
+        return new IntersectionGraph(intersectionSet, globalVertices, splitEdges, pairs);
+    }
+
+    private static IReadOnlyList<(IntersectionEdgeId Id, IntersectionVertexId Start, IntersectionVertexId End)> SplitEdgesPassingThroughVertices(
+        IReadOnlyList<(IntersectionVertexId Id, RealPoint Position)> vertices,
+        IReadOnlyList<(IntersectionEdgeId Id, IntersectionVertexId Start, IntersectionVertexId End)> edges)
+    {
+        if (edges.Count == 0 || vertices.Count < 3)
+        {
+            return edges;
+        }
+
+        double tEps = Tolerances.FeatureBarycentricEpsilon;
+        double distanceEpsilon = 10.0 * Tolerances.MergeEpsilon;
+        double distanceEpsilonSquared = distanceEpsilon * distanceEpsilon;
+
+        var output = new List<(IntersectionEdgeId Id, IntersectionVertexId Start, IntersectionVertexId End)>(edges.Count);
+        var edgeIdByEndpoints = new Dictionary<(int, int), IntersectionEdgeId>(edges.Count);
+        var interior = new List<(double T, int VertexValue)>();
+
+        void AddEdgeDedup(int a, int b)
+        {
+            if (a == b)
+            {
+                return;
+            }
+
+            if (b < a)
+            {
+                (a, b) = (b, a);
+            }
+
+            var key = (a, b);
+            if (edgeIdByEndpoints.ContainsKey(key))
+            {
+                return;
+            }
+
+            var id = new IntersectionEdgeId(output.Count);
+            edgeIdByEndpoints.Add(key, id);
+            output.Add((id, new IntersectionVertexId(a), new IntersectionVertexId(b)));
+        }
+
+        for (int edgeIndex = 0; edgeIndex < edges.Count; edgeIndex++)
+        {
+            var edge = edges[edgeIndex];
+            int startValue = edge.Start.Value;
+            int endValue = edge.End.Value;
+            if (startValue == endValue)
+            {
+                continue;
+            }
+
+            interior.Clear();
+
+            var start = vertices[startValue].Position;
+            var end = vertices[endValue].Position;
+            var ab = RealVector.FromPoints(in start, in end);
+            double abLenSq = ab.Dot(in ab);
+            if (abLenSq <= 0.0)
+            {
+                AddEdgeDedup(startValue, endValue);
+                continue;
+            }
+
+            for (int v = 0; v < vertices.Count; v++)
+            {
+                if (v == startValue || v == endValue)
+                {
+                    continue;
+                }
+
+                var p = vertices[v].Position;
+                var ap = RealVector.FromPoints(in start, in p);
+                double t = ap.Dot(in ab) / abLenSq;
+                if (t <= tEps || t >= 1.0 - tEps)
+                {
+                    continue;
+                }
+
+                var closest = Lerp(in start, in end, t);
+                if (p.DistanceSquared(in closest) > distanceEpsilonSquared)
+                {
+                    continue;
+                }
+
+                interior.Add((t, v));
+            }
+
+            if (interior.Count == 0)
+            {
+                AddEdgeDedup(startValue, endValue);
+                continue;
+            }
+
+            interior.Sort(static (a, b) => a.T.CompareTo(b.T));
+
+            int prev = startValue;
+            for (int i = 0; i < interior.Count; i++)
+            {
+                int next = interior[i].VertexValue;
+                AddEdgeDedup(prev, next);
+                prev = next;
+            }
+            AddEdgeDedup(prev, endValue);
+        }
+
+        return output;
+    }
+
+    private static RealPoint Lerp(in RealPoint a, in RealPoint b, double t)
+    {
+        return new RealPoint(
+            a.X + (b.X - a.X) * t,
+            a.Y + (b.Y - a.Y) * t,
+            a.Z + (b.Z - a.Z) * t);
     }
 
     private readonly struct QuantizedPointKey : IEquatable<QuantizedPointKey>

@@ -139,6 +139,12 @@ public sealed class TrianglePatchSet
                 segments.Add(new TriangleSubdivision.IntersectionSegment(startIdx, endIdx));
             }
 
+            segments = SplitSegmentsPassingThroughPoints(points, segments);
+
+#if DEBUG
+            DebugAssertNoSegmentPassesThroughPoint(i, points, segments);
+#endif
+
             IReadOnlyList<RealTriangle> patches;
             try
             {
@@ -157,6 +163,178 @@ public sealed class TrianglePatchSet
     }
 
     private static (int, int) Normalize(int a, int b) => a < b ? (a, b) : (b, a);
+
+    private static List<TriangleSubdivision.IntersectionSegment> SplitSegmentsPassingThroughPoints(
+        IReadOnlyList<TriangleSubdivision.IntersectionPoint> points,
+        IReadOnlyList<TriangleSubdivision.IntersectionSegment> segments)
+    {
+        if (segments.Count == 0 || points.Count < 3)
+        {
+            return segments as List<TriangleSubdivision.IntersectionSegment>
+                ?? new List<TriangleSubdivision.IntersectionSegment>(segments);
+        }
+
+        double interiorTEpsilon = Tolerances.FeatureBarycentricEpsilon;
+        double mergeDistanceEpsilon = 10.0 * Tolerances.MergeEpsilon;
+        double mergeDistanceEpsilonSquared = mergeDistanceEpsilon * mergeDistanceEpsilon;
+
+        var output = new List<TriangleSubdivision.IntersectionSegment>(segments.Count);
+        var seenSegments = new HashSet<(int, int)>();
+        var interiorPoints = new List<(double T, int Index)>();
+
+        for (int segmentIndex = 0; segmentIndex < segments.Count; segmentIndex++)
+        {
+            var segment = segments[segmentIndex];
+            int startIndex = segment.StartIndex;
+            int endIndex = segment.EndIndex;
+
+            if ((uint)startIndex >= (uint)points.Count ||
+                (uint)endIndex >= (uint)points.Count ||
+                startIndex == endIndex)
+            {
+                continue;
+            }
+
+            if (!TryCollectInteriorPointsOnSegment(
+                    points,
+                    startIndex,
+                    endIndex,
+                    interiorTEpsilon,
+                    mergeDistanceEpsilonSquared,
+                    interiorPoints))
+            {
+                AddSegmentDedup(output, seenSegments, startIndex, endIndex);
+                continue;
+            }
+
+            interiorPoints.Sort(static (a, b) => a.T.CompareTo(b.T));
+
+            int previous = startIndex;
+            for (int i = 0; i < interiorPoints.Count; i++)
+            {
+                int next = interiorPoints[i].Index;
+                AddSegmentDedup(output, seenSegments, previous, next);
+                previous = next;
+            }
+            AddSegmentDedup(output, seenSegments, previous, endIndex);
+        }
+
+        return output;
+    }
+
+    private static bool TryCollectInteriorPointsOnSegment(
+        IReadOnlyList<TriangleSubdivision.IntersectionPoint> points,
+        int startIndex,
+        int endIndex,
+        double interiorTEpsilon,
+        double mergeDistanceEpsilonSquared,
+        List<(double T, int Index)> interiorPoints)
+    {
+        interiorPoints.Clear();
+
+        var start = points[startIndex].Position;
+        var end = points[endIndex].Position;
+
+        var segmentDirection = RealVector.FromPoints(in start, in end);
+        double segmentLengthSquared = segmentDirection.Dot(in segmentDirection);
+        if (segmentLengthSquared <= 0.0)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < points.Count; i++)
+        {
+            if (i == startIndex || i == endIndex)
+            {
+                continue;
+            }
+
+            var p = points[i].Position;
+            var startToPoint = RealVector.FromPoints(in start, in p);
+            double t = startToPoint.Dot(in segmentDirection) / segmentLengthSquared;
+
+            if (t <= interiorTEpsilon || t >= 1.0 - interiorTEpsilon)
+            {
+                continue;
+            }
+
+            var closest = Lerp(in start, in end, t);
+            if (p.DistanceSquared(in closest) > mergeDistanceEpsilonSquared)
+            {
+                continue;
+            }
+
+            interiorPoints.Add((t, i));
+        }
+
+        return interiorPoints.Count > 0;
+    }
+
+    private static RealPoint Lerp(in RealPoint a, in RealPoint b, double t)
+    {
+        return new RealPoint(
+            a.X + (b.X - a.X) * t,
+            a.Y + (b.Y - a.Y) * t,
+            a.Z + (b.Z - a.Z) * t);
+    }
+
+    private static void AddSegmentDedup(
+        List<TriangleSubdivision.IntersectionSegment> segments,
+        HashSet<(int, int)> seenSegments,
+        int a,
+        int b)
+    {
+        if (a == b)
+        {
+            return;
+        }
+
+        var key = Normalize(a, b);
+        if (!seenSegments.Add(key))
+        {
+            return;
+        }
+
+        segments.Add(new TriangleSubdivision.IntersectionSegment(a, b));
+    }
+
+#if DEBUG
+    private static void DebugAssertNoSegmentPassesThroughPoint(
+        int triangleIndex,
+        IReadOnlyList<TriangleSubdivision.IntersectionPoint> points,
+        IReadOnlyList<TriangleSubdivision.IntersectionSegment> segments)
+    {
+        double interiorTEpsilon = Tolerances.FeatureBarycentricEpsilon;
+        double mergeDistanceEpsilon = 10.0 * Tolerances.MergeEpsilon;
+        double mergeDistanceEpsilonSquared = mergeDistanceEpsilon * mergeDistanceEpsilon;
+
+        var interiorPoints = new List<(double T, int Index)>();
+
+        for (int segmentIndex = 0; segmentIndex < segments.Count; segmentIndex++)
+        {
+            var segment = segments[segmentIndex];
+            if ((uint)segment.StartIndex >= (uint)points.Count ||
+                (uint)segment.EndIndex >= (uint)points.Count ||
+                segment.StartIndex == segment.EndIndex)
+            {
+                continue;
+            }
+
+            if (TryCollectInteriorPointsOnSegment(
+                    points,
+                    segment.StartIndex,
+                    segment.EndIndex,
+                    interiorTEpsilon,
+                    mergeDistanceEpsilonSquared,
+                    interiorPoints))
+            {
+                System.Diagnostics.Debug.Fail(
+                    $"TrianglePatchSet: segment passes through another point (tri={triangleIndex} seg={segment.StartIndex}->{segment.EndIndex} via={interiorPoints[0].Index}).");
+                return;
+            }
+        }
+    }
+#endif
 
     private static void TryDumpFailure(
         int triangleIndex,

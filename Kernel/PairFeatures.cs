@@ -246,14 +246,91 @@ public static class PairFeaturesFactory
                 return;
             }
 
-            // Genuine segment: connect the two farthest vertices using
-            // the 3D samples as distance metric.
-            barycentricVertices.FindFarthestPair(out int startIndex, out int endIndex);
-
+            // For non-coplanar intersections, ensure any intermediate points are
+            // preserved as a chain so adjacent triangles cannot disagree on
+            // whether a segment is split by a shared vertex.
             segments.Clear();
-            if (startIndex != endIndex)
-                segments.Add(new PairSegment(vertices[startIndex], vertices[endIndex]));
+            BuildCollinearChainSegments(vertices, barycentricVertices.Samples, segments);
             return;
+        }
+    }
+
+    private static void BuildCollinearChainSegments(
+        IReadOnlyList<PairVertex> vertices,
+        IReadOnlyList<PairVertexSample3D> samples,
+        List<PairSegment> segments)
+    {
+        if (samples.Count < 2)
+        {
+            return;
+        }
+
+        PairVertexSample3D.FindFarthestPair(samples, out int startVertexIndex, out int endVertexIndex);
+        if (startVertexIndex == endVertexIndex)
+        {
+            return;
+        }
+
+        bool foundStart = false;
+        bool foundEnd = false;
+        var startPoint = samples[0].Point;
+        var endPoint = samples[0].Point;
+        for (int i = 0; i < samples.Count; i++)
+        {
+            if (samples[i].VertexIndex == startVertexIndex)
+            {
+                startPoint = samples[i].Point;
+                foundStart = true;
+            }
+            if (samples[i].VertexIndex == endVertexIndex)
+            {
+                endPoint = samples[i].Point;
+                foundEnd = true;
+            }
+        }
+
+        if (!foundStart || !foundEnd)
+        {
+            return;
+        }
+
+        var axis = RealVector.FromPoints(in startPoint, in endPoint);
+        double axisLenSq = axis.Dot(in axis);
+        if (axisLenSq <= 0.0)
+        {
+            return;
+        }
+
+        var ordered = new List<(double T, int VertexIndex)>(samples.Count);
+        var seen = new HashSet<int>();
+
+        for (int i = 0; i < samples.Count; i++)
+        {
+            int vid = samples[i].VertexIndex;
+            if (!seen.Add(vid))
+            {
+                continue;
+            }
+
+            var p = samples[i].Point;
+            var ap = RealVector.FromPoints(in startPoint, in p);
+            double t = ap.Dot(in axis) / axisLenSq;
+            ordered.Add((t, vid));
+        }
+
+        ordered.Sort(static (a, b) => a.T.CompareTo(b.T));
+
+        int prev = ordered[0].VertexIndex;
+        for (int i = 1; i < ordered.Count; i++)
+        {
+            int next = ordered[i].VertexIndex;
+            if (prev == next)
+            {
+                continue;
+            }
+
+            segments.Add(new PairSegment(vertices[prev], vertices[next]));
+            prev = next;
         }
     }
 

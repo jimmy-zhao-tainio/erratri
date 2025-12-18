@@ -96,6 +96,15 @@ public abstract class MeshTopology
             globalVertexLookup[Quantize(position, invEpsilon)] = id;
         }
 
+        var vertexPositions = new RealPoint[graph.Vertices.Count];
+        foreach (var (id, position) in graph.Vertices)
+        {
+            if ((uint)id.Value < (uint)vertexPositions.Length)
+            {
+                vertexPositions[id.Value] = position;
+            }
+        }
+
         var trianglesA = graph.IntersectionSet.TrianglesA ?? throw new ArgumentNullException(nameof(graph.IntersectionSet.TrianglesA));
         var trianglesB = graph.IntersectionSet.TrianglesB ?? throw new ArgumentNullException(nameof(graph.IntersectionSet.TrianglesB));
 
@@ -162,15 +171,36 @@ public abstract class MeshTopology
                 int b = endId.Value;
                 if (b < a) (a, b) = (b, a);
 
-                if (!edgeIdByEndpoints.TryGetValue((a, b), out var edgeId))
+                if (edgeIdByEndpoints.TryGetValue((a, b), out var edgeId))
                 {
-                    System.Diagnostics.Debug.Fail("Edge not found for pair segment endpoints.");
+                    dst.Add(edgeId);
                     continue;
                 }
 
-                dst.Add(edgeId);
+                // If the global graph has been split by intermediate vertices, a pair-local
+                // segment may represent a "super-edge". Expand it to the existing chain.
+                if (!TryExpandSegmentToEdgeChain(
+                        startId.Value,
+                        endId.Value,
+                        vertexPositions,
+                        edgeIdByEndpoints,
+                        dst))
+                {
+                    System.Diagnostics.Debug.Fail("Edge not found for pair segment endpoints.");
+                }
             }
         }
+
+        // Edge propagation across shared mesh edges:
+        // If an intersection edge lies on an original mesh edge, ensure it is attached to both
+        // triangles incident to that mesh edge. This prevents cracks when one triangle does not
+        // appear in graph.Pairs (and would otherwise have no constraints) but shares a mesh edge
+        // containing intersection vertices with a neighboring triangle that does.
+        PropagateEdgesAcrossSharedMeshEdges(
+            meshA ? trianglesA : trianglesB,
+            perTriangleVertices,
+            triangleEdgeLists,
+            edgeById);
 
         for (int i = 0; i < triangleEdgeLists.Length; i++)
         {
@@ -248,6 +278,343 @@ public abstract class MeshTopology
             meshEdges.ToArray(),
             vertexEdges,
             loops.ToArray());
+    }
+
+    private static void PropagateEdgesAcrossSharedMeshEdges(
+        IReadOnlyList<Triangle> triangles,
+        IReadOnlyList<TriangleIntersectionVertex[]> perTriangleVertices,
+        IReadOnlyList<List<IntersectionEdgeId>> triangleEdgeLists,
+        IReadOnlyDictionary<int, (IntersectionVertexId Start, IntersectionVertexId End)> edgeById)
+    {
+        if (triangles.Count != perTriangleVertices.Count ||
+            triangles.Count != triangleEdgeLists.Count)
+        {
+            return;
+        }
+
+        var sharedEdges = BuildTriangleAdjacency(triangles);
+        if (sharedEdges.Count == 0)
+        {
+            return;
+        }
+
+        var scratchEdges0 = new List<IntersectionEdgeId>();
+        var scratchEdges1 = new List<IntersectionEdgeId>();
+        var union = new HashSet<int>();
+
+        foreach (var kvp in sharedEdges)
+        {
+            var adj = kvp.Value;
+            if (adj.Count != 2)
+            {
+                continue;
+            }
+
+            int t0 = adj.Tri0;
+            int e0 = adj.Edge0;
+            int t1 = adj.Tri1;
+            int e1 = adj.Edge1;
+
+            scratchEdges0.Clear();
+            scratchEdges1.Clear();
+            CollectEdgesOnTriangleEdge(perTriangleVertices[t0], triangleEdgeLists[t0], edgeById, e0, scratchEdges0);
+            CollectEdgesOnTriangleEdge(perTriangleVertices[t1], triangleEdgeLists[t1], edgeById, e1, scratchEdges1);
+
+            if (scratchEdges0.Count == 0 && scratchEdges1.Count == 0)
+            {
+                continue;
+            }
+
+            union.Clear();
+            AddEdgeValues(union, scratchEdges0);
+            AddEdgeValues(union, scratchEdges1);
+
+            foreach (int edgeValue in union)
+            {
+                if (!edgeById.TryGetValue(edgeValue, out var endpoints))
+                {
+                    continue;
+                }
+
+                // Avoid attaching edges whose endpoints are not attached as vertices on the triangle
+                // (TrianglePatchSet would otherwise fail when converting edge endpoints to point indices).
+                if (ContainsVertex(perTriangleVertices[t0], endpoints.Start) &&
+                    ContainsVertex(perTriangleVertices[t0], endpoints.End) &&
+                    !ContainsEdge(triangleEdgeLists[t0], edgeValue))
+                {
+                    triangleEdgeLists[t0].Add(new IntersectionEdgeId(edgeValue));
+                }
+
+                if (ContainsVertex(perTriangleVertices[t1], endpoints.Start) &&
+                    ContainsVertex(perTriangleVertices[t1], endpoints.End) &&
+                    !ContainsEdge(triangleEdgeLists[t1], edgeValue))
+                {
+                    triangleEdgeLists[t1].Add(new IntersectionEdgeId(edgeValue));
+                }
+            }
+        }
+    }
+
+    private static void CollectEdgesOnTriangleEdge(
+        TriangleIntersectionVertex[] verticesOnTriangle,
+        List<IntersectionEdgeId> triangleEdges,
+        IReadOnlyDictionary<int, (IntersectionVertexId Start, IntersectionVertexId End)> edgeById,
+        int edgeIndex,
+        List<IntersectionEdgeId> output)
+    {
+        output.Clear();
+        if (triangleEdges.Count == 0 || verticesOnTriangle.Length == 0)
+        {
+            return;
+        }
+
+        var verticesOnEdge = new HashSet<int>();
+        for (int i = 0; i < verticesOnTriangle.Length; i++)
+        {
+            var v = verticesOnTriangle[i];
+            if (GetEdgeMask(v.Barycentric, Tolerances.BarycentricInsideEpsilon).HasFlag(edgeIndex))
+            {
+                verticesOnEdge.Add(v.VertexId.Value);
+            }
+        }
+
+        if (verticesOnEdge.Count == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < triangleEdges.Count; i++)
+        {
+            int edgeValue = triangleEdges[i].Value;
+            if (!edgeById.TryGetValue(edgeValue, out var endpoints))
+            {
+                continue;
+            }
+
+            if (verticesOnEdge.Contains(endpoints.Start.Value) && verticesOnEdge.Contains(endpoints.End.Value))
+            {
+                output.Add(new IntersectionEdgeId(edgeValue));
+            }
+        }
+    }
+
+    private static void AddEdgeValues(HashSet<int> dst, List<IntersectionEdgeId> edges)
+    {
+        for (int i = 0; i < edges.Count; i++)
+        {
+            dst.Add(edges[i].Value);
+        }
+    }
+
+    private readonly struct EdgeMask
+    {
+        private readonly int _mask;
+        public EdgeMask(int mask) => _mask = mask;
+        public bool HasFlag(int edgeIndex) => (_mask & (1 << edgeIndex)) != 0;
+    }
+
+    private static EdgeMask GetEdgeMask(in Barycentric b, double eps)
+    {
+        int mask = 0;
+        if (Math.Abs(b.U) <= eps) mask |= 1 << 0; // edge P1-P2
+        if (Math.Abs(b.V) <= eps) mask |= 1 << 1; // edge P2-P0
+        if (Math.Abs(b.W) <= eps) mask |= 1 << 2; // edge P0-P1
+        return new EdgeMask(mask);
+    }
+
+    private static bool ContainsVertex(TriangleIntersectionVertex[] vertices, IntersectionVertexId vertexId)
+    {
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            if (vertices[i].VertexId.Value == vertexId.Value)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool ContainsEdge(List<IntersectionEdgeId> edges, int edgeValue)
+    {
+        for (int i = 0; i < edges.Count; i++)
+        {
+            if (edges[i].Value == edgeValue)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private readonly struct TriangleAdjacencyEntry
+    {
+        public readonly int Tri0;
+        public readonly int Edge0;
+        public readonly int Tri1;
+        public readonly int Edge1;
+        public readonly int Count;
+
+        public TriangleAdjacencyEntry(int tri0, int edge0, int tri1, int edge1, int count)
+        {
+            Tri0 = tri0;
+            Edge0 = edge0;
+            Tri1 = tri1;
+            Edge1 = edge1;
+            Count = count;
+        }
+    }
+
+    private static Dictionary<(Point A, Point B), TriangleAdjacencyEntry> BuildTriangleAdjacency(IReadOnlyList<Triangle> triangles)
+    {
+        var adjacency = new Dictionary<(Point A, Point B), TriangleAdjacencyEntry>();
+
+        for (int triIndex = 0; triIndex < triangles.Count; triIndex++)
+        {
+            var tri = triangles[triIndex];
+            AddEdge(in tri.P1, in tri.P2, triIndex, edgeIndex: 0);
+            AddEdge(in tri.P2, in tri.P0, triIndex, edgeIndex: 1);
+            AddEdge(in tri.P0, in tri.P1, triIndex, edgeIndex: 2);
+        }
+
+        return adjacency;
+
+        void AddEdge(in Point p0, in Point p1, int triIndex, int edgeIndex)
+        {
+            var key = NormalizeEdgeKey(in p0, in p1);
+            if (!adjacency.TryGetValue(key, out var entry))
+            {
+                adjacency.Add(key, new TriangleAdjacencyEntry(triIndex, edgeIndex, tri1: -1, edge1: -1, count: 1));
+                return;
+            }
+
+            if (entry.Count == 1)
+            {
+                adjacency[key] = new TriangleAdjacencyEntry(entry.Tri0, entry.Edge0, triIndex, edgeIndex, count: 2);
+                return;
+            }
+
+            adjacency[key] = new TriangleAdjacencyEntry(tri0: -1, edge0: -1, tri1: -1, edge1: -1, count: 3);
+        }
+    }
+
+    private static (Point A, Point B) NormalizeEdgeKey(in Point a, in Point b)
+    {
+        return ComparePoints(in a, in b) <= 0 ? (a, b) : (b, a);
+    }
+
+    private static int ComparePoints(in Point a, in Point b)
+    {
+        int cmp = a.X.CompareTo(b.X);
+        if (cmp != 0) return cmp;
+        cmp = a.Y.CompareTo(b.Y);
+        if (cmp != 0) return cmp;
+        return a.Z.CompareTo(b.Z);
+    }
+
+    private static bool TryExpandSegmentToEdgeChain(
+        int startVertexValue,
+        int endVertexValue,
+        RealPoint[] vertexPositions,
+        Dictionary<(int Min, int Max), IntersectionEdgeId> edgeIdByEndpoints,
+        List<IntersectionEdgeId> output)
+    {
+        if ((uint)startVertexValue >= (uint)vertexPositions.Length ||
+            (uint)endVertexValue >= (uint)vertexPositions.Length ||
+            startVertexValue == endVertexValue)
+        {
+            return false;
+        }
+
+        var start = vertexPositions[startVertexValue];
+        var end = vertexPositions[endVertexValue];
+
+        var ab = RealVector.FromPoints(in start, in end);
+        double abLenSq = ab.Dot(in ab);
+        if (abLenSq <= 0.0)
+        {
+            return false;
+        }
+
+        double tEps = Tolerances.FeatureBarycentricEpsilon;
+        double distanceEpsilon = 10.0 * Tolerances.MergeEpsilon;
+        double distanceEpsilonSquared = distanceEpsilon * distanceEpsilon;
+
+        var interior = new List<(double T, int VertexValue)>();
+
+        for (int v = 0; v < vertexPositions.Length; v++)
+        {
+            if (v == startVertexValue || v == endVertexValue)
+            {
+                continue;
+            }
+
+            var p = vertexPositions[v];
+            var ap = RealVector.FromPoints(in start, in p);
+            double t = ap.Dot(in ab) / abLenSq;
+            if (t <= tEps || t >= 1.0 - tEps)
+            {
+                continue;
+            }
+
+            var closest = Lerp(in start, in end, t);
+            if (p.DistanceSquared(in closest) > distanceEpsilonSquared)
+            {
+                continue;
+            }
+
+            interior.Add((t, v));
+        }
+
+        if (interior.Count == 0)
+        {
+            return false;
+        }
+
+        interior.Sort(static (a, b) => a.T.CompareTo(b.T));
+
+        int prev = startVertexValue;
+        for (int i = 0; i < interior.Count; i++)
+        {
+            int next = interior[i].VertexValue;
+            if (!TryAddEdge(prev, next))
+            {
+                return false;
+            }
+            prev = next;
+        }
+
+        return TryAddEdge(prev, endVertexValue);
+
+        bool TryAddEdge(int a, int b)
+        {
+            if (a == b)
+            {
+                return true;
+            }
+
+            if (b < a)
+            {
+                (a, b) = (b, a);
+            }
+
+            if (!edgeIdByEndpoints.TryGetValue((a, b), out var edgeId))
+            {
+                return false;
+            }
+
+            output.Add(edgeId);
+            return true;
+        }
+    }
+
+    private static RealPoint Lerp(in RealPoint a, in RealPoint b, double t)
+    {
+        return new RealPoint(
+            a.X + (b.X - a.X) * t,
+            a.Y + (b.Y - a.Y) * t,
+            a.Z + (b.Z - a.Z) * t);
     }
 
     private static (long X, long Y, long Z) Quantize(RealPoint point, double invEpsilon)
