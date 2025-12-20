@@ -10,14 +10,13 @@ Normalize the public boolean-op request into a canonical, deterministic Stage0â†
 - BP00
 
 ## Deliverables
-- [ ] `Contracts.Stage0to1`: DTOs + strict validators + `CONTRACT.md` + `ERRORS.md` + conformance tests + goldens
-- [ ] Stage0 implementation project that:
-  - [ ] Normalizes input meshes/policies/tolerances into canonical form
-  - [ ] Fails fast on unsupported request shapes/cases (stable error codes)
-  - [ ] Emits only `Contracts.Stage0to1` DTOs
-- [ ] Orchestrator wiring for Stage0 with strict pre/post validation
+- [x] `Contracts.Stage0to1`: DTOs + strict validators + `CONTRACT.md` + `ERRORS.md` + conformance tests + goldens
+- [x] Stage0 implementation project that:
+  - [x] Normalizes input meshes/policies/tolerances into canonical form
+  - [x] Fails fast on unsupported request shapes/cases (stable error codes)
+  - [x] Emits only `Contracts.Stage0to1` DTOs
+- [x] Orchestrator wiring for Stage0 with strict pre/post validation
 
 ## Done when
-- [ ] Contract conformance tests pass (good/bad + goldens)
-- [ ] Stage0 unit/integration tests prove strict pre/post validation and stable error codes
-
+- [x] Contract conformance tests pass (good/bad + goldens)
+- [x] Stage0 unit/integration tests prove strict pre/post validation and stable error codes

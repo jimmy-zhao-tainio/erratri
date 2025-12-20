@@ -49,4 +49,26 @@ public sealed class UnitTest1
         ContractValidationAssert.InvalidWithCode(() => pipeline.Run(-1), "BP00.ORCHESTRATOR.NEGATIVE_INPUT");
         Assert.Equal(new[] { "validate-in" }, calls);
     }
+
+    [Fact]
+    public void Then_RejectsInvalidOutputWhenValidationIsBypassed()
+    {
+        var stage = new Stage<int, int>(
+            Name: "BadOutput",
+            Execute: (v, _) => v,
+            ValidateInputStrict: _ => { },
+            ValidateOutputStrict: v =>
+            {
+                if (v == 0)
+                {
+                    var ctx = new ContractValidationContext();
+                    ctx.Add(ContractErrorCode.From("BP00.ORCHESTRATOR.INVALID_OUTPUT"), "Output must not be 0.", "v");
+                    ctx.ThrowIfAny();
+                }
+            });
+
+        var pipeline = BooleanPipeline.Start<int>().Then(stage);
+
+        ContractValidationAssert.InvalidWithCode(() => pipeline.Run(0), "BP00.ORCHESTRATOR.INVALID_OUTPUT");
+    }
 }
