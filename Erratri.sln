@@ -37,25 +37,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contracts.Testing", "Contra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contracts.Core.Tests", "Contracts.Core.Tests\Contracts.Core.Tests.csproj", "{AABD80A1-FD6C-4282-A62F-E27798A5AF9B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BooleanPipeline.Orchestrator", "BooleanPipeline.Orchestrator\BooleanPipeline.Orchestrator.csproj", "{D2703117-4448-4D42-BC67-9D3D14F34AB2}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BooleanPipeline.Orchestrator.Tests", "BooleanPipeline.Orchestrator.Tests\BooleanPipeline.Orchestrator.Tests.csproj", "{089085C7-0E2E-47C4-AC0C-143C565505B7}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contracts.Stage0to1", "Contracts.Stage0to1\Contracts.Stage0to1.csproj", "{390759FC-5C71-49AE-9585-2D2FAF7CE1FD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contracts.Stage0to1.Tests", "Contracts.Stage0to1.Tests\Contracts.Stage0to1.Tests.csproj", "{5891AF28-F9A6-4128-B017-19F832F4B839}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BooleanPipeline.Stage0", "BooleanPipeline.Stage0\BooleanPipeline.Stage0.csproj", "{898F39E8-EAE3-4234-B281-17B0FE5D1EC1}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BooleanPipeline.Stage0.Tests", "BooleanPipeline.Stage0.Tests\BooleanPipeline.Stage0.Tests.csproj", "{17C50757-4E00-4011-93DA-79BDD9B2F211}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contracts.Stage1to2", "Contracts.Stage1to2\Contracts.Stage1to2.csproj", "{A4B443B9-0397-454B-B84C-D26A5A81E82C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contracts.Stage1to2.Tests", "Contracts.Stage1to2.Tests\Contracts.Stage1to2.Tests.csproj", "{1F76ABF8-E402-494B-82A1-90FDF2F84284}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BooleanPipeline.Stage1", "BooleanPipeline.Stage1\BooleanPipeline.Stage1.csproj", "{3260CCA2-FD61-475D-8D49-4E7279E2EC29}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BooleanPipeline.Stage1.Tests", "BooleanPipeline.Stage1.Tests\BooleanPipeline.Stage1.Tests.csproj", "{98697D04-BE92-47A0-86B5-E7B8E425102A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -131,14 +119,6 @@ Global
 		{AABD80A1-FD6C-4282-A62F-E27798A5AF9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AABD80A1-FD6C-4282-A62F-E27798A5AF9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AABD80A1-FD6C-4282-A62F-E27798A5AF9B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D2703117-4448-4D42-BC67-9D3D14F34AB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D2703117-4448-4D42-BC67-9D3D14F34AB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D2703117-4448-4D42-BC67-9D3D14F34AB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D2703117-4448-4D42-BC67-9D3D14F34AB2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{089085C7-0E2E-47C4-AC0C-143C565505B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{089085C7-0E2E-47C4-AC0C-143C565505B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{089085C7-0E2E-47C4-AC0C-143C565505B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{089085C7-0E2E-47C4-AC0C-143C565505B7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{390759FC-5C71-49AE-9585-2D2FAF7CE1FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{390759FC-5C71-49AE-9585-2D2FAF7CE1FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{390759FC-5C71-49AE-9585-2D2FAF7CE1FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -147,14 +127,6 @@ Global
 		{5891AF28-F9A6-4128-B017-19F832F4B839}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5891AF28-F9A6-4128-B017-19F832F4B839}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5891AF28-F9A6-4128-B017-19F832F4B839}.Release|Any CPU.Build.0 = Release|Any CPU
-		{898F39E8-EAE3-4234-B281-17B0FE5D1EC1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{898F39E8-EAE3-4234-B281-17B0FE5D1EC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{898F39E8-EAE3-4234-B281-17B0FE5D1EC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{898F39E8-EAE3-4234-B281-17B0FE5D1EC1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{17C50757-4E00-4011-93DA-79BDD9B2F211}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{17C50757-4E00-4011-93DA-79BDD9B2F211}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{17C50757-4E00-4011-93DA-79BDD9B2F211}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{17C50757-4E00-4011-93DA-79BDD9B2F211}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A4B443B9-0397-454B-B84C-D26A5A81E82C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A4B443B9-0397-454B-B84C-D26A5A81E82C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A4B443B9-0397-454B-B84C-D26A5A81E82C}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -163,14 +135,6 @@ Global
 		{1F76ABF8-E402-494B-82A1-90FDF2F84284}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1F76ABF8-E402-494B-82A1-90FDF2F84284}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1F76ABF8-E402-494B-82A1-90FDF2F84284}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3260CCA2-FD61-475D-8D49-4E7279E2EC29}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3260CCA2-FD61-475D-8D49-4E7279E2EC29}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3260CCA2-FD61-475D-8D49-4E7279E2EC29}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3260CCA2-FD61-475D-8D49-4E7279E2EC29}.Release|Any CPU.Build.0 = Release|Any CPU
-		{98697D04-BE92-47A0-86B5-E7B8E425102A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{98697D04-BE92-47A0-86B5-E7B8E425102A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{98697D04-BE92-47A0-86B5-E7B8E425102A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{98697D04-BE92-47A0-86B5-E7B8E425102A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
