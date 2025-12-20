@@ -11,6 +11,7 @@
     <ProjectReference Include="..\Geometry\Geometry.csproj" />
     <ProjectReference Include="..\Geometry.Predicates\Geometry.Predicates.csproj" />
     <ProjectReference Include="..\Topology\Topology.csproj" />
+    <ProjectReference Include="..\Intersection.Pair\Intersection.Pair.csproj" />
     <ProjectReference Include="..\TriangleSubdivision\TriangleSubdivision.csproj" />
   </ItemGroup>
 </Project>
