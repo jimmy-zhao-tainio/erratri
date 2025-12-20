@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConstrainedTriangulator.Dem
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pslg", "Pslg\Pslg.csproj", "{03F186E5-7504-4859-83FC-5D6B188A3A76}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriangleSubdivision", "TriangleSubdivision\TriangleSubdivision.csproj", "{DA37234B-8E58-413B-B411-381D2D8BAC8D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +101,10 @@ Global
 		{03F186E5-7504-4859-83FC-5D6B188A3A76}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{03F186E5-7504-4859-83FC-5D6B188A3A76}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{03F186E5-7504-4859-83FC-5D6B188A3A76}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA37234B-8E58-413B-B411-381D2D8BAC8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA37234B-8E58-413B-B411-381D2D8BAC8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA37234B-8E58-413B-B411-381D2D8BAC8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA37234B-8E58-413B-B411-381D2D8BAC8D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
