@@ -4,6 +4,7 @@ using System.Linq;
 using Geometry;
 using Geometry.Predicates;
 using Kernel;
+using Pslg;
 using Xunit;
 
 namespace Kernel.Tests;
@@ -16,12 +17,25 @@ public class PslgCoreTests
             new Point(1, 0, 0),
             new Point(0, 1, 0));
 
-    private static PslgResult RunPslg(
+    private static PslgOutput RunPslg(
         Triangle triangle,
         IReadOnlyList<TriangleSubdivision.IntersectionPoint> points,
         IReadOnlyList<TriangleSubdivision.IntersectionSegment> segments)
     {
-        var input = new PslgInput(in triangle, points, segments);
+        var pslgPoints = new List<PslgPoint>(points.Count);
+        for (int i = 0; i < points.Count; i++)
+        {
+            pslgPoints.Add(new PslgPoint(points[i].Barycentric));
+        }
+
+        var pslgSegments = new List<PslgSegment>(segments.Count);
+        for (int i = 0; i < segments.Count; i++)
+        {
+            var seg = segments[i];
+            pslgSegments.Add(new PslgSegment(seg.StartIndex, seg.EndIndex));
+        }
+
+        var input = new PslgInput(in triangle, pslgPoints, pslgSegments);
         return PslgBuilder.Run(in input);
     }
 
@@ -472,7 +486,7 @@ public class PslgCoreTests
         }).SignedArea;
         var face = new PslgFace(new[] { 0, 1, 2, 3 }, signedArea: faceArea);
 
-        var tris = PslgBuilder.TriangulateSimple(face.OuterVertices, vertices, faceArea);
+        var tris = TriangleSubdivisionTriangulator.TriangulateSimple(face.OuterVertices, vertices, faceArea);
         Assert.Equal(2, tris.Count);
 
         double areaSum = 0.0;
@@ -509,7 +523,7 @@ public class PslgCoreTests
         }).SignedArea;
         var face = new PslgFace(new[] { 0, 1, 2, 3, 4 }, signedArea: faceArea);
 
-        var tris = PslgBuilder.TriangulateSimple(face.OuterVertices, vertices, faceArea);
+        var tris = TriangleSubdivisionTriangulator.TriangulateSimple(face.OuterVertices, vertices, faceArea);
         Assert.Equal(3, tris.Count);
 
         double areaSum = 0.0;
@@ -539,7 +553,7 @@ public class PslgCoreTests
         var face = new PslgFace(new[] { 0, 1, 2, 3 }, signedArea: 0.0);
 
         Assert.Throws<InvalidOperationException>(
-            () => PslgBuilder.TriangulateSimple(face.OuterVertices, vertices, expectedArea: 0.0));
+            () => TriangleSubdivisionTriangulator.TriangulateSimple(face.OuterVertices, vertices, expectedArea: 0.0));
     }
 
     [Fact]
@@ -567,7 +581,7 @@ public class PslgCoreTests
         var result = RunPslg(tri, points, segments);
 
         // Triangulate and map to patches.
-        var patches = result.Patches;
+        var patches = TriangleSubdivisionTriangulator.Triangulate(in tri, result);
 
         // Area check.
         double patchArea = patches.Sum(p => Math.Abs(new RealTriangle(p.P0, p.P1, p.P2).SignedArea));

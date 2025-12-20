@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Geometry;
+using Pslg;
 
 namespace Kernel;
 
@@ -14,8 +15,7 @@ namespace Kernel;
 // Current implementation:
 //   - If there are no segments, return the original triangle as a single patch.
 //   - Fast lane: single edge-to-edge chord is implemented.
-//   - General PSLG lane is implemented in PslgCore but not yet invoked here;
-//     non-fast patterns still throw to avoid silent fallbacks.
+//   - General PSLG lane uses the Pslg pipeline and TriangleSubdivisionTriangulator.
 public static class TriangleSubdivision
 {
     // Reference UV triangle has vertices (1,0), (0,1), (0,0); its area is 1/2.
@@ -221,9 +221,22 @@ public static class TriangleSubdivision
             default:
                 // General PSLG-based subdivision path: run the full PSLG pipeline
                 // for this triangle and use the resulting patches.
-                var pslgInput = new PslgInput(in triangle, points, filteredSegments);
-                var pslgResult = PslgBuilder.Run(in pslgInput);
-                return pslgResult.Patches;
+                var pslgPoints = new List<PslgPoint>(points.Count);
+                for (int i = 0; i < points.Count; i++)
+                {
+                    pslgPoints.Add(new PslgPoint(points[i].Barycentric));
+                }
+
+                var pslgSegments = new List<PslgSegment>(filteredSegments.Count);
+                for (int i = 0; i < filteredSegments.Count; i++)
+                {
+                    var seg = filteredSegments[i];
+                    pslgSegments.Add(new PslgSegment(seg.StartIndex, seg.EndIndex));
+                }
+
+                var pslgInput = new PslgInput(in triangle, pslgPoints, pslgSegments);
+                var pslgOutput = PslgBuilder.Run(in pslgInput);
+                return TriangleSubdivisionTriangulator.Triangulate(in triangle, pslgOutput);
         }
     }
 

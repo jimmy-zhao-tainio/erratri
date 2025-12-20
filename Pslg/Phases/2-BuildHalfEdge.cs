@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Kernel.Pslg.Phases;
+namespace Pslg.Phases;
 
 internal static class PslgHalfEdgePhase
 {

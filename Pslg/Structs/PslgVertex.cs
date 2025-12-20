@@ -1,8 +1,8 @@
 using System;
 
-namespace Kernel;
+namespace Pslg;
 
-internal readonly struct PslgVertex
+public readonly struct PslgVertex
 {
     public double X { get; }
     public double Y { get; }

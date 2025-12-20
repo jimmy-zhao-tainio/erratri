@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Geometry;
 
-namespace Kernel;
+namespace Pslg;
 
 internal sealed class PslgDebugSnapshot
 {

@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace Kernel;
+namespace Pslg;
 
-internal sealed class PslgFace
+public sealed class PslgFace
 {
     // CCW outer boundary vertex indices.
     public int[] OuterVertices { get; }

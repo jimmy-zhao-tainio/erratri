@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Geometry;
-using Kernel.Pslg.Phases;
+using Pslg.Phases;
 
-namespace Kernel;
+namespace Pslg;
 
 public static partial class PslgBuilder
 {
@@ -15,12 +15,11 @@ public static partial class PslgBuilder
     //   - builds the PSLG vertices/edges from intersection points/segments,
     //   - builds half-edges and faces,
     //   - selects interior faces with area checks,
-    //   - triangulates interior faces back to RealTriangle patches,
     //   - captures a debug snapshot of all intermediate structures.
     //
     // Callers should prefer this entry point over invoking the individual
     // phases directly.
-    public static PslgResult Run(in PslgInput input)
+    public static PslgOutput Run(in PslgInput input)
     {
         input.Validate();
 
@@ -36,9 +35,6 @@ public static partial class PslgBuilder
         var selectionState = PslgSelectionPhase.Run(faceState);
         selectionState.Validate();
 
-        var triangulationState = PslgTriangulationPhase.Run(input.Triangle, selectionState);
-        triangulationState.Validate();
-
         SetDebugSnapshot(
             input.Triangle,
             buildState.Vertices,
@@ -47,13 +43,11 @@ public static partial class PslgBuilder
             faceState.Faces,
             selectionState.Selection);
 
-        return new PslgResult(
-            input,
+        return new PslgOutput(
             buildState,
             halfEdgeState,
             faceState,
-            selectionState,
-            triangulationState);
+            selectionState);
     }
 
     private static void SetDebugSnapshot(
@@ -67,9 +61,4 @@ public static partial class PslgBuilder
         _lastSnapshot = new PslgDebugSnapshot(triangle, vertices, edges, halfEdges, faces, selection);
     }
 
-    internal static List<(int A, int B, int C)> TriangulateSimple(
-        int[] polygon,
-        IReadOnlyList<PslgVertex> vertices,
-        double expectedArea)
-        => PslgTriangulationPhase.TriangulateSimple(polygon, vertices, expectedArea);
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Geometry;
 using Kernel;
+using Pslg;
 using Xunit;
 
 namespace Kernel.Tests;
@@ -33,7 +34,20 @@ public class PslgTriangulationTests
             new(startIndex: 0, endIndex: 2)
         };
 
-        var input = new PslgInput(in triangle, onEdgePoints, segments);
+        var pslgPoints = new List<PslgPoint>(onEdgePoints.Count);
+        for (int i = 0; i < onEdgePoints.Count; i++)
+        {
+            pslgPoints.Add(new PslgPoint(onEdgePoints[i].Barycentric));
+        }
+
+        var pslgSegments = new List<PslgSegment>(segments.Count);
+        for (int i = 0; i < segments.Count; i++)
+        {
+            var seg = segments[i];
+            pslgSegments.Add(new PslgSegment(seg.StartIndex, seg.EndIndex));
+        }
+
+        var input = new PslgInput(in triangle, pslgPoints, pslgSegments);
         var result = PslgBuilder.Run(in input);
 
         Assert.NotEmpty(result.Selection.InteriorFaces);
@@ -75,7 +89,7 @@ public class PslgTriangulationTests
 
         // Act – must not throw even though the left edge is subdivided
         // by collinear intermediate points.
-        var triangles = PslgBuilder.TriangulateSimple(polygon, vertices, expectedArea);
+        var triangles = TriangleSubdivisionTriangulator.TriangulateSimple(polygon, vertices, expectedArea);
 
         Assert.NotEmpty(triangles);
 
@@ -117,7 +131,7 @@ public class PslgTriangulationTests
         int[] polygon = { 0, 1, 2, 3, 4, 5 };
         double expectedArea = 4.0; // 2x2 rectangle
 
-        var tris = PslgBuilder.TriangulateSimple(polygon, vertices, expectedArea);
+        var tris = TriangleSubdivisionTriangulator.TriangulateSimple(polygon, vertices, expectedArea);
 
         Assert.NotEmpty(tris);
 

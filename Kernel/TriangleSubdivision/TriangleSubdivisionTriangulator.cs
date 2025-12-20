@@ -3,23 +3,22 @@ using System.Collections.Generic;
 using ConstrainedTriangulator;
 using Geometry;
 using Geometry.Predicates;
+using Pslg;
 
-namespace Kernel.Pslg.Phases;
+namespace Kernel;
 
-// Phase #5: triangulate the PSLG and map triangles back to world-space patches.
-internal static class PslgTriangulationPhase
+// Triangulate PSLG output and map triangles back to world-space patches.
+internal static class TriangleSubdivisionTriangulator
 {
-    internal static PslgTriangulationState Run(
-        Triangle triangle,
-        PslgSelectionState selectionState)
+    internal static IReadOnlyList<RealTriangle> Triangulate(
+        in Triangle triangle,
+        PslgOutput pslg)
     {
-        if (selectionState.Vertices is null) throw new ArgumentNullException(nameof(selectionState));
-        if (selectionState.Edges is null) throw new ArgumentNullException(nameof(selectionState));
-        if (selectionState.Selection.InteriorFaces is null) throw new ArgumentNullException(nameof(selectionState));
+        if (pslg is null) throw new ArgumentNullException(nameof(pslg));
 
-        var vertices = selectionState.Vertices;
-        var edges = selectionState.Edges;
-        var interiorFaces = selectionState.Selection.InteriorFaces;
+        var vertices = pslg.Vertices ?? throw new ArgumentNullException(nameof(pslg.Vertices));
+        var edges = pslg.Edges ?? throw new ArgumentNullException(nameof(pslg.Edges));
+        var interiorFaces = pslg.Selection.InteriorFaces ?? throw new ArgumentNullException(nameof(pslg.Selection));
 
         var uvPoints = new List<RealPoint2D>(vertices.Count);
         for (int i = 0; i < vertices.Count; i++)
@@ -68,13 +67,15 @@ internal static class PslgTriangulationPhase
 
         var patches = new List<RealTriangle>();
 
+        var triangleLocal = triangle;
+
         RealPoint MapVertex(int idx)
         {
             double u = vertices[idx].X;
             double v = vertices[idx].Y;
             double w = 1.0 - u - v;
             var bary = new Barycentric(u, v, w);
-            return Barycentric.ToRealPointOnTriangle(in triangle, in bary);
+            return Barycentric.ToRealPointOnTriangle(in triangleLocal, in bary);
         }
 
         for (int fi = 0; fi < faceRegions.Count; fi++)
@@ -116,13 +117,7 @@ internal static class PslgTriangulationPhase
             }
         }
 
-        return new PslgTriangulationState(
-            selectionState.Vertices,
-            selectionState.Edges,
-            selectionState.HalfEdges,
-            selectionState.Faces,
-            selectionState.Selection,
-            patches);
+        return patches;
     }
 
     internal static List<(int A, int B, int C)> TriangulateSimple(

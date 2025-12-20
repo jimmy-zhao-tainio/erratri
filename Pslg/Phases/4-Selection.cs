@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Geometry;
 
-namespace Kernel.Pslg.Phases;
+namespace Pslg.Phases;
 
 internal static class PslgSelectionPhase
 {

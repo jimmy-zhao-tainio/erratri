@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace Kernel;
+namespace Pslg;
 
-internal readonly struct PslgFaceSelection
+public readonly struct PslgFaceSelection
 {
     public IReadOnlyList<PslgFace> InteriorFaces { get; }
 

@@ -1,18 +1,25 @@
 using System.Collections.Generic;
-using Geometry;
 
-namespace Kernel;
+namespace Pslg;
 
 // Output of the Build phase: PSLG vertices and edges.
 internal readonly struct PslgBuildState
 {
     internal IReadOnlyList<PslgVertex> Vertices { get; }
     internal IReadOnlyList<PslgEdge> Edges { get; }
+    internal IReadOnlyList<PslgPoint> Points { get; }
+    internal IReadOnlyList<PslgSegment> Segments { get; }
 
-    internal PslgBuildState(IReadOnlyList<PslgVertex> vertices, IReadOnlyList<PslgEdge> edges)
+    internal PslgBuildState(
+        IReadOnlyList<PslgVertex> vertices,
+        IReadOnlyList<PslgEdge> edges,
+        IReadOnlyList<PslgPoint> points,
+        IReadOnlyList<PslgSegment> segments)
     {
         Vertices = vertices;
         Edges = edges;
+        Points = points;
+        Segments = segments;
     }
 
     internal void Validate()
@@ -165,38 +172,3 @@ internal readonly struct PslgSelectionState
     }
 }
 
-// Output of the triangulation phase.
-internal readonly struct PslgTriangulationState
-{
-    internal IReadOnlyList<PslgVertex> Vertices { get; }
-    internal IReadOnlyList<PslgEdge> Edges { get; }
-    internal IReadOnlyList<PslgHalfEdge> HalfEdges { get; }
-    internal IReadOnlyList<PslgFace> Faces { get; }
-    internal PslgFaceSelection Selection { get; }
-    internal IReadOnlyList<RealTriangle> Patches { get; }
-
-    internal PslgTriangulationState(
-        IReadOnlyList<PslgVertex> vertices,
-        IReadOnlyList<PslgEdge> edges,
-        IReadOnlyList<PslgHalfEdge> halfEdges,
-        IReadOnlyList<PslgFace> faces,
-        PslgFaceSelection selection,
-        IReadOnlyList<RealTriangle> patches)
-    {
-        Vertices = vertices;
-        Edges = edges;
-        HalfEdges = halfEdges;
-        Faces = faces;
-        Selection = selection;
-        Patches = patches;
-    }
-
-    internal void Validate()
-    {
-        System.Diagnostics.Debug.Assert(Patches != null, "Patches should not be null.");
-        if (Patches is null) return;
-
-        // Optional: ensure positive area for patches.
-        // TODO: add area checks if desired (requires RealTriangle access in debug assertions).
-    }
-}

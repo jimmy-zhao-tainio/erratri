@@ -1,6 +1,6 @@
-namespace Kernel;
+namespace Pslg;
 
-internal struct PslgHalfEdge
+public struct PslgHalfEdge
 {
     public int From { get; set; }
     public int To { get; set; }

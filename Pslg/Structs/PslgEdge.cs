@@ -1,6 +1,6 @@
-namespace Kernel;
+namespace Pslg;
 
-internal readonly struct PslgEdge
+public readonly struct PslgEdge
 {
     public int Start { get; }
     public int End { get; }

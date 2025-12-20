@@ -4,7 +4,7 @@ using System.Linq;
 using Geometry;
 using Geometry.Predicates;
 
-namespace Kernel.Pslg.Phases;
+namespace Pslg.Phases;
 
 internal static class PslgFacePhase
 {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Geometry;
 using Geometry.Predicates;
 
-namespace Kernel.Pslg.Phases;
+namespace Pslg.Phases;
 
 // Phase #1: build an initial PSLG for one triangle and its intersection points/segments.
 // Vertices:
@@ -13,7 +13,7 @@ namespace Kernel.Pslg.Phases;
 //   - 3..: intersection points in the same order as the input list, mapped to (u, v).
 // Edges:
 //   - Boundary edges: (0,1), (1,2), (2,0) marked IsBoundary = true.
-//   - Segment edges: for each IntersectionSegment (i,j), add an edge between (3 + i) and (3 + j).
+//   - Segment edges: for each segment (i,j), add an edge between (3 + i) and (3 + j).
 // This is intentionally minimal and does not yet split boundary edges or build half-edge/face structures.
 internal static class PslgBuildPhase
 {
@@ -52,7 +52,35 @@ internal static class PslgBuildPhase
         BuildIntersectionEdges(points, segments, indexMap, vertices, edges, edgeKeys);
         VerifyNoCrossings(vertices, edges);
 
-        return new PslgBuildState(vertices, edges);
+        var canonicalPoints = new PslgPoint[points.Count];
+        for (int i = 0; i < points.Count; i++)
+        {
+            int rep = indexMap[3 + i];
+            var v = vertices[rep];
+            var barycentric = new Barycentric(v.X, v.Y, 1.0 - v.X - v.Y);
+            canonicalPoints[i] = new PslgPoint(barycentric);
+        }
+
+        var canonicalSegments = new List<PslgSegment>(segments.Count);
+        for (int i = 0; i < segments.Count; i++)
+        {
+            var seg = segments[i];
+            if (seg.StartIndex == seg.EndIndex)
+            {
+                continue;
+            }
+
+            int startRep = indexMap[3 + seg.StartIndex];
+            int endRep = indexMap[3 + seg.EndIndex];
+            if (startRep == endRep)
+            {
+                continue;
+            }
+
+            canonicalSegments.Add(new PslgSegment(seg.StartIndex, seg.EndIndex));
+        }
+
+        return new PslgBuildState(vertices, edges, canonicalPoints, canonicalSegments);
     }
 
     // Snap and deduplicate PSLG vertices.
@@ -275,10 +303,10 @@ internal static class PslgBuildPhase
         }
     }
 
-    // Build intersection edges between PSLG vertices corresponding to IntersectionSegment endpoints (after vertex deduplication).
+    // Build intersection edges between PSLG vertices corresponding to segment endpoints (after vertex deduplication).
     private static void BuildIntersectionEdges(
-        IReadOnlyList<TriangleSubdivision.IntersectionPoint> points,
-        IReadOnlyList<TriangleSubdivision.IntersectionSegment> segments,
+        IReadOnlyList<PslgPoint> points,
+        IReadOnlyList<PslgSegment> segments,
         int[] indexMap,
         List<PslgVertex> vertices,
         List<PslgEdge> edges,
