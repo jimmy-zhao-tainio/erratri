@@ -6,7 +6,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Geometry\Geometry.csproj" />
-    <ProjectReference Include="..\Geometry.Predicates\Geometry.Predicates.csproj" />
     <ProjectReference Include="..\Topology\Topology.csproj" />
     <ProjectReference Include="..\Boolean.Intersection.Pair\Boolean.Intersection.Pair.csproj" />
     <ProjectReference Include="..\Boolean.Intersection.Graph\Boolean.Intersection.Graph.csproj" />
@@ -14,8 +13,6 @@
     <ProjectReference Include="..\Boolean.Classification\Boolean.Classification.csproj" />
     <ProjectReference Include="..\Boolean.Selection\Boolean.Selection.csproj" />
     <ProjectReference Include="..\Boolean.Assembly\Boolean.Assembly.csproj" />
-    <ProjectReference Include="..\Boolean.Pipeline\Boolean.Pipeline.csproj" />
-    <ProjectReference Include="..\Boolean.Triangulation\Boolean.Triangulation.csproj" />
   </ItemGroup>
 </Project>
 

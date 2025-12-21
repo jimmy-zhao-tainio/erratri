@@ -6,7 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Geometry\Geometry.csproj" />
-    <ProjectReference Include="..\Intersection.Graph\Intersection.Graph.csproj" />
-    <ProjectReference Include="..\TriangleSubdivision\TriangleSubdivision.csproj" />
+    <ProjectReference Include="..\Boolean.Classification\Boolean.Classification.csproj" />
   </ItemGroup>
 </Project>
+

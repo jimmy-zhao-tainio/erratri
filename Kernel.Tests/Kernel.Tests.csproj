@@ -14,15 +14,16 @@
     <ProjectReference Include="..\Geometry\Geometry.csproj" />
     <ProjectReference Include="..\Topology\Topology.csproj" />
     <ProjectReference Include="..\Kernel\Kernel.csproj" />
-    <ProjectReference Include="..\Intersection.Pair\Intersection.Pair.csproj" />
-    <ProjectReference Include="..\Intersection.Graph\Intersection.Graph.csproj" />
-    <ProjectReference Include="..\Patching\Patching.csproj" />
-    <ProjectReference Include="..\Classification\Classification.csproj" />
-    <ProjectReference Include="..\Selection\Selection.csproj" />
-    <ProjectReference Include="..\Assembly\Assembly.csproj" />
-    <ProjectReference Include="..\MeshInterop\MeshInterop.csproj" />
-    <ProjectReference Include="..\Pslg\Pslg.csproj" />
-    <ProjectReference Include="..\TriangleSubdivision\TriangleSubdivision.csproj" />
+    <ProjectReference Include="..\Boolean.Intersection.Pair\Boolean.Intersection.Pair.csproj" />
+    <ProjectReference Include="..\Boolean.Intersection.Graph\Boolean.Intersection.Graph.csproj" />
+    <ProjectReference Include="..\Boolean.Patching\Boolean.Patching.csproj" />
+    <ProjectReference Include="..\Boolean.Classification\Boolean.Classification.csproj" />
+    <ProjectReference Include="..\Boolean.Selection\Boolean.Selection.csproj" />
+    <ProjectReference Include="..\Boolean.Assembly\Boolean.Assembly.csproj" />
+    <ProjectReference Include="..\Boolean.MeshInterop\Boolean.MeshInterop.csproj" />
+    <ProjectReference Include="..\Boolean.Triangulation.Pslg\Boolean.Triangulation.Pslg.csproj" />
+    <ProjectReference Include="..\Boolean.Triangulation\Boolean.Triangulation.csproj" />
     <ProjectReference Include="..\World\World.csproj" />
   </ItemGroup>
 </Project>
+

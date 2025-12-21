@@ -6,8 +6,9 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Geometry\Geometry.csproj" />
-    <ProjectReference Include="..\Geometry.Predicates\Geometry.Predicates.csproj" />
-    <ProjectReference Include="..\ConstrainedTriangulator\ConstrainedTriangulator.csproj" />
-    <ProjectReference Include="..\Pslg\Pslg.csproj" />
+    <ProjectReference Include="..\Topology\Topology.csproj" />
+    <ProjectReference Include="..\Boolean.Intersection.Pair\Boolean.Intersection.Pair.csproj" />
+    <ProjectReference Include="..\Boolean.Patching\Boolean.Patching.csproj" />
   </ItemGroup>
 </Project>
+

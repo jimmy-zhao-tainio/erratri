@@ -1,4 +1,5 @@
 using System;
+using Boolean.Pipeline;
 using Topology;
 
 namespace Kernel;
@@ -26,6 +27,6 @@ public static class BooleanOps
         if (a is null) throw new ArgumentNullException(nameof(a));
         if (b is null) throw new ArgumentNullException(nameof(b));
 
-        return AssemblyEntry.Run(a, b, op);
+        return PipelineEntry.Run(a, b, op);
     }
 }

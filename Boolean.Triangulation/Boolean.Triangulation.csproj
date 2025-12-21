@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Geometry\Geometry.csproj" />
+    <ProjectReference Include="..\Geometry.Predicates\Geometry.Predicates.csproj" />
+    <ProjectReference Include="..\Boolean.Triangulation.Triangulator\Boolean.Triangulation.Triangulator.csproj" />
+    <ProjectReference Include="..\Boolean.Triangulation.Pslg\Boolean.Triangulation.Pslg.csproj" />
+  </ItemGroup>
+</Project>
+

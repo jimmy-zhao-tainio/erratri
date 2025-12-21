@@ -6,8 +6,8 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Geometry\Geometry.csproj" />
-    <ProjectReference Include="..\Topology\Topology.csproj" />
-    <ProjectReference Include="..\Intersection.Pair\Intersection.Pair.csproj" />
-    <ProjectReference Include="..\Patching\Patching.csproj" />
+    <ProjectReference Include="..\Boolean.Intersection.Graph\Boolean.Intersection.Graph.csproj" />
+    <ProjectReference Include="..\Boolean.Triangulation\Boolean.Triangulation.csproj" />
   </ItemGroup>
 </Project>
+

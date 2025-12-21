@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
 using Geometry;
+using Kernel;
 using Kernel.Intersection.Graph.Index;
 using Topology;
 
-namespace Kernel;
+namespace Boolean.Pipeline;
 
-public static class AssemblyEntry
+public static class PipelineEntry
 {
     public static RealMesh Run(Mesh left, Mesh right, BooleanOperation op)
     {

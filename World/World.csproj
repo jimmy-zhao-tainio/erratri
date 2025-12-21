@@ -10,10 +10,11 @@
     <ProjectReference Include="..\\Geometry.Predicates\\Geometry.Predicates.csproj" />
     <ProjectReference Include="..\\IO\\IO.csproj" />
     <ProjectReference Include="..\\Kernel\\Kernel.csproj" />
-    <ProjectReference Include="..\\Selection\\Selection.csproj" />
-    <ProjectReference Include="..\\MeshInterop\\MeshInterop.csproj" />
+    <ProjectReference Include="..\\Boolean.Selection\\Boolean.Selection.csproj" />
+    <ProjectReference Include="..\\Boolean.MeshInterop\\Boolean.MeshInterop.csproj" />
   </ItemGroup>
 </Project>
+
 
 
 
