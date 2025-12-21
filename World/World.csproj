@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Boolean.Operations\Boolean.Operation.csproj" />
+    <ProjectReference Include="..\Boolean.Operation\Boolean.Operation.csproj" />
     <ProjectReference Include="..\Geometry\Geometry.csproj" />
     <ProjectReference Include="..\\Topology\\Topology.csproj" />
     <ProjectReference Include="..\\Geometry.Predicates\\Geometry.Predicates.csproj" />

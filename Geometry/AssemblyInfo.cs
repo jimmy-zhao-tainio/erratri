@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Boolean.Operations")]
+[assembly: InternalsVisibleTo("Boolean.Operation")]
 [assembly: InternalsVisibleTo("Boolean.Intersection.Pair")]
 [assembly: InternalsVisibleTo("Boolean.Intersection.Graph")]
 [assembly: InternalsVisibleTo("Boolean.MeshInterop")]

@@ -23,8 +23,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topology.Tests", "Topology.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.Intersections", "Demo.Intersections\Demo.Intersections.csproj", "{D6A0C56B-57A7-4B3E-80CE-3F91C2D4EEA4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boolean.Tests", "Kernel.Tests\Boolean.Tests.csproj", "{58653B3A-B792-4F19-ADFB-AC694861312B}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boolean.Pipeline", "Boolean.Pipeline\Boolean.Pipeline.csproj", "{37B28CDE-1D32-4FEF-9AA7-092356DDD9D0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boolean.Assembly", "Boolean.Assembly\Boolean.Assembly.csproj", "{144B20F2-AA1E-45D7-8D44-E3535D4D436E}"
@@ -49,7 +47,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boolean.Triangulation.Trian
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boolean.Triangulation.Triangulator.Demo", "Boolean.Triangulation.Triangulator.Demo\Boolean.Triangulation.Triangulator.Demo.csproj", "{AFABB009-B0F1-481B-94EE-8C609D1B28AA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boolean.Operation", "Boolean.Operations\Boolean.Operation.csproj", "{EE42D80B-F746-41DE-97DB-73A319E7ABFF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boolean.Operation", "Boolean.Operation\Boolean.Operation.csproj", "{EE42D80B-F746-41DE-97DB-73A319E7ABFF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.Boolean", "Tests.Boolean\Tests.Boolean.csproj", "{1AF7B88F-45A3-4732-93F3-7224EF3EA9C5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -97,10 +97,6 @@ Global
 		{D6A0C56B-57A7-4B3E-80CE-3F91C2D4EEA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D6A0C56B-57A7-4B3E-80CE-3F91C2D4EEA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D6A0C56B-57A7-4B3E-80CE-3F91C2D4EEA4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{58653B3A-B792-4F19-ADFB-AC694861312B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{58653B3A-B792-4F19-ADFB-AC694861312B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{58653B3A-B792-4F19-ADFB-AC694861312B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{58653B3A-B792-4F19-ADFB-AC694861312B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{37B28CDE-1D32-4FEF-9AA7-092356DDD9D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{37B28CDE-1D32-4FEF-9AA7-092356DDD9D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{37B28CDE-1D32-4FEF-9AA7-092356DDD9D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -153,6 +149,10 @@ Global
 		{EE42D80B-F746-41DE-97DB-73A319E7ABFF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EE42D80B-F746-41DE-97DB-73A319E7ABFF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EE42D80B-F746-41DE-97DB-73A319E7ABFF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1AF7B88F-45A3-4732-93F3-7224EF3EA9C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1AF7B88F-45A3-4732-93F3-7224EF3EA9C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1AF7B88F-45A3-4732-93F3-7224EF3EA9C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1AF7B88F-45A3-4732-93F3-7224EF3EA9C5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
