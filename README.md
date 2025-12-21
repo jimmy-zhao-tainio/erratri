@@ -57,7 +57,7 @@ See the full, runnable code in:
 
 The boolean mesher lives in `Kernel` and is deliberately layered:
 
-- **Intersection graph + topology**: `IntersectionSet`, `IntersectionGraph`, `TriangleIntersectionIndex`, and `MeshATopology` / `MeshBTopology` capture where two closed meshes intersect and how triangles are connected.
+- **Intersection graph + topology**: `IntersectionSet`, `IntersectionGraph`, `Intersection.Graph.Index.TriangleIntersectionIndex`, and `MeshATopology` / `MeshBTopology` capture where two closed meshes intersect and how triangles are connected.
 - **Per-triangle PSLG subdivision**: `TriangleSubdivision` and `PslgBuilder` build a local planar straight-line graph in barycentric UV space for each intersected triangle, then triangulate interior faces back to 3D.
 - **Patch classification and selection**: `TrianglePatchSet`, `PatchClassifier`, and `BooleanPatchClassifier` group subdivided triangles into patches, classify them as inside/outside the other solid, and pick which patches to keep for each boolean operation.
 - **Assembly and validation**: `BooleanMeshAssembler` merges vertices, assembles triangles into a `BooleanMesh`, and runs strict manifold and degeneracy checks. `BooleanOps` is a small façade that ties these layers together for `ClosedSurface` inputs.

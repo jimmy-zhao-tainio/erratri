@@ -13,6 +13,7 @@
     <ProjectReference Include="..\IO\IO.csproj" />
     <ProjectReference Include="..\Kernel\Kernel.csproj" />
     <ProjectReference Include="..\Intersection.Pair\Intersection.Pair.csproj" />
+    <ProjectReference Include="..\Intersection.Graph\Intersection.Graph.csproj" />
     <ProjectReference Include="..\TriangleSubdivision\TriangleSubdivision.csproj" />
   </ItemGroup>
 </Project>

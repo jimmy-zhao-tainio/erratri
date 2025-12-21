@@ -4,7 +4,7 @@ Goal: split Kernel into independent libraries in small, buildable steps.
 
 - [x] Step 01: Extract `TriangleSubdivision` (project + `Kernel/TriangleSubdivision/*`).
 - [x] Step 02: Extract `Intersection.Pair` (`IntersectionSet`, `PairFeatures`, `BarycentricVertices`).
-- [ ] Step 03: Extract `Intersection.Graph` (`IntersectionGraph`, `Intersection.Graph.Index` for `TriangleIntersectionIndex`, `Mesh*Topology`, `IntersectionCurve*`).
+- [x] Step 03: Extract `Intersection.Graph` (`IntersectionGraph`, `Intersection.Graph.Index` for `TriangleIntersectionIndex`, `Mesh*Topology`, `IntersectionCurve*`).
 - [ ] Step 04: Extract `Patching` (`TrianglePatchSet`).
 - [ ] Step 05: Extract `Classification` (`PatchClassifier`, `PointInMeshTester`, `RayIntersectsTriangle`).
 - [ ] Step 06: Extract `Selection` (`BooleanPatchSet`, `BooleanPatchClassifier`, `BooleanOperation`).
