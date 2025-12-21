@@ -1,13 +1,13 @@
 using System.Linq;
 using Geometry;
-using Kernel;
+using Boolean;
 using Topology;
 using World;
 using Xunit;
 using WTetrahedron = World.Tetrahedron;
-using Kernel.Intersection.Graph.Index;
+using Boolean.Intersection.Graph.Index;
 
-namespace Kernel.Tests;
+namespace Boolean.Tests;
 
 
 

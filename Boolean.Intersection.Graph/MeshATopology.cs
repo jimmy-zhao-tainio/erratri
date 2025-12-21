@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Geometry;
-using Kernel.Intersection.Graph.Index;
+using Boolean.Intersection.Graph.Index;
 
-namespace Kernel;
+namespace Boolean;
 
 
 

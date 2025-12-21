@@ -5,11 +5,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Boolean.Operations\Boolean.Operation.csproj" />
     <ProjectReference Include="..\Geometry\Geometry.csproj" />
     <ProjectReference Include="..\\Topology\\Topology.csproj" />
     <ProjectReference Include="..\\Geometry.Predicates\\Geometry.Predicates.csproj" />
     <ProjectReference Include="..\\IO\\IO.csproj" />
-    <ProjectReference Include="..\\Kernel\\Kernel.csproj" />
     <ProjectReference Include="..\\Boolean.Selection\\Boolean.Selection.csproj" />
     <ProjectReference Include="..\\Boolean.MeshInterop\\Boolean.MeshInterop.csproj" />
   </ItemGroup>

@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using Geometry;
-using Kernel;
+using Boolean;
 using Topology;
 using Xunit;
 using WTetrahedron = World.Tetrahedron;
 
-namespace Kernel.Tests;
+namespace Boolean.Tests;
 
 public class BooleanTouchingSolidsTests
 {
@@ -24,7 +24,7 @@ public class BooleanTouchingSolidsTests
             new Point(0, 2, 0),
             new Point(0, 0, -2));
 
-        var mesh = BooleanOps.Intersection(a.Mesh, b.Mesh);
+        var mesh = Boolean.Operation.Intersection(a.Mesh, b.Mesh);
         Assert.Empty(mesh.Triangles);
     }
 
@@ -43,7 +43,7 @@ public class BooleanTouchingSolidsTests
             new Point(0, 2, 0),
             new Point(0, 0, -2));
 
-        var mesh = BooleanOps.Union(a.Mesh, b.Mesh);
+        var mesh = Boolean.Operation.Union(a.Mesh, b.Mesh);
         Assert.NotEmpty(mesh.Triangles);
     }
 
@@ -53,7 +53,7 @@ public class BooleanTouchingSolidsTests
         var boxA = MakeBoxMesh(new Point(0, 0, 0), width: 10, depth: 10, height: 10);
         var boxB = MakeBoxMesh(new Point(10, 0, 0), width: 10, depth: 10, height: 10);
 
-        var mesh = BooleanOps.Intersection(boxA, boxB);
+        var mesh = Boolean.Operation.Intersection(boxA, boxB);
         Assert.Empty(mesh.Triangles);
     }
 
@@ -63,7 +63,7 @@ public class BooleanTouchingSolidsTests
         var boxA = MakeBoxMesh(new Point(0, 0, 0), width: 10, depth: 10, height: 10);
         var boxB = MakeBoxMesh(new Point(100, 0, 0), width: 10, depth: 10, height: 10);
 
-        var mesh = BooleanOps.Intersection(boxA, boxB);
+        var mesh = Boolean.Operation.Intersection(boxA, boxB);
         Assert.Empty(mesh.Triangles);
     }
 

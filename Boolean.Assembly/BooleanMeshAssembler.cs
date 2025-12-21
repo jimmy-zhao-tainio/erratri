@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Geometry;
 using Topology;
 
-namespace Kernel;
+namespace Boolean;
 
 // Assembles a mesh from selected boolean patches by quantizing vertices and emitting indexed triangles.
 // NOTE: Pipeline stages are split into separate files in Kernel/BooleanAssembly/.

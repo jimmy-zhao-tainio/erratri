@@ -1,11 +1,11 @@
 using Geometry;
-using Kernel;
+using Boolean;
 using System;
 using System.Collections.Generic;
 using Topology;
 using Xunit;
 
-namespace Kernel.Tests;
+namespace Boolean.Tests;
 
 public class PairFeaturesTests
 {

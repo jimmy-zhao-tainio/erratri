@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Geometry;
 
-namespace Kernel;
+namespace Boolean;
 
 internal static class VertexQuantizer
 {

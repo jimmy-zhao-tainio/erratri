@@ -4,9 +4,9 @@ using Topology;
 using World;
 using Xunit;
 using WTetrahedron = World.Tetrahedron;
-using Kernel.Intersection.Graph.Index;
+using Boolean.Intersection.Graph.Index;
 
-namespace Kernel.Tests;
+namespace Boolean.Tests;
 
 
 
@@ -22,7 +22,7 @@ public class BooleanMeshAssemblerTests
 
 
 
-    private static RealMesh Build(BooleanOperation op, WTetrahedron a, WTetrahedron b)
+    private static RealMesh Build(BooleanOperationType op, WTetrahedron a, WTetrahedron b)
 
 
 
@@ -134,7 +134,7 @@ public class BooleanMeshAssemblerTests
 
 
 
-        var mesh = Build(BooleanOperation.Union, a, b);
+        var mesh = Build(BooleanOperationType.Union, a, b);
 
 
 
@@ -210,7 +210,7 @@ public class BooleanMeshAssemblerTests
 
 
 
-        var mesh = Build(BooleanOperation.Intersection, inner, outer);
+        var mesh = Build(BooleanOperationType.Intersection, inner, outer);
 
 
 
@@ -310,7 +310,7 @@ public class BooleanMeshAssemblerTests
 
 
 
-        var mesh = Build(BooleanOperation.Union, a, b);
+        var mesh = Build(BooleanOperationType.Union, a, b);
 
 
 

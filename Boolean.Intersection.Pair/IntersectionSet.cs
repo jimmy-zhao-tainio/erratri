@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Geometry;
 using Topology;
 
-namespace Kernel;
+namespace Boolean;
 
 // Represents two triangle meshes plus the sparse set of intersecting
 // triangle pairs between them, classified by IntersectionType.

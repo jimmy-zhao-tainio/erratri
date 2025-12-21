@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using Geometry;
-using Kernel;
+using Boolean;
 using Topology;
 using World;
 using Xunit;
 
-namespace Kernel.Tests;
+namespace Boolean.Tests;
 
 public class CheeseStage2ManifoldTests
 {
@@ -17,10 +17,10 @@ public class CheeseStage2ManifoldTests
         Shape tunnelX = new Box(width: 600, depth: 200, height: 200).Position(-300, -100, -100);
         Shape tunnelY = new Box(width: 200, depth: 600, height: 200).Position(-100, -300, -100);
 
-        var stage1 = BooleanOps.DifferenceAB(cube.Mesh, tunnelX.Mesh);
+        var stage1 = Boolean.Operation.DifferenceAB(cube.Mesh, tunnelX.Mesh);
         var stage1Mesh = BooleanMeshConverter.ToMesh(stage1);
 
-        var stage2 = BooleanOps.DifferenceAB(stage1Mesh, tunnelY.Mesh);
+        var stage2 = Boolean.Operation.DifferenceAB(stage1Mesh, tunnelY.Mesh);
 
         Assert.NotEmpty(stage2.Triangles);
         AssertManifoldByEdgeUse(stage2);
@@ -33,10 +33,10 @@ public class CheeseStage2ManifoldTests
         Shape tunnelX = new Box(width: 600, depth: 200, height: 200).Position(-300, -100, -100);
         Shape tunnelY = new Box(width: 200, depth: 600, height: 100).Position(-100, -300, 0);
 
-        var stage1 = BooleanOps.DifferenceAB(cube.Mesh, tunnelX.Mesh);
+        var stage1 = Boolean.Operation.DifferenceAB(cube.Mesh, tunnelX.Mesh);
         var stage1Mesh = BooleanMeshConverter.ToMesh(stage1);
 
-        var stage2 = BooleanOps.DifferenceAB(stage1Mesh, tunnelY.Mesh);
+        var stage2 = Boolean.Operation.DifferenceAB(stage1Mesh, tunnelY.Mesh);
 
         Assert.NotEmpty(stage2.Triangles);
         AssertManifoldByEdgeUse(stage2);
@@ -49,10 +49,10 @@ public class CheeseStage2ManifoldTests
         Shape tunnelX = new Box(width: 600, depth: 200, height: 200).Position(-300, -100, -100);
         Shape tunnelY = new Box(width: 200, depth: 600, height: 98).Position(-100, -300, 1);
 
-        var stage1 = BooleanOps.DifferenceAB(cube.Mesh, tunnelX.Mesh);
+        var stage1 = Boolean.Operation.DifferenceAB(cube.Mesh, tunnelX.Mesh);
         var stage1Mesh = BooleanMeshConverter.ToMesh(stage1);
 
-        var stage2 = BooleanOps.DifferenceAB(stage1Mesh, tunnelY.Mesh);
+        var stage2 = Boolean.Operation.DifferenceAB(stage1Mesh, tunnelY.Mesh);
 
         Assert.NotEmpty(stage2.Triangles);
         AssertManifoldByEdgeUse(stage2);

@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Geometry;
-using Kernel.Intersection.Graph.Index;
+using Boolean.Intersection.Graph.Index;
 
-namespace Kernel;
+namespace Boolean;
 
 // Per-mesh triangle patches obtained by cutting each triangle along the
 // intersection segments that lie on it. This is the mesh-level wrapper
@@ -151,7 +151,7 @@ public sealed class TrianglePatchSet
 
             var edges = triangleEdges[i];
 
-            var points = new List<TriangleSubdivision.IntersectionPoint>(vertices.Length);
+            var points = new List<Triangulation.IntersectionPoint>(vertices.Length);
 
             var pointIndexByVertexId = new Dictionary<int, int>(vertices.Length);
 
@@ -167,11 +167,11 @@ public sealed class TrianglePatchSet
 
                 pointIndexByVertexId[vertex.VertexId.Value] = points.Count;
 
-                points.Add(new TriangleSubdivision.IntersectionPoint(vertex.Barycentric, world));
+                points.Add(new Triangulation.IntersectionPoint(vertex.Barycentric, world));
 
             }
 
-            var segments = new List<TriangleSubdivision.IntersectionSegment>(edges.Length);
+            var segments = new List<Triangulation.IntersectionSegment>(edges.Length);
 
             var seenSegments = new HashSet<(int, int)>();
 
@@ -217,7 +217,7 @@ public sealed class TrianglePatchSet
 
                 }
 
-                segments.Add(new TriangleSubdivision.IntersectionSegment(startIdx, endIdx));
+                segments.Add(new Triangulation.IntersectionSegment(startIdx, endIdx));
 
             }
 
@@ -235,7 +235,7 @@ public sealed class TrianglePatchSet
 
             {
 
-                patches = TriangleSubdivision.Subdivide(in triangle, points, segments);
+                patches = Triangulation.Subdivide(in triangle, points, segments);
 
             }
 
@@ -261,11 +261,11 @@ public sealed class TrianglePatchSet
 
     private static (int, int) Normalize(int a, int b) => a < b ? (a, b) : (b, a);
 
-    private static List<TriangleSubdivision.IntersectionSegment> SplitSegmentsPassingThroughPoints(
+    private static List<Triangulation.IntersectionSegment> SplitSegmentsPassingThroughPoints(
 
-        IReadOnlyList<TriangleSubdivision.IntersectionPoint> points,
+        IReadOnlyList<Triangulation.IntersectionPoint> points,
 
-        IReadOnlyList<TriangleSubdivision.IntersectionSegment> segments)
+        IReadOnlyList<Triangulation.IntersectionSegment> segments)
 
     {
 
@@ -273,9 +273,9 @@ public sealed class TrianglePatchSet
 
         {
 
-            return segments as List<TriangleSubdivision.IntersectionSegment>
+            return segments as List<Triangulation.IntersectionSegment>
 
-                ?? new List<TriangleSubdivision.IntersectionSegment>(segments);
+                ?? new List<Triangulation.IntersectionSegment>(segments);
 
         }
 
@@ -285,7 +285,7 @@ public sealed class TrianglePatchSet
 
         double mergeDistanceEpsilonSquared = mergeDistanceEpsilon * mergeDistanceEpsilon;
 
-        var output = new List<TriangleSubdivision.IntersectionSegment>(segments.Count);
+        var output = new List<Triangulation.IntersectionSegment>(segments.Count);
 
         var seenSegments = new HashSet<(int, int)>();
 
@@ -361,7 +361,7 @@ public sealed class TrianglePatchSet
 
     private static bool TryCollectInteriorPointsOnSegment(
 
-        IReadOnlyList<TriangleSubdivision.IntersectionPoint> points,
+        IReadOnlyList<Triangulation.IntersectionPoint> points,
 
         int startIndex,
 
@@ -453,7 +453,7 @@ public sealed class TrianglePatchSet
 
     private static void AddSegmentDedup(
 
-        List<TriangleSubdivision.IntersectionSegment> segments,
+        List<Triangulation.IntersectionSegment> segments,
 
         HashSet<(int, int)> seenSegments,
 
@@ -481,7 +481,7 @@ public sealed class TrianglePatchSet
 
         }
 
-        segments.Add(new TriangleSubdivision.IntersectionSegment(a, b));
+        segments.Add(new Triangulation.IntersectionSegment(a, b));
 
     }
 
@@ -491,9 +491,9 @@ public sealed class TrianglePatchSet
 
         int triangleIndex,
 
-        IReadOnlyList<TriangleSubdivision.IntersectionPoint> points,
+        IReadOnlyList<Triangulation.IntersectionPoint> points,
 
-        IReadOnlyList<TriangleSubdivision.IntersectionSegment> segments)
+        IReadOnlyList<Triangulation.IntersectionSegment> segments)
 
     {
 
@@ -559,9 +559,9 @@ public sealed class TrianglePatchSet
 
         Triangle triangle,
 
-        IReadOnlyList<TriangleSubdivision.IntersectionPoint> points,
+        IReadOnlyList<Triangulation.IntersectionPoint> points,
 
-        IReadOnlyList<TriangleSubdivision.IntersectionSegment> segments,
+        IReadOnlyList<Triangulation.IntersectionSegment> segments,
 
         Exception ex)
 

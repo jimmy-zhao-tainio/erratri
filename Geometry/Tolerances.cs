@@ -1,6 +1,6 @@
 namespace Geometry;
 
-// Centralized numerical tolerances for double-based operations.
+// Centralized numerical tolerances for double-based BooleanOperation.
 public static class Tolerances
 {
     // Epsilon for plane-side tests and related dot evaluations.

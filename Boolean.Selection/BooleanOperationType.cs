@@ -1,6 +1,6 @@
-namespace Kernel;
+namespace Boolean;
 
-public enum BooleanOperation
+public enum BooleanOperationType
 {
     Union = 0,
     Intersection = 1,

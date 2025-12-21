@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Linq;
 using Geometry;
 
-namespace Kernel;
+namespace Boolean;
 
 internal static class EdgeUseDiagnostics
 {

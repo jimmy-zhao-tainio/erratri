@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Geometry;
-using Kernel;
+using Boolean;
 using Xunit;
 
-namespace Kernel.Tests;
+namespace Boolean.Tests;
 
 public class IntersectionCurveRegularizerTests
 {

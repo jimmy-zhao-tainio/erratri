@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Geometry;
-using Kernel;
+using Boolean;
 using Pslg;
 using Xunit;
 
-namespace Kernel.Tests;
+namespace Boolean.Tests;
 
 public class PslgTriangulationTests
 {
@@ -20,7 +20,7 @@ public class PslgTriangulationTests
             new Point(1, 0, 0),
             new Point(0, 1, 0));
 
-        var onEdgePoints = new List<TriangleSubdivision.IntersectionPoint>
+        var onEdgePoints = new List<Triangulation.IntersectionPoint>
         {
             MakeOnEdgePoint(triangle, 0.7233333333333334),
             MakeOnEdgePoint(triangle, 0.8333333333333334),
@@ -29,7 +29,7 @@ public class PslgTriangulationTests
 
         // Force the PSLG path (skip the trivial "no segments" early return)
         // by adding a single segment along that same edge.
-        var segments = new List<TriangleSubdivision.IntersectionSegment>
+        var segments = new List<Triangulation.IntersectionSegment>
         {
             new(startIndex: 0, endIndex: 2)
         };
@@ -66,7 +66,7 @@ public class PslgTriangulationTests
         double polygonArea = new RealPolygon(outer).SignedArea;
 
         Assert.True(
-            Math.Abs(polygonArea - TriangleSubdivision.ReferenceTriangleAreaUv) <= 1e-6,
+            Math.Abs(polygonArea - Triangulation.ReferenceTriangleAreaUv) <= 1e-6,
             $"Interior face lost area: outer=[{string.Join(",", largest.OuterVertices)}], area={polygonArea}");
     }
 
@@ -89,7 +89,7 @@ public class PslgTriangulationTests
 
         // Act – must not throw even though the left edge is subdivided
         // by collinear intermediate points.
-        var triangles = TriangleSubdivisionTriangulator.TriangulateSimple(polygon, vertices, expectedArea);
+        var triangles = TriangulationTriangulator.TriangulateSimple(polygon, vertices, expectedArea);
 
         Assert.NotEmpty(triangles);
 
@@ -131,7 +131,7 @@ public class PslgTriangulationTests
         int[] polygon = { 0, 1, 2, 3, 4, 5 };
         double expectedArea = 4.0; // 2x2 rectangle
 
-        var tris = TriangleSubdivisionTriangulator.TriangulateSimple(polygon, vertices, expectedArea);
+        var tris = TriangulationTriangulator.TriangulateSimple(polygon, vertices, expectedArea);
 
         Assert.NotEmpty(tris);
 
@@ -153,12 +153,12 @@ public class PslgTriangulationTests
         return 0.5 * Math.Abs(ax * by - ay * bx);
     }
 
-    private static TriangleSubdivision.IntersectionPoint MakeOnEdgePoint(
+    private static Triangulation.IntersectionPoint MakeOnEdgePoint(
         Triangle triangle,
         double vOnEdge)
     {
         var bary = new Barycentric(0.0, vOnEdge, 1.0 - vOnEdge);
         var pos = Barycentric.ToRealPointOnTriangle(in triangle, in bary);
-        return new TriangleSubdivision.IntersectionPoint(bary, pos);
+        return new Triangulation.IntersectionPoint(bary, pos);
     }
 }

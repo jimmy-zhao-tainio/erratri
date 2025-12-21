@@ -11,6 +11,7 @@
     <ProjectReference Include="..\World\World.csproj" />
     <ProjectReference Include="..\Geometry.Predicates\Geometry.Predicates.csproj" />
     <ProjectReference Include="..\IO\IO.csproj" />
-    <ProjectReference Include="..\Kernel\Kernel.csproj" />
+    <ProjectReference Include="..\Boolean.Operations\Boolean.Operations.csproj" />
   </ItemGroup>
 </Project>
+

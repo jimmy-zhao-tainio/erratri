@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Geometry;
 using Geometry.Predicates;
-using Kernel;
+using Boolean;
 using Pslg;
 using Xunit;
 
-namespace Kernel.Tests;
+namespace Boolean.Tests;
 
 public class PslgCoreTests
 {
@@ -19,8 +19,8 @@ public class PslgCoreTests
 
     private static PslgOutput RunPslg(
         Triangle triangle,
-        IReadOnlyList<TriangleSubdivision.IntersectionPoint> points,
-        IReadOnlyList<TriangleSubdivision.IntersectionSegment> segments)
+        IReadOnlyList<Triangulation.IntersectionPoint> points,
+        IReadOnlyList<Triangulation.IntersectionSegment> segments)
     {
         var pslgPoints = new List<PslgPoint>(points.Count);
         for (int i = 0; i < points.Count; i++)
@@ -42,8 +42,8 @@ public class PslgCoreTests
     [Fact]
     public void Build_NoSegments_AddsTriangleCornersAndBoundaryEdges()
     {
-        var points = new List<TriangleSubdivision.IntersectionPoint>();
-        var segments = new List<TriangleSubdivision.IntersectionSegment>();
+        var points = new List<Triangulation.IntersectionPoint>();
+        var segments = new List<Triangulation.IntersectionSegment>();
 
         var triangle = MakeCanonicalTriangle();
         var result = RunPslg(triangle, points, segments);
@@ -88,15 +88,15 @@ public class PslgCoreTests
     public void Build_SingleSegment_AddsIntersectionVerticesAndEdge()
     {
         // Two intersection points with arbitrary barycentrics.
-        var points = new List<TriangleSubdivision.IntersectionPoint>
+        var points = new List<Triangulation.IntersectionPoint>
         {
-            new TriangleSubdivision.IntersectionPoint(new Barycentric(0.6, 0.3, 0.1), new RealPoint(0, 0, 0)),
-            new TriangleSubdivision.IntersectionPoint(new Barycentric(0.2, 0.5, 0.3), new RealPoint(0, 0, 0))
+            new Triangulation.IntersectionPoint(new Barycentric(0.6, 0.3, 0.1), new RealPoint(0, 0, 0)),
+            new Triangulation.IntersectionPoint(new Barycentric(0.2, 0.5, 0.3), new RealPoint(0, 0, 0))
         };
 
-        var segments = new List<TriangleSubdivision.IntersectionSegment>
+        var segments = new List<Triangulation.IntersectionSegment>
         {
-            new TriangleSubdivision.IntersectionSegment(0, 1)
+            new Triangulation.IntersectionSegment(0, 1)
         };
 
         var triangle = MakeCanonicalTriangle();
@@ -133,17 +133,17 @@ public class PslgCoreTests
     {
         double delta = 1e-8;
 
-        var points = new List<TriangleSubdivision.IntersectionPoint>
+        var points = new List<Triangulation.IntersectionPoint>
         {
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.2, 0.3, 0.5),
                 new RealPoint(0, 0, 0)),
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.2 + delta, 0.3 - delta, 0.5),
                 new RealPoint(0, 0, 0))
         };
 
-        var segments = new List<TriangleSubdivision.IntersectionSegment>();
+        var segments = new List<Triangulation.IntersectionSegment>();
 
         var triangle = MakeCanonicalTriangle();
         var result = RunPslg(triangle, points, segments);
@@ -163,25 +163,25 @@ public class PslgCoreTests
     {
         double delta = 5e-8;
 
-        var points = new List<TriangleSubdivision.IntersectionPoint>
+        var points = new List<Triangulation.IntersectionPoint>
         {
             // Near V0 = (u,v) = (1,0).
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(1.0 - delta, delta, 0.0),
                 new RealPoint(0, 0, 0)),
 
             // Near V1 = (u,v) = (0,1).
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.0, 1.0 - delta, delta),
                 new RealPoint(0, 0, 0)),
 
             // Near V2 = (u,v) = (0,0).
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(delta, 0.0, 1.0 - delta),
                 new RealPoint(0, 0, 0))
         };
 
-        var segments = new List<TriangleSubdivision.IntersectionSegment>();
+        var segments = new List<Triangulation.IntersectionSegment>();
 
         var triangle = MakeCanonicalTriangle();
         var result = RunPslg(triangle, points, segments);
@@ -212,30 +212,30 @@ public class PslgCoreTests
         // Construct an "X" crossing in param space with no explicit vertex
         // at the crossing. This must be rejected by the PSLG consistency
         // checks (Phase D3).
-        var points = new List<TriangleSubdivision.IntersectionPoint>
+        var points = new List<Triangulation.IntersectionPoint>
         {
             // Segment A: P0 -> P1, roughly horizontal.
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.2, 0.2, 0.6),
                 new RealPoint(0, 0, 0)), // P0: (u,v) = (0.2, 0.2)
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.8, 0.2, 0.0),
                 new RealPoint(0, 0, 0)), // P1: (0.8, 0.2)
 
             // Segment B: P2 -> P3, roughly vertical.
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.5, 0.0, 0.5),
                 new RealPoint(0, 0, 0)), // P2: (0.5, 0.0)
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.5, 0.5, 0.0),
                 new RealPoint(0, 0, 0))  // P3: (0.5, 0.5)
         };
 
-        var segments = new List<TriangleSubdivision.IntersectionSegment>
+        var segments = new List<Triangulation.IntersectionSegment>
         {
             // Crossing segments: (P0,P1) and (P2,P3).
-            new TriangleSubdivision.IntersectionSegment(0, 1),
-            new TriangleSubdivision.IntersectionSegment(2, 3)
+            new Triangulation.IntersectionSegment(0, 1),
+            new Triangulation.IntersectionSegment(2, 3)
         };
 
         var ex = Assert.Throws<InvalidOperationException>(
@@ -252,34 +252,34 @@ public class PslgCoreTests
     public void PslgBoundaryEdges_SplitAndOrdered()
     {
         // Points on each boundary side to ensure splitting and ordering.
-        var points = new List<TriangleSubdivision.IntersectionPoint>
+        var points = new List<Triangulation.IntersectionPoint>
         {
             // Side V0-V1 (w = 0): v = 0.25 and v = 0.75.
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.75, 0.25, 0.0),
                 new RealPoint(0, 0, 0)), // index 0 -> vertex 3
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.25, 0.75, 0.0),
                 new RealPoint(0, 0, 0)), // index 1 -> vertex 4
 
             // Side V1-V2 (u = 0): v = 0.25 and v = 0.6.
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.0, 0.25, 0.75),
                 new RealPoint(0, 0, 0)), // index 2 -> vertex 5
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.0, 0.6, 0.4),
                 new RealPoint(0, 0, 0)), // index 3 -> vertex 6
 
             // Side V2-V0 (v = 0): u = 0.3 and u = 0.6.
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.3, 0.0, 0.7),
                 new RealPoint(0, 0, 0)), // index 4 -> vertex 7
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.6, 0.0, 0.4),
                 new RealPoint(0, 0, 0))  // index 5 -> vertex 8
         };
 
-        var segments = new List<TriangleSubdivision.IntersectionSegment>();
+        var segments = new List<Triangulation.IntersectionSegment>();
 
         var triangle = MakeCanonicalTriangle();
         var result = RunPslg(triangle, points, segments);
@@ -317,26 +317,26 @@ public class PslgCoreTests
 
         // Two points near V0 that will snap/dedup to the corner,
         // plus one interior point.
-        var points = new List<TriangleSubdivision.IntersectionPoint>
+        var points = new List<Triangulation.IntersectionPoint>
         {
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(1.0 - delta, delta, 0.0),
                 new RealPoint(0, 0, 0)), // near V0
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(1.0 - 2 * delta, 2 * delta, 0.0),
                 new RealPoint(0, 0, 0)), // also near V0
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.4, 0.3, 0.3),
                 new RealPoint(0, 0, 0))   // interior
         };
 
-        var segments = new List<TriangleSubdivision.IntersectionSegment>
+        var segments = new List<Triangulation.IntersectionSegment>
         {
             // Degenerate after snapping: both endpoints map to V0.
-            new TriangleSubdivision.IntersectionSegment(0, 1),
+            new Triangulation.IntersectionSegment(0, 1),
             // Valid segment V0 -> interior (in both orders, should dedup).
-            new TriangleSubdivision.IntersectionSegment(0, 2),
-            new TriangleSubdivision.IntersectionSegment(2, 0)
+            new Triangulation.IntersectionSegment(0, 2),
+            new Triangulation.IntersectionSegment(2, 0)
         };
 
         var triangle = MakeCanonicalTriangle();
@@ -372,8 +372,8 @@ public class PslgCoreTests
     [Fact]
     public void HalfEdge_FaceExtraction_SimpleTriangle()
     {
-        var points = new List<TriangleSubdivision.IntersectionPoint>();
-        var segments = new List<TriangleSubdivision.IntersectionSegment>();
+        var points = new List<Triangulation.IntersectionPoint>();
+        var segments = new List<Triangulation.IntersectionSegment>();
 
         var triangle = MakeCanonicalTriangle();
         var result = RunPslg(triangle, points, segments);
@@ -388,19 +388,19 @@ public class PslgCoreTests
     public void HalfEdge_FaceExtraction_SingleChord()
     {
         // One chord splitting the triangle into two interior faces.
-        var points = new List<TriangleSubdivision.IntersectionPoint>
+        var points = new List<Triangulation.IntersectionPoint>
         {
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.6, 0.4, 0.0),
                 new RealPoint(0, 0, 0)),
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.0, 0.6, 0.4),
                 new RealPoint(0, 0, 0))
         };
 
-        var segments = new List<TriangleSubdivision.IntersectionSegment>
+        var segments = new List<Triangulation.IntersectionSegment>
         {
-            new TriangleSubdivision.IntersectionSegment(0, 1)
+            new Triangulation.IntersectionSegment(0, 1)
         };
 
         var triangle = MakeCanonicalTriangle();
@@ -416,19 +416,19 @@ public class PslgCoreTests
     {
         // Triangle with a chord: same setup as the previous test but exercise
         // the interior-face selector.
-        var points = new List<TriangleSubdivision.IntersectionPoint>
+        var points = new List<Triangulation.IntersectionPoint>
         {
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.6, 0.4, 0.0),
                 new RealPoint(0, 0, 0)),
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.0, 0.6, 0.4),
                 new RealPoint(0, 0, 0))
         };
 
-        var segments = new List<TriangleSubdivision.IntersectionSegment>
+        var segments = new List<Triangulation.IntersectionSegment>
         {
-            new TriangleSubdivision.IntersectionSegment(0, 1)
+            new Triangulation.IntersectionSegment(0, 1)
         };
 
         var triangle = MakeCanonicalTriangle();
@@ -444,19 +444,19 @@ public class PslgCoreTests
     [Fact]
     public void SelectInteriorFaces_WithExpectedArea_PassesForValidPslg()
     {
-        var points = new List<TriangleSubdivision.IntersectionPoint>
+        var points = new List<Triangulation.IntersectionPoint>
         {
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.6, 0.4, 0.0),
                 new RealPoint(0, 0, 0)),
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.0, 0.6, 0.4),
                 new RealPoint(0, 0, 0))
         };
 
-        var segments = new List<TriangleSubdivision.IntersectionSegment>
+        var segments = new List<Triangulation.IntersectionSegment>
         {
-            new TriangleSubdivision.IntersectionSegment(0, 1)
+            new Triangulation.IntersectionSegment(0, 1)
         };
 
         var triangle = MakeCanonicalTriangle();
@@ -486,7 +486,7 @@ public class PslgCoreTests
         }).SignedArea;
         var face = new PslgFace(new[] { 0, 1, 2, 3 }, signedArea: faceArea);
 
-        var tris = TriangleSubdivisionTriangulator.TriangulateSimple(face.OuterVertices, vertices, faceArea);
+        var tris = TriangulationTriangulator.TriangulateSimple(face.OuterVertices, vertices, faceArea);
         Assert.Equal(2, tris.Count);
 
         double areaSum = 0.0;
@@ -523,7 +523,7 @@ public class PslgCoreTests
         }).SignedArea;
         var face = new PslgFace(new[] { 0, 1, 2, 3, 4 }, signedArea: faceArea);
 
-        var tris = TriangleSubdivisionTriangulator.TriangulateSimple(face.OuterVertices, vertices, faceArea);
+        var tris = TriangulationTriangulator.TriangulateSimple(face.OuterVertices, vertices, faceArea);
         Assert.Equal(3, tris.Count);
 
         double areaSum = 0.0;
@@ -553,7 +553,7 @@ public class PslgCoreTests
         var face = new PslgFace(new[] { 0, 1, 2, 3 }, signedArea: 0.0);
 
         Assert.Throws<InvalidOperationException>(
-            () => TriangleSubdivisionTriangulator.TriangulateSimple(face.OuterVertices, vertices, expectedArea: 0.0));
+            () => TriangulationTriangulator.TriangulateSimple(face.OuterVertices, vertices, expectedArea: 0.0));
     }
 
     [Fact]
@@ -564,24 +564,24 @@ public class PslgCoreTests
         var v2 = new Point(0, 1, 0);
         var tri = new Triangle(v0, v1, v2, new Point(0, 0, 1));
 
-        var points = new List<TriangleSubdivision.IntersectionPoint>
+        var points = new List<Triangulation.IntersectionPoint>
         {
-            new TriangleSubdivision.IntersectionPoint(new Barycentric(0.8, 0.2, 0.0), new RealPoint(0,0,0)), // P0 on V0-V1
-            new TriangleSubdivision.IntersectionPoint(new Barycentric(0.0, 0.7, 0.3), new RealPoint(0,0,0)), // P1 on V1-V2
-            new TriangleSubdivision.IntersectionPoint(new Barycentric(0.3, 0.0, 0.7), new RealPoint(0,0,0)), // P2 on V0-V2
-            new TriangleSubdivision.IntersectionPoint(new Barycentric(0.0, 0.3, 0.7), new RealPoint(0,0,0))  // P3 on V1-V2
+            new Triangulation.IntersectionPoint(new Barycentric(0.8, 0.2, 0.0), new RealPoint(0,0,0)), // P0 on V0-V1
+            new Triangulation.IntersectionPoint(new Barycentric(0.0, 0.7, 0.3), new RealPoint(0,0,0)), // P1 on V1-V2
+            new Triangulation.IntersectionPoint(new Barycentric(0.3, 0.0, 0.7), new RealPoint(0,0,0)), // P2 on V0-V2
+            new Triangulation.IntersectionPoint(new Barycentric(0.0, 0.3, 0.7), new RealPoint(0,0,0))  // P3 on V1-V2
         };
 
-        var segments = new List<TriangleSubdivision.IntersectionSegment>
+        var segments = new List<Triangulation.IntersectionSegment>
         {
-            new TriangleSubdivision.IntersectionSegment(0, 1),
-            new TriangleSubdivision.IntersectionSegment(2, 3)
+            new Triangulation.IntersectionSegment(0, 1),
+            new Triangulation.IntersectionSegment(2, 3)
         };
 
         var result = RunPslg(tri, points, segments);
 
         // Triangulate and map to patches.
-        var patches = TriangleSubdivisionTriangulator.Triangulate(in tri, result);
+        var patches = TriangulationTriangulator.Triangulate(in tri, result);
 
         // Area check.
         double patchArea = patches.Sum(p => Math.Abs(new RealTriangle(p.P0, p.P1, p.P2).SignedArea));

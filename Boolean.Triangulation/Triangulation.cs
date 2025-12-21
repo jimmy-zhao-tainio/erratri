@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Geometry;
 using Pslg;
 
-namespace Kernel;
+namespace Boolean;
 
 // Standalone triangle subdivision helper library.
 //
@@ -16,7 +16,7 @@ namespace Kernel;
 //   - If there are no segments, return the original triangle as a single patch.
 //   - Fast lane: single edge-to-edge chord is implemented.
 //   - General PSLG lane uses the Pslg pipeline and TriangleSubdivisionTriangulator.
-public static class TriangleSubdivision
+public static class Triangulation
 {
     // Reference UV triangle has vertices (1,0), (0,1), (0,0); its area is 1/2.
     public const double ReferenceTriangleAreaUv = 0.5;
@@ -236,7 +236,7 @@ public static class TriangleSubdivision
 
                 var pslgInput = new PslgInput(in triangle, pslgPoints, pslgSegments);
                 var pslgOutput = PslgBuilder.Run(in pslgInput);
-                return TriangleSubdivisionTriangulator.Triangulate(in triangle, pslgOutput);
+                return TriangulationTriangulator.Triangulate(in triangle, pslgOutput);
         }
     }
 

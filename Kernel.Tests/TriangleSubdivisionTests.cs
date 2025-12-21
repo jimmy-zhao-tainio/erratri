@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using Geometry;
-using Kernel;
+using Boolean;
 using Xunit;
 
-namespace Kernel.Tests;
+namespace Boolean.Tests;
 
 public class TriangleSubdivisionTests
 {
@@ -18,10 +18,10 @@ public class TriangleSubdivisionTests
 
         var tri = new Triangle(v0, v1, v2, missing);
 
-        var points = new List<TriangleSubdivision.IntersectionPoint>();
-        var segments = new List<TriangleSubdivision.IntersectionSegment>();
+        var points = new List<Triangulation.IntersectionPoint>();
+        var segments = new List<Triangulation.IntersectionSegment>();
 
-        var patches = TriangleSubdivision.Subdivide(in tri, points, segments);
+        var patches = Triangulation.Subdivide(in tri, points, segments);
 
         var single = Assert.Single(patches);
 
@@ -48,19 +48,19 @@ public class TriangleSubdivisionTests
 
         var tri = new Triangle(v0, v1, v2, missing);
 
-        var points = new List<TriangleSubdivision.IntersectionPoint>
+        var points = new List<Triangulation.IntersectionPoint>
         {
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.5, 0.5, 0.0),
                 new RealPoint(5.0, 5.0, 0.0))
         };
 
-        var segments = new List<TriangleSubdivision.IntersectionSegment>
+        var segments = new List<Triangulation.IntersectionSegment>
         {
-            new TriangleSubdivision.IntersectionSegment(0, 0)
+            new Triangulation.IntersectionSegment(0, 0)
         };
 
-        var patches = TriangleSubdivision.Subdivide(in tri, points, segments);
+        var patches = Triangulation.Subdivide(in tri, points, segments);
         var single = Assert.Single(patches);
 
         Assert.Equal(tri.P0.X, single.P0.X);
@@ -95,18 +95,18 @@ public class TriangleSubdivisionTests
         var baryQ = new Barycentric(0.0, 0.7, 0.3);
         var posQ = Barycentric.ToRealPointOnTriangle(in tri, in baryQ);
 
-        var points = new List<TriangleSubdivision.IntersectionPoint>
+        var points = new List<Triangulation.IntersectionPoint>
         {
-            new TriangleSubdivision.IntersectionPoint(baryP, posP),
-            new TriangleSubdivision.IntersectionPoint(baryQ, posQ)
+            new Triangulation.IntersectionPoint(baryP, posP),
+            new Triangulation.IntersectionPoint(baryQ, posQ)
         };
 
-        var segments = new List<TriangleSubdivision.IntersectionSegment>
+        var segments = new List<Triangulation.IntersectionSegment>
         {
-            new TriangleSubdivision.IntersectionSegment(0, 1)
+            new Triangulation.IntersectionSegment(0, 1)
         };
 
-        var patches = TriangleSubdivision.Subdivide(in tri, points, segments);
+        var patches = Triangulation.Subdivide(in tri, points, segments);
 
         Assert.Equal(3, patches.Count);
 
@@ -156,18 +156,18 @@ public class TriangleSubdivisionTests
         var baryQ = new Barycentric(0.0, 0.4, 0.6);
         var posQ = Barycentric.ToRealPointOnTriangle(in tri, in baryQ);
 
-        var points = new List<TriangleSubdivision.IntersectionPoint>
+        var points = new List<Triangulation.IntersectionPoint>
         {
-            new TriangleSubdivision.IntersectionPoint(baryP, posP),
-            new TriangleSubdivision.IntersectionPoint(baryQ, posQ)
+            new Triangulation.IntersectionPoint(baryP, posP),
+            new Triangulation.IntersectionPoint(baryQ, posQ)
         };
 
-        var segments = new List<TriangleSubdivision.IntersectionSegment>
+        var segments = new List<Triangulation.IntersectionSegment>
         {
-            new TriangleSubdivision.IntersectionSegment(0, 1)
+            new Triangulation.IntersectionSegment(0, 1)
         };
 
-        var patches = TriangleSubdivision.Subdivide(in tri, points, segments);
+        var patches = Triangulation.Subdivide(in tri, points, segments);
         Assert.NotEmpty(patches);
     }
 
@@ -227,61 +227,61 @@ public class TriangleSubdivisionTests
         var onEdge1 = new Barycentric(0.0, 0.5, 0.5); // u = 0
         var onEdge2 = new Barycentric(0.5, 0.0, 0.5); // v = 0
 
-        Assert.Equal(TriangleSubdivision.EdgeLocation.Edge0, TriangleSubdivision.ClassifyEdge(onEdge0));
-        Assert.Equal(TriangleSubdivision.EdgeLocation.Edge1, TriangleSubdivision.ClassifyEdge(onEdge1));
-        Assert.Equal(TriangleSubdivision.EdgeLocation.Edge2, TriangleSubdivision.ClassifyEdge(onEdge2));
+        Assert.Equal(Triangulation.EdgeLocation.Edge0, Triangulation.ClassifyEdge(onEdge0));
+        Assert.Equal(Triangulation.EdgeLocation.Edge1, Triangulation.ClassifyEdge(onEdge1));
+        Assert.Equal(Triangulation.EdgeLocation.Edge2, Triangulation.ClassifyEdge(onEdge2));
 
         // Interior point.
         var interior = new Barycentric(0.2, 0.3, 0.5);
-        Assert.Equal(TriangleSubdivision.EdgeLocation.Interior, TriangleSubdivision.ClassifyEdge(interior));
+        Assert.Equal(Triangulation.EdgeLocation.Interior, Triangulation.ClassifyEdge(interior));
     }
 
     [Fact]
     public void ClassifyPattern_NoneAndSingleEdgeToEdge()
     {
-        var points = new List<TriangleSubdivision.IntersectionPoint>();
-        var segments = new List<TriangleSubdivision.IntersectionSegment>();
+        var points = new List<Triangulation.IntersectionPoint>();
+        var segments = new List<Triangulation.IntersectionSegment>();
 
         // No segments -> None.
-        var pattern = TriangleSubdivision.ClassifyPattern(points, segments);
-        Assert.Equal(TriangleSubdivision.PatternKind.None, pattern);
+        var pattern = Triangulation.ClassifyPattern(points, segments);
+        Assert.Equal(Triangulation.PatternKind.None, pattern);
 
         // Single edge-to-edge segment: endpoints on distinct edges.
-        points.Add(new TriangleSubdivision.IntersectionPoint(
+        points.Add(new Triangulation.IntersectionPoint(
             new Barycentric(0.5, 0.5, 0.0), new RealPoint(5.0, 5.0, 0.0))); // Edge0
-        points.Add(new TriangleSubdivision.IntersectionPoint(
+        points.Add(new Triangulation.IntersectionPoint(
             new Barycentric(0.0, 0.5, 0.5), new RealPoint(5.0, 5.0, 0.0))); // Edge1
 
-        segments.Add(new TriangleSubdivision.IntersectionSegment(0, 1));
+        segments.Add(new Triangulation.IntersectionSegment(0, 1));
 
-        pattern = TriangleSubdivision.ClassifyPattern(points, segments);
-        Assert.Equal(TriangleSubdivision.PatternKind.SingleEdgeToEdge, pattern);
+        pattern = Triangulation.ClassifyPattern(points, segments);
+        Assert.Equal(Triangulation.PatternKind.SingleEdgeToEdge, pattern);
     }
 
     [Fact]
     public void ClassifyPattern_InteriorOrMultipleSegments_IsOther()
     {
-        var points = new List<TriangleSubdivision.IntersectionPoint>
+        var points = new List<Triangulation.IntersectionPoint>
         {
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.2, 0.3, 0.5), new RealPoint(2.0, 3.0, 0.0)), // interior
-            new TriangleSubdivision.IntersectionPoint(
+            new Triangulation.IntersectionPoint(
                 new Barycentric(0.5, 0.5, 0.0), new RealPoint(5.0, 5.0, 0.0))  // edge0
         };
 
         // Single segment with an interior endpoint -> Other.
-        var segments = new List<TriangleSubdivision.IntersectionSegment>
+        var segments = new List<Triangulation.IntersectionSegment>
         {
-            new TriangleSubdivision.IntersectionSegment(0, 1)
+            new Triangulation.IntersectionSegment(0, 1)
         };
 
-        var pattern = TriangleSubdivision.ClassifyPattern(points, segments);
-        Assert.Equal(TriangleSubdivision.PatternKind.Other, pattern);
+        var pattern = Triangulation.ClassifyPattern(points, segments);
+        Assert.Equal(Triangulation.PatternKind.Other, pattern);
 
         // Multiple segments -> Other.
-        segments.Add(new TriangleSubdivision.IntersectionSegment(1, 1));
-        pattern = TriangleSubdivision.ClassifyPattern(points, segments);
-        Assert.Equal(TriangleSubdivision.PatternKind.Other, pattern);
+        segments.Add(new Triangulation.IntersectionSegment(1, 1));
+        pattern = Triangulation.ClassifyPattern(points, segments);
+        Assert.Equal(Triangulation.PatternKind.Other, pattern);
     }
 
     // Same geometric pattern as the base triangle A0 in the TetraPeek example:
@@ -305,21 +305,21 @@ public class TriangleSubdivisionTests
         var p1 = Barycentric.ToRealPointOnTriangle(in tri, in bary1);
         var p2 = Barycentric.ToRealPointOnTriangle(in tri, in bary2);
 
-        var points = new List<TriangleSubdivision.IntersectionPoint>
+        var points = new List<Triangulation.IntersectionPoint>
         {
-            new TriangleSubdivision.IntersectionPoint(bary0, p0),
-            new TriangleSubdivision.IntersectionPoint(bary1, p1),
-            new TriangleSubdivision.IntersectionPoint(bary2, p2)
+            new Triangulation.IntersectionPoint(bary0, p0),
+            new Triangulation.IntersectionPoint(bary1, p1),
+            new Triangulation.IntersectionPoint(bary2, p2)
         };
 
-        var segments = new List<TriangleSubdivision.IntersectionSegment>
+        var segments = new List<Triangulation.IntersectionSegment>
         {
-            new TriangleSubdivision.IntersectionSegment(0, 1),
-            new TriangleSubdivision.IntersectionSegment(1, 2),
-            new TriangleSubdivision.IntersectionSegment(2, 0)
+            new Triangulation.IntersectionSegment(0, 1),
+            new Triangulation.IntersectionSegment(1, 2),
+            new Triangulation.IntersectionSegment(2, 0)
         };
 
-        var patches = TriangleSubdivision.Subdivide(in tri, points, segments);
+        var patches = Triangulation.Subdivide(in tri, points, segments);
 
         // Must actually subdivide: inner loop should split the triangle.
         Assert.True(patches.Count > 1);

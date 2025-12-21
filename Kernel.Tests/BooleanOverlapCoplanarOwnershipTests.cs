@@ -4,7 +4,7 @@ using Topology;
 using Xunit;
 using WTetrahedron = World.Tetrahedron;
 
-namespace Kernel.Tests;
+namespace Boolean.Tests;
 
 public class BooleanOverlapCoplanarOwnershipTests
 {
@@ -24,7 +24,7 @@ public class BooleanOverlapCoplanarOwnershipTests
             new Point(0, 2, 1),
             new Point(0, 0, -1));
 
-        var mesh = BooleanOps.Intersection(a.Mesh, b.Mesh);
+        var mesh = Boolean.Operation.Intersection(a.Mesh, b.Mesh);
         Assert.NotEmpty(mesh.Triangles);
 
         var edgeUse = new Dictionary<(int Min, int Max), int>();

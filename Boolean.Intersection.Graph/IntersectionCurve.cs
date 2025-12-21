@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Immutable;
 
-namespace Kernel;
+namespace Boolean;
 
 public sealed class IntersectionCurve
 {

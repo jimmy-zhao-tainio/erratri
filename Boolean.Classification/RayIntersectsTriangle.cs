@@ -1,7 +1,7 @@
 using System;
 using Geometry;
 
-namespace Kernel;
+namespace Boolean;
 
 internal static class RayIntersectsTriangleHelper
 {

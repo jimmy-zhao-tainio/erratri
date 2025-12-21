@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using Geometry;
 
-namespace Kernel;
+namespace Boolean;
 
 // Selects which patches to keep for a given boolean operation using
 // patch-level inside/outside classification.
 public static class BooleanPatchClassifier
 {
-    public static BooleanPatchSet Select(BooleanOperation operation, PatchClassification classification)
+    public static BooleanPatchSet Select(BooleanOperationType operation, PatchClassification classification)
     {
         if (classification is null) throw new ArgumentNullException(nameof(classification));
 
@@ -40,23 +40,23 @@ public static class BooleanPatchClassifier
         return new BooleanPatchSet(keptA, keptB);
     }
 
-    private static bool ShouldKeepFromA(BooleanOperation op, bool isInsideB) => op switch
+    private static bool ShouldKeepFromA(BooleanOperationType op, bool isInsideB) => op switch
     {
-        BooleanOperation.Intersection => isInsideB,
-        BooleanOperation.Union => !isInsideB,
-        BooleanOperation.DifferenceAB => !isInsideB,
-        BooleanOperation.DifferenceBA => isInsideB,
-        BooleanOperation.SymmetricDifference => !isInsideB,
+        BooleanOperationType.Intersection => isInsideB,
+        BooleanOperationType.Union => !isInsideB,
+        BooleanOperationType.DifferenceAB => !isInsideB,
+        BooleanOperationType.DifferenceBA => isInsideB,
+        BooleanOperationType.SymmetricDifference => !isInsideB,
         _ => throw new ArgumentOutOfRangeException(nameof(op), op, "Unsupported boolean operation.")
     };
 
-    private static bool ShouldKeepFromB(BooleanOperation op, bool isInsideA) => op switch
+    private static bool ShouldKeepFromB(BooleanOperationType op, bool isInsideA) => op switch
     {
-        BooleanOperation.Intersection => isInsideA,
-        BooleanOperation.Union => !isInsideA,
-        BooleanOperation.DifferenceAB => isInsideA,
-        BooleanOperation.DifferenceBA => !isInsideA,
-        BooleanOperation.SymmetricDifference => !isInsideA,
+        BooleanOperationType.Intersection => isInsideA,
+        BooleanOperationType.Union => !isInsideA,
+        BooleanOperationType.DifferenceAB => isInsideA,
+        BooleanOperationType.DifferenceBA => !isInsideA,
+        BooleanOperationType.SymmetricDifference => !isInsideA,
         _ => throw new ArgumentOutOfRangeException(nameof(op), op, "Unsupported boolean operation.")
     };
 }

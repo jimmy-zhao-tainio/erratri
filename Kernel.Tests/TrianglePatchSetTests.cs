@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Geometry;
-using Kernel;
+using Boolean;
 using Xunit;
-using Kernel.Intersection.Graph.Index;
+using Boolean.Intersection.Graph.Index;
 
-namespace Kernel.Tests;
+namespace Boolean.Tests;
 
 
 
@@ -270,7 +270,7 @@ public class TrianglePatchSetTests
 
 
 
-        Assert.Equal(1, bPatches.Count);
+        Assert.Single(bPatches);
 
 
 

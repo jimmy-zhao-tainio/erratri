@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Geometry;
 using Topology;
 
-namespace Kernel;
+namespace Boolean;
 
 internal sealed class PointInMeshTester
 {

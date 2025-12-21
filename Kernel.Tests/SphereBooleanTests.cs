@@ -1,9 +1,9 @@
 using Geometry;
-using Kernel;
+using Boolean;
 using World;
 using Xunit;
 
-namespace Kernel.Tests;
+namespace Boolean.Tests;
 
 public class SphereBooleanTests
 {
@@ -17,7 +17,7 @@ public class SphereBooleanTests
         var sphereA = new Sphere(r, subdivisions: 3, center: aCenter);
         var sphereB = new Sphere(r, subdivisions: 3, center: bCenter);
 
-        var realMesh = BooleanOps.Union(sphereA.Mesh, sphereB.Mesh);
+        var realMesh = Boolean.Operation.Union(sphereA.Mesh, sphereB.Mesh);
         Assert.NotNull(realMesh);
         Assert.NotEmpty(realMesh.Triangles);
 

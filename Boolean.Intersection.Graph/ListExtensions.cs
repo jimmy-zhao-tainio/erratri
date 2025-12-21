@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Kernel;
+namespace Boolean;
 
 internal static class ListExtensions
 {

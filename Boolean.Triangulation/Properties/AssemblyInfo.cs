@@ -1,3 +1,3 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Kernel.Tests")]
+[assembly: InternalsVisibleTo("Boolean.Tests")]

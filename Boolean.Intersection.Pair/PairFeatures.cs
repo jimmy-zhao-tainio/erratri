@@ -5,7 +5,7 @@ using Geometry.Predicates;
 using Geometry.Predicates.Internal;
 using Topology;
 
-namespace Kernel;
+namespace Boolean;
 
 // This file describes *local* intersection data for ONE triangle pair
 // (one triangle from mesh A and one from mesh B).

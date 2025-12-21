@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using Geometry;
 
-namespace Kernel;
+namespace Boolean;
 
 // Higher-level helper for extracting reasonably clean closed intersection
 // curves on a single mesh (A or B) from the raw IntersectionGraph /

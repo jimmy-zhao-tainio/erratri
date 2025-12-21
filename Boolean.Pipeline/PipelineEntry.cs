@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
 using Geometry;
-using Kernel;
-using Kernel.Intersection.Graph.Index;
+using Boolean;
+using Boolean.Intersection.Graph.Index;
 using Topology;
 
 namespace Boolean.Pipeline;
 
 public static class PipelineEntry
 {
-    public static RealMesh Run(Mesh left, Mesh right, BooleanOperation op)
+    public static RealMesh Run(Mesh left, Mesh right, BooleanOperationType op)
     {
         if (left is null) throw new ArgumentNullException(nameof(left));
         if (right is null) throw new ArgumentNullException(nameof(right));

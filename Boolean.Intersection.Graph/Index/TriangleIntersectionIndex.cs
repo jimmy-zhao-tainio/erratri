@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Geometry;
-using Kernel;
+using Boolean;
 
-namespace Kernel.Intersection.Graph.Index;
+namespace Boolean.Intersection.Graph.Index;
 
 // One intersection vertex attached to a specific triangle, expressed in
 // barycentric coordinates on that triangle plus the shared global vertex id.

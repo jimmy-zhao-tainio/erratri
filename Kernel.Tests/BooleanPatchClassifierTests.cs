@@ -3,9 +3,9 @@ using Geometry;
 using World;
 using Xunit;
 using WTetrahedron = World.Tetrahedron;
-using Kernel.Intersection.Graph.Index;
+using Boolean.Intersection.Graph.Index;
 
-namespace Kernel.Tests;
+namespace Boolean.Tests;
 
 
 
@@ -133,7 +133,7 @@ public class BooleanPatchClassifierTests
 
 
 
-        var intersection = BooleanPatchClassifier.Select(BooleanOperation.Intersection, classification);
+        var intersection = BooleanPatchClassifier.Select(BooleanOperationType.Intersection, classification);
 
 
 
@@ -149,7 +149,7 @@ public class BooleanPatchClassifierTests
 
 
 
-        var union = BooleanPatchClassifier.Select(BooleanOperation.Union, classification);
+        var union = BooleanPatchClassifier.Select(BooleanOperationType.Union, classification);
 
 
 
@@ -165,7 +165,7 @@ public class BooleanPatchClassifierTests
 
 
 
-        var diffAB = BooleanPatchClassifier.Select(BooleanOperation.DifferenceAB, classification);
+        var diffAB = BooleanPatchClassifier.Select(BooleanOperationType.DifferenceAB, classification);
 
 
 
@@ -181,7 +181,7 @@ public class BooleanPatchClassifierTests
 
 
 
-        var diffBA = BooleanPatchClassifier.Select(BooleanOperation.DifferenceBA, classification);
+        var diffBA = BooleanPatchClassifier.Select(BooleanOperationType.DifferenceBA, classification);
 
 
 
@@ -197,7 +197,7 @@ public class BooleanPatchClassifierTests
 
 
 
-        var xor = BooleanPatchClassifier.Select(BooleanOperation.SymmetricDifference, classification);
+        var xor = BooleanPatchClassifier.Select(BooleanOperationType.SymmetricDifference, classification);
 
 
 
@@ -285,7 +285,7 @@ public class BooleanPatchClassifierTests
 
 
 
-        var union = BooleanPatchClassifier.Select(BooleanOperation.Union, classification);
+        var union = BooleanPatchClassifier.Select(BooleanOperationType.Union, classification);
 
 
 
@@ -301,7 +301,7 @@ public class BooleanPatchClassifierTests
 
 
 
-        var intersection = BooleanPatchClassifier.Select(BooleanOperation.Intersection, classification);
+        var intersection = BooleanPatchClassifier.Select(BooleanOperationType.Intersection, classification);
 
 
 

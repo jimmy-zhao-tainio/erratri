@@ -3,7 +3,7 @@ using System;
 using System.Linq;
 using World;
 using Topology;
-using Kernel;
+using Boolean;
 using IO;
 
 namespace Demo.Intersections;
@@ -220,8 +220,8 @@ internal static class Program
     private sealed class TriAccum
     {
         public Triangle Triangle { get; }
-        public List<TriangleSubdivision.IntersectionPoint> Points { get; } = new();
-        public List<TriangleSubdivision.IntersectionSegment> Segments { get; } = new();
+        public List<Triangulation.IntersectionPoint> Points { get; } = new();
+        public List<Triangulation.IntersectionSegment> Segments { get; } = new();
         public List<RealPoint> WorldPoints { get; } = new();
 
         public TriAccum(Triangle triangle)
@@ -297,7 +297,7 @@ internal static class Program
             var triVal = acc.Triangle;
             try
             {
-                var patches = TriangleSubdivision.Subdivide(in triVal, acc.Points, acc.Segments);
+                var patches = Triangulation.Subdivide(in triVal, acc.Points, acc.Segments);
                 double triArea = Math.Abs(new RealTriangle(
                     new RealPoint(triVal.P0),
                     new RealPoint(triVal.P1),
@@ -336,7 +336,7 @@ internal static class Program
         }
 
         acc.WorldPoints.Add(pos);
-        acc.Points.Add(new TriangleSubdivision.IntersectionPoint(bary, pos));
+        acc.Points.Add(new Triangulation.IntersectionPoint(bary, pos));
         return acc.WorldPoints.Count - 1;
     }
 
@@ -354,6 +354,6 @@ internal static class Program
                 return;
             }
         }
-        acc.Segments.Add(new TriangleSubdivision.IntersectionSegment(a, b));
+        acc.Segments.Add(new Triangulation.IntersectionSegment(a, b));
     }
 }

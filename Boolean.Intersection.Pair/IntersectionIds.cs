@@ -1,4 +1,4 @@
-namespace Kernel;
+namespace Boolean;
 
 public readonly struct IntersectionVertexId
 {

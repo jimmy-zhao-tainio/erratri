@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using Geometry;
-using Kernel;
+using Boolean;
 using Topology;
 using Xunit;
 
-namespace Kernel.Tests;
+namespace Boolean.Tests;
 
 public class IntersectionSetTests
 {

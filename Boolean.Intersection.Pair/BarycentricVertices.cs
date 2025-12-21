@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Geometry;
 using Geometry.Predicates.Internal;
 
-namespace Kernel;
+namespace Boolean;
 
 // Small helper for "candidate intersection points for one pair".
 //

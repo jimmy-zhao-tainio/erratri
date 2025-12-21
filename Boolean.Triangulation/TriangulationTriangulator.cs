@@ -5,10 +5,10 @@ using Geometry;
 using Geometry.Predicates;
 using Pslg;
 
-namespace Kernel;
+namespace Boolean;
 
 // Triangulate PSLG output and map triangles back to world-space patches.
-internal static class TriangleSubdivisionTriangulator
+internal static class TriangulationTriangulator
 {
     internal static IReadOnlyList<RealTriangle> Triangulate(
         in Triangle triangle,

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Geometry;
 
-namespace Kernel;
+namespace Boolean;
 
 // Represents the global intersection graph between two meshes.
 //

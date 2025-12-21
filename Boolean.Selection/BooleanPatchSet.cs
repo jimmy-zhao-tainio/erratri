@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Geometry;
 
-namespace Kernel;
+namespace Boolean;
 
 // Output of the boolean patch selection step: which patches from each mesh
 // should participate in the chosen boolean operation.

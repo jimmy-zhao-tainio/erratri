@@ -6,10 +6,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Kernel\Kernel.csproj" />
+    <ProjectReference Include="..\Boolean.Operations\Boolean.Operations.csproj" />
     <ProjectReference Include="..\Boolean.Intersection.Pair\Boolean.Intersection.Pair.csproj" />
     <ProjectReference Include="..\Boolean.Intersection.Graph\Boolean.Intersection.Graph.csproj" />
     <ProjectReference Include="..\World\World.csproj" />
   </ItemGroup>
 </Project>
+
 
