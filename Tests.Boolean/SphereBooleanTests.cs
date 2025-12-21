@@ -3,7 +3,7 @@ using Boolean;
 using World;
 using Xunit;
 
-namespace Boolean.Tests;
+namespace Tests.Boolean;
 
 public class SphereBooleanTests
 {
@@ -17,7 +17,7 @@ public class SphereBooleanTests
         var sphereA = new Sphere(r, subdivisions: 3, center: aCenter);
         var sphereB = new Sphere(r, subdivisions: 3, center: bCenter);
 
-        var realMesh = Boolean.Operation.Union(sphereA.Mesh, sphereB.Mesh);
+        var realMesh = global::Boolean.Operation.Union(sphereA.Mesh, sphereB.Mesh);
         Assert.NotNull(realMesh);
         Assert.NotEmpty(realMesh.Triangles);
 
@@ -25,3 +25,5 @@ public class SphereBooleanTests
         Assert.True(snapped.Count > 0);
     }
 }
+
+

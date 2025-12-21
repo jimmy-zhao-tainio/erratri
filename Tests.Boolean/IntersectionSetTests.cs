@@ -5,7 +5,7 @@ using Boolean;
 using Topology;
 using Xunit;
 
-namespace Boolean.Tests;
+namespace Tests.Boolean;
 
 public class IntersectionSetTests
 {
@@ -207,3 +207,4 @@ public class IntersectionGraphFromIntersectionSetTests
         Assert.Equal(set.Intersections.Count, graph.IntersectionSet.Intersections.Count);
     }
 }
+

@@ -7,7 +7,7 @@ using Boolean;
 using Pslg;
 using Xunit;
 
-namespace Boolean.Tests;
+namespace Tests.Boolean;
 
 public class PslgCoreTests
 {
@@ -648,3 +648,4 @@ public class PslgCoreTests
 
     private static void AddEdge(HashSet<(int, int)> set, int a, int b) => set.Add(NormalizeEdge(a, b));
 }
+

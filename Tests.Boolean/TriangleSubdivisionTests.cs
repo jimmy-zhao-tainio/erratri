@@ -4,7 +4,7 @@ using Geometry;
 using Boolean;
 using Xunit;
 
-namespace Boolean.Tests;
+namespace Tests.Boolean;
 
 public class TriangleSubdivisionTests
 {
@@ -343,3 +343,4 @@ public class TriangleSubdivisionTests
             $"Patch area {patchArea} differs from triangle area {triArea} by {diff}.");
     }
 }
+

@@ -6,6 +6,6 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Boolean.MeshInterop")]
 [assembly: InternalsVisibleTo("Boolean.Assembly")]
 [assembly: InternalsVisibleTo("Boolean.Pipeline")]
-[assembly: InternalsVisibleTo("Geometry.Tests")]
+[assembly: InternalsVisibleTo("Tests.Geometry")]
 [assembly: InternalsVisibleTo("Geometry.Predicates")]
 

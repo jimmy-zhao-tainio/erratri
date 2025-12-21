@@ -6,7 +6,7 @@ using Boolean;
 using Pslg;
 using Xunit;
 
-namespace Boolean.Tests;
+namespace Tests.Boolean;
 
 public class PslgTriangulationTests
 {
@@ -162,3 +162,4 @@ public class PslgTriangulationTests
         return new Triangulation.IntersectionPoint(bary, pos);
     }
 }
+

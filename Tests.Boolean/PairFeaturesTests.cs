@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using Topology;
 using Xunit;
 
-namespace Boolean.Tests;
+namespace Tests.Boolean;
 
 public class PairFeaturesTests
 {
@@ -206,3 +206,4 @@ public class PairFeaturesTests
         Assert.Empty(features.Segments);
     }
 }
+

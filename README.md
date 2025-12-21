@@ -62,7 +62,7 @@ The boolean mesher lives in `Kernel` and is deliberately layered:
 - **Patch classification and selection**: `TrianglePatchSet`, `PatchClassifier`, and `BooleanPatchClassifier` group subdivided triangles into patches, classify them as inside/outside the other solid, and pick which patches to keep for each boolean operation.
 - **Assembly and validation**: `BooleanMeshAssembler` merges vertices, assembles triangles into a `BooleanMesh`, and runs strict manifold and degeneracy checks. `BooleanOps` is a small façade that ties these layers together for `ClosedSurface` inputs.
 
-The boolean gallery in `Demo.Mesh/Program.cs` showcases four basic CSG operations on two spheres:
+The boolean gallery in `Demo.Boolean.Mesh/Program.cs` showcases four basic CSG operations on two spheres:
 
 ```csharp
 using World;

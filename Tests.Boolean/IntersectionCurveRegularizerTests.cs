@@ -5,7 +5,7 @@ using Geometry;
 using Boolean;
 using Xunit;
 
-namespace Boolean.Tests;
+namespace Tests.Boolean;
 
 public class IntersectionCurveRegularizerTests
 {
@@ -290,4 +290,5 @@ public class IntersectionCurveRegularizerTests
         return result;
     }
 }
+
 

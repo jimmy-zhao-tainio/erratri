@@ -7,7 +7,7 @@ using Xunit;
 using WTetrahedron = World.Tetrahedron;
 using Boolean.Intersection.Graph.Index;
 
-namespace Boolean.Tests;
+namespace Tests.Boolean;
 
 
 
@@ -232,3 +232,4 @@ public class PatchClassifierTests
 
 
 }
+

@@ -6,7 +6,7 @@ using World;
 using Xunit;
 using Boolean.Intersection.Graph.Index;
 
-namespace Boolean.Tests;
+namespace Tests.Boolean;
 
 
 
@@ -1795,3 +1795,4 @@ public class IntersectionGraphTests
 
 
 }
+
