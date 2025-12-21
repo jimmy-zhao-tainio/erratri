@@ -5,11 +5,11 @@ Goal: split Kernel into independent libraries in small, buildable steps.
 - [x] Step 01: Extract `TriangleSubdivision` (project + `Kernel/TriangleSubdivision/*`).
 - [x] Step 02: Extract `Intersection.Pair` (`IntersectionSet`, `PairFeatures`, `BarycentricVertices`).
 - [x] Step 03: Extract `Intersection.Graph` (`IntersectionGraph`, `Intersection.Graph.Index` for `TriangleIntersectionIndex`, `Mesh*Topology`, `IntersectionCurve*`).
-- [ ] Step 04: Extract `Patching` (`TrianglePatchSet`).
-- [ ] Step 05: Extract `Classification` (`PatchClassifier`, `PointInMeshTester`, `RayIntersectsTriangle`).
-- [ ] Step 06: Extract `Selection` (`BooleanPatchSet`, `BooleanPatchClassifier`, `BooleanOperation`).
-- [ ] Step 07: Extract `Assembly` (`Kernel/BooleanAssembly/*`).
-- [ ] Step 08: Extract `MeshInterop` (`BooleanMeshConverter`).
+- [x] Step 04: Extract `Patching` (`TrianglePatchSet`).
+- [x] Step 05: Extract `Classification` (`PatchClassifier`, `PointInMeshTester`, `RayIntersectsTriangle`).
+- [x] Step 06: Extract `Selection` (`BooleanPatchSet`, `BooleanPatchClassifier`, `BooleanOperation`).
+- [x] Step 07: Extract `Assembly` (`Kernel/BooleanAssembly/*`).
+- [x] Step 08: Extract `MeshInterop` (`BooleanMeshConverter`).
 - [ ] Step 09: Keep `BooleanOps` as the thin API facade and wire new refs.
 
 # Future goal

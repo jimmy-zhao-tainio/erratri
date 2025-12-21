@@ -10,6 +10,11 @@
     <ProjectReference Include="..\Topology\Topology.csproj" />
     <ProjectReference Include="..\Intersection.Pair\Intersection.Pair.csproj" />
     <ProjectReference Include="..\Intersection.Graph\Intersection.Graph.csproj" />
+    <ProjectReference Include="..\Patching\Patching.csproj" />
+    <ProjectReference Include="..\Classification\Classification.csproj" />
+    <ProjectReference Include="..\Selection\Selection.csproj" />
+    <ProjectReference Include="..\Assembly\Assembly.csproj" />
+    <ProjectReference Include="..\MeshInterop\MeshInterop.csproj" />
     <ProjectReference Include="..\TriangleSubdivision\TriangleSubdivision.csproj" />
   </ItemGroup>
 </Project>
