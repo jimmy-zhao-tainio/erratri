@@ -5,9 +5,9 @@ using Geometry;
 using Boolean;
 using Xunit;
 
-namespace Tests.Boolean;
+namespace Tests.Boolean.Intersection.Graph;
 
-public class IntersectionCurveRegularizerTests
+public class GraphCurveRegularizerTests
 {
     [Fact]
     public void RegularizeMeshA_PureLoop_ReturnsSingleCurveCoveringAllEdges()
@@ -290,5 +290,6 @@ public class IntersectionCurveRegularizerTests
         return result;
     }
 }
+
 
 

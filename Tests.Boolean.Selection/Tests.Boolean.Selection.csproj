@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>Tests.Boolean.Selection</AssemblyName>
+    <RootNamespace>Tests.Boolean.Selection</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Include="xunit" Version="2.5.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\\Boolean.Selection\\Boolean.Selection.csproj" />
+    <ProjectReference Include="..\\Boolean.Classification\\Boolean.Classification.csproj" />
+    <ProjectReference Include="..\\Boolean.Patching\\Boolean.Patching.csproj" />
+    <ProjectReference Include="..\\Boolean.Intersection.Graph\\Boolean.Intersection.Graph.csproj" />
+    <ProjectReference Include="..\\Boolean.Intersection.Pair\\Boolean.Intersection.Pair.csproj" />
+    <ProjectReference Include="..\\Geometry\\Geometry.csproj" />
+    <ProjectReference Include="..\\Topology\\Topology.csproj" />
+    <ProjectReference Include="..\\World\\World.csproj" />
+  </ItemGroup>
+</Project>
