@@ -42,50 +42,7 @@ public static class AssemblyEntry
         var patches = input.Patches;
         var selected = input.Selected;
 
-        bool debug = EdgeUseDiagnostics.DebugStage2Enabled;
-
-        if (debug)
-        {
-            var allA = new List<RealTriangle>();
-            var allB = new List<RealTriangle>();
-            for (int i = 0; i < patches.TrianglesA.Count; i++)
-            {
-                var g = patches.TrianglesA[i];
-                for (int p = 0; p < g.Count; p++) allA.Add(g[p]);
-            }
-            for (int i = 0; i < patches.TrianglesB.Count; i++)
-            {
-                var g = patches.TrianglesB[i];
-                for (int p = 0; p < g.Count; p++) allB.Add(g[p]);
-            }
-
-            var allPatchSet = new BooleanPatchSet(allA, allB);
-            BooleanMeshAssembler.DebugPrintCheckpointAllPatches("ckpt_allPatches", allPatchSet);
-
-            var allPatches = new List<RealTriangle>();
-            for (int i = 0; i < patches.TrianglesA.Count; i++)
-            {
-                var g = patches.TrianglesA[i];
-                for (int p = 0; p < g.Count; p++) allPatches.Add(g[p]);
-            }
-            for (int i = 0; i < patches.TrianglesB.Count; i++)
-            {
-                var g = patches.TrianglesB[i];
-                for (int p = 0; p < g.Count; p++) allPatches.Add(g[p]);
-            }
-
-            EdgeUseDiagnostics.PrintEdgeUseFromRealTriangles("ckpt_patches_all", allPatches);
-        }
-
         ValidateSelectedBoundaryEdgesMatchGraph(graph, selected);
-
-        if (debug)
-        {
-            var allSelected = new List<RealTriangle>(selected.FromMeshA.Count + selected.FromMeshB.Count);
-            for (int i = 0; i < selected.FromMeshA.Count; i++) allSelected.Add(selected.FromMeshA[i]);
-            for (int i = 0; i < selected.FromMeshB.Count; i++) allSelected.Add(selected.FromMeshB[i]);
-            EdgeUseDiagnostics.PrintEdgeUseFromRealTriangles("ckpt_selected_all", allSelected);
-        }
 
         var mesh = BooleanMeshAssembler.Assemble(selected);
         return new AssemblyOutput(mesh);
