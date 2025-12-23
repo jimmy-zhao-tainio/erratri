@@ -80,9 +80,4 @@ public readonly struct IntersectionSet
     }
 }
 
-public static class Kernel
-{
-    public static IntersectionSet Intersections(IReadOnlyList<Triangle> trianglesA, IReadOnlyList<Triangle> trianglesB)
-        => new IntersectionSet(trianglesA, trianglesB);
-}
 
