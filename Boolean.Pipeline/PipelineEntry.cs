@@ -16,8 +16,8 @@ public static class PipelineEntry
         var meshA = left;
         var meshB = right;
 
-        var set = new IntersectionSet(meshA.Triangles, meshB.Triangles);
-        var graph = IntersectionGraph.FromIntersectionSet(set);
+        var set = Intersection.PairEntry.Run(meshA.Triangles, meshB.Triangles);
+        var graph = Intersection.GraphEntry.Run(set);
         var index = TriangleIntersectionIndex.Build(graph);
         var topoA = MeshATopology.Build(graph, index);
         var topoB = MeshBTopology.Build(graph, index);
