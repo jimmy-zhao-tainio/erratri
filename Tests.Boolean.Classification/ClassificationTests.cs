@@ -2,7 +2,7 @@ using System.Linq;
 using Boolean;
 using Boolean.Intersection.Graph.Index;
 using Geometry;
-using Topology;
+using Geometry.Topology;
 using World;
 using Xunit;
 using WTetrahedron = World.Tetrahedron;
@@ -58,4 +58,5 @@ public class ClassificationTests
         return PatchClassifier.Classify(set, patches);
     }
 }
+
 

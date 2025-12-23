@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Geometry;
 using Boolean;
-using Topology;
+using Geometry.Topology;
 using World;
 using Xunit;
 
@@ -74,4 +74,5 @@ public class OperationCheeseStage2ManifoldTests
         }
     }
 }
+
 

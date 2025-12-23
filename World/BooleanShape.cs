@@ -1,4 +1,4 @@
-using Topology;
+using Geometry.Topology;
 
 namespace World;
 
@@ -61,3 +61,4 @@ public sealed class SymmetricDifference : BooleanShape
     public SymmetricDifference(Shape left, Shape right)
         : base(left, right, Boolean.BooleanOperationType.SymmetricDifference) { }
 }
+

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Geometry;
 using Boolean;
-using Topology;
+using Geometry.Topology;
 using Xunit;
 
 namespace Tests.Boolean.Intersection.Graph;
@@ -53,4 +53,5 @@ public class GraphFromIntersectionSetTests
         Assert.Equal(set.Intersections.Count, graph.IntersectionSet.Intersections.Count);
     }
 }
+
 

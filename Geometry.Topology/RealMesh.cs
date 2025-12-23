@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Geometry;
 
-namespace Topology;
+namespace Geometry.Topology;
 
 // Final boolean mesh result: merged vertices and triangles.
 public sealed class RealMesh
@@ -18,3 +18,4 @@ public sealed class RealMesh
         Triangles = triangles ?? throw new ArgumentNullException(nameof(triangles));
     }
 }
+

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Geometry;
 using Geometry.Predicates;
 using Geometry.Predicates.Internal;
-using Topology;
+using Geometry.Topology;
 
 namespace Boolean;
 
@@ -481,3 +481,4 @@ public static class PairFeaturesFactory
         points.Add(candidate);
     }
 }
+

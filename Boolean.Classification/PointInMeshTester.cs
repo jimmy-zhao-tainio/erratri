@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Geometry;
-using Topology;
+using Geometry.Topology;
 
 namespace Boolean;
 
@@ -54,3 +54,4 @@ internal sealed class PointInMeshTester
         return (crossings & 1) == 1;
     }
 }
+

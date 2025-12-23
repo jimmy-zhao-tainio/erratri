@@ -1,8 +1,9 @@
 using Geometry;
 using Geometry.Predicates;
+using Geometry.Topology;
 using Xunit;
 
-namespace Tests.Topology;
+namespace Tests.Geometry.Topology;
 
 public class IntersectionTypesTests
 {
@@ -817,4 +818,5 @@ public class IntersectionTypesTests
         Assert.Equal(kindBase, kindFlippedNormal);
     }
 }
+
 

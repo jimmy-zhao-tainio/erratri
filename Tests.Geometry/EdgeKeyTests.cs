@@ -1,5 +1,5 @@
 using Xunit;
-using Topology;
+using Geometry.Topology;
 
 namespace Tests.Geometry;
 
@@ -49,4 +49,5 @@ public class EdgeKeyTests
         if (m.TryGetValue(k, out var c)) m[k] = c + 1; else m[k] = 1; 
     }
 }
+
 

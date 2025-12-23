@@ -2,7 +2,7 @@ using Geometry;
 using Boolean;
 using System;
 using System.Collections.Generic;
-using Topology;
+using Geometry.Topology;
 using Xunit;
 
 namespace Tests.Boolean.Intersection.Pair;
@@ -171,4 +171,5 @@ public class PairFeaturesTests
         Assert.Empty(features.Segments);
     }
 }
+
 

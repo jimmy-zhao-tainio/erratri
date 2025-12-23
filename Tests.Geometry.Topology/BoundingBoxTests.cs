@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using Geometry;
-using Topology;
+using Geometry.Topology;
 using Xunit;
 
-namespace Tests.Topology;
+namespace Tests.Geometry.Topology;
 
 public class BoundingBoxTests
 {
@@ -301,4 +301,5 @@ public class BoundingBoxTreeTests
         Assert.Empty(hits);
     }
 }
+
 

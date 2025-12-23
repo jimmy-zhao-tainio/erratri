@@ -1,6 +1,6 @@
 using System;
 using Boolean.Pipeline;
-using Topology;
+using Geometry.Topology;
 
 namespace Boolean;
 
@@ -30,3 +30,4 @@ public static class Operation
         return PipelineEntry.Run(a, b, op);
     }
 }
+

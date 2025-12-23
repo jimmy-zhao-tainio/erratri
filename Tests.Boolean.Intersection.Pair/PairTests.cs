@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Geometry;
 using Boolean;
-using Topology;
+using Geometry.Topology;
 using Xunit;
 
 namespace Tests.Boolean.Intersection.Pair;
@@ -126,4 +126,5 @@ public class PairTests
         Assert.Equal(IntersectionType.Point, intersections[1].Type);
     }
 }
+
 

@@ -1,7 +1,7 @@
 using System.Linq;
 using Geometry;
 using Boolean;
-using Topology;
+using Geometry.Topology;
 using World;
 using Xunit;
 using WTetrahedron = World.Tetrahedron;
@@ -80,4 +80,5 @@ public class AssemblyTests
         Assert.NotEmpty(mesh.Triangles);
     }
 }
+
 

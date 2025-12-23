@@ -11,8 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo", "Demo\Demo.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Geometry.Predicates", "Geometry.Predicates\Geometry.Predicates.csproj", "{33652EF2-076D-4526-83FA-365DACB89BD6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topology", "Topology\Topology.csproj", "{4B42BA46-763B-481F-940D-BB5757884E92}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO", "IO\IO.csproj", "{7A4598ED-26DC-4B7F-80BA-E7B94E3913E2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boolean.Pipeline", "Boolean.Pipeline\Boolean.Pipeline.csproj", "{37B28CDE-1D32-4FEF-9AA7-092356DDD9D0}"
@@ -45,8 +43,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.Boolean.Intersections"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.Boolean.Triangulation.Triangulator", "Demo.Boolean.Triangulation.Triangulator\Demo.Boolean.Triangulation.Triangulator.csproj", "{F3032A5F-F789-4BCA-BDC2-35BDF30EBCB9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.Topology", "Tests.Topology\Tests.Topology.csproj", "{2DD65EA9-80C8-4212-B3EA-C0E4963DD965}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.Geometry", "Tests.Geometry\Tests.Geometry.csproj", "{673A5B6F-B0BD-492E-84CE-75AF711C01E4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.Boolean.Mesh.Cheese", "Demo.Boolean.Mesh.Cheese\Demo.Boolean.Mesh.Cheese.csproj", "{63110DFC-A7D6-4CDD-8695-FA40BB60C82A}"
@@ -68,6 +64,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.Boolean.Operation", "Tests.Boolean.Operation\Tests.Boolean.Operation.csproj", "{E950E4DF-5775-464F-A73E-A11F806DC3C3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.Boolean.Triangulation", "Tests.Boolean.Triangulation\Tests.Boolean.Triangulation.csproj", "{C0826163-27B3-436F-A007-78E0D22AAD91}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Geometry.Topology", "Geometry.Topology\Geometry.Topology.csproj", "{E3A457B9-DE4D-4121-A910-0B3BD459C095}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.Geometry.Topology", "Tests.Geometry.Topology\Tests.Geometry.Topology.csproj", "{8DED7B7F-65ED-462F-BDA6-BE3E1311AA87}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -91,10 +91,6 @@ Global
 		{33652EF2-076D-4526-83FA-365DACB89BD6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{33652EF2-076D-4526-83FA-365DACB89BD6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{33652EF2-076D-4526-83FA-365DACB89BD6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4B42BA46-763B-481F-940D-BB5757884E92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4B42BA46-763B-481F-940D-BB5757884E92}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4B42BA46-763B-481F-940D-BB5757884E92}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4B42BA46-763B-481F-940D-BB5757884E92}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7A4598ED-26DC-4B7F-80BA-E7B94E3913E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7A4598ED-26DC-4B7F-80BA-E7B94E3913E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A4598ED-26DC-4B7F-80BA-E7B94E3913E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -159,10 +155,6 @@ Global
 		{F3032A5F-F789-4BCA-BDC2-35BDF30EBCB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F3032A5F-F789-4BCA-BDC2-35BDF30EBCB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F3032A5F-F789-4BCA-BDC2-35BDF30EBCB9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2DD65EA9-80C8-4212-B3EA-C0E4963DD965}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2DD65EA9-80C8-4212-B3EA-C0E4963DD965}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2DD65EA9-80C8-4212-B3EA-C0E4963DD965}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2DD65EA9-80C8-4212-B3EA-C0E4963DD965}.Release|Any CPU.Build.0 = Release|Any CPU
 		{673A5B6F-B0BD-492E-84CE-75AF711C01E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{673A5B6F-B0BD-492E-84CE-75AF711C01E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{673A5B6F-B0BD-492E-84CE-75AF711C01E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -207,6 +199,14 @@ Global
 		{C0826163-27B3-436F-A007-78E0D22AAD91}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0826163-27B3-436F-A007-78E0D22AAD91}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C0826163-27B3-436F-A007-78E0D22AAD91}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3A457B9-DE4D-4121-A910-0B3BD459C095}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3A457B9-DE4D-4121-A910-0B3BD459C095}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3A457B9-DE4D-4121-A910-0B3BD459C095}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3A457B9-DE4D-4121-A910-0B3BD459C095}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8DED7B7F-65ED-462F-BDA6-BE3E1311AA87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DED7B7F-65ED-462F-BDA6-BE3E1311AA87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DED7B7F-65ED-462F-BDA6-BE3E1311AA87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DED7B7F-65ED-462F-BDA6-BE3E1311AA87}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

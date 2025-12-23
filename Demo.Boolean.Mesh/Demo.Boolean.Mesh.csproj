@@ -9,10 +9,11 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Geometry\Geometry.csproj" />
-    <ProjectReference Include="..\Topology\Topology.csproj" />
+    <ProjectReference Include="..\\Geometry.Topology\\Geometry.Topology.csproj" />
     <ProjectReference Include="..\World\World.csproj" />
     <ProjectReference Include="..\Geometry.Predicates\Geometry.Predicates.csproj" />
     <ProjectReference Include="..\IO\IO.csproj" />
   </ItemGroup>
 </Project>
+
 

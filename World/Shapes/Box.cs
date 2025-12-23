@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Topology;
+using Geometry.Topology;
 using Geometry;
 
 namespace World;
@@ -39,3 +39,4 @@ public sealed class Box : Shape
     public long Depth { get; }
     public long Height { get; }
 }
+

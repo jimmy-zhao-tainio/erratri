@@ -1,5 +1,5 @@
 using Geometry;
-using Topology;
+using Geometry.Topology;
 
 namespace IO;
 
@@ -34,3 +34,4 @@ public static class StlWriter
         }
     }
 }
+

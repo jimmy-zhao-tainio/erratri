@@ -1,6 +1,6 @@
 using Geometry;
 
-namespace Topology;
+namespace Geometry.Topology;
 
 // Order-agnostic, integer-only key for an undirected edge defined by two grid Points.
 public readonly struct EdgeKey : IEquatable<EdgeKey>
@@ -36,3 +36,4 @@ public readonly struct EdgeKey : IEquatable<EdgeKey>
         return p.Z < q.Z;
     }
 }
+

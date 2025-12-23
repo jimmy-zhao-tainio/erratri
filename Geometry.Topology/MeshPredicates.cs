@@ -1,4 +1,4 @@
-namespace Topology;
+namespace Geometry.Topology;
 
 public static class MeshPredicates
 {
@@ -30,3 +30,4 @@ public static class MeshPredicates
         if (map.TryGetValue(e, out var c)) map[e] = c + 1; else map[e] = 1;
     }
 }
+

@@ -1,5 +1,5 @@
 using Xunit;
-using Topology;
+using Geometry.Topology;
 
 namespace Tests.Geometry;
 
@@ -77,4 +77,5 @@ public class TriangleKeyTests
         if (map.TryGetValue(key, out var c)) map[key] = c + 1; else map[key] = 1;
     }
 }
+
 

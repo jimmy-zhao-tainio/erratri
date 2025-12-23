@@ -14,10 +14,11 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Geometry\Geometry.csproj" />
-    <ProjectReference Include="..\\Topology\\Topology.csproj" />
+    <ProjectReference Include="..\\Geometry.Topology\\Geometry.Topology.csproj" />
     <ProjectReference Include="..\\Geometry.Predicates\\Geometry.Predicates.csproj" />
   </ItemGroup>
 </Project>
+
 
 
 

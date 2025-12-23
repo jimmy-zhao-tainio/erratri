@@ -1,6 +1,6 @@
 using Geometry;
 
-namespace Topology;
+namespace Geometry.Topology;
 
 // A lightweight collection wrapper for a set of triangles assumed to bound a closed volume.
 public sealed class Mesh
@@ -45,3 +45,4 @@ public sealed class Mesh
         return new Mesh(boundary);
     }
 }
+

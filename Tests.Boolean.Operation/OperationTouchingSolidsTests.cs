@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Geometry;
 using Boolean;
-using Topology;
+using Geometry.Topology;
 using Xunit;
 using WTetrahedron = World.Tetrahedron;
 
@@ -82,4 +82,5 @@ public class OperationTouchingSolidsTests
         return Mesh.FromTetrahedra(tetrahedra);
     }
 }
+
 

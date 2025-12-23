@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Geometry;
 
-namespace Topology;
+namespace Geometry.Topology;
 
 public sealed class BoundingBoxTree
 {
@@ -126,3 +126,4 @@ public sealed class BoundingBoxTree
             => axis == 0 ? (b.Min.X + b.Max.X) : axis == 1 ? (b.Min.Y + b.Max.Y) : (b.Min.Z + b.Max.Z);
     }
 }
+

@@ -2,7 +2,7 @@ using Geometry;
 using System;
 using System.Linq;
 using World;
-using Topology;
+using Geometry.Topology;
 using Boolean;
 using IO;
 
@@ -357,3 +357,4 @@ internal static class Program
         acc.Segments.Add(new Triangulation.IntersectionSegment(a, b));
     }
 }
+

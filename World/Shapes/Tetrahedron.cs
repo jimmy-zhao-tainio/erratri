@@ -1,4 +1,4 @@
-using Topology;
+using Geometry.Topology;
 using Geometry;
 
 namespace World;
@@ -17,3 +17,4 @@ public sealed class Tetrahedron : Shape
     public Point C { get; }
     public Point D { get; }
 }
+

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Geometry;
 using Boolean;
 using Boolean.Intersection.Graph.Index;
-using Topology;
+using Geometry.Topology;
 
 namespace Boolean.Pipeline;
 
@@ -213,3 +213,4 @@ public static class PipelineEntry
         return (qx, qy, qz);
     }
 }
+

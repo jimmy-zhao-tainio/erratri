@@ -1,5 +1,5 @@
 using Geometry;
-using Topology;
+using Geometry.Topology;
 
 namespace World;
 
@@ -73,3 +73,4 @@ public abstract partial class Shape
         Mesh = new Mesh(updated);
     }
 }
+

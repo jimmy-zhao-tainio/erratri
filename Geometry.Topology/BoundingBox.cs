@@ -1,7 +1,7 @@
 using Geometry;
 using System.Collections.Generic;
 
-namespace Topology;
+namespace Geometry.Topology;
 
 public readonly struct BoundingBox
 {
@@ -96,3 +96,4 @@ public readonly struct BoundingBox
         new Point(long.MaxValue, long.MaxValue, long.MaxValue),
         new Point(long.MinValue, long.MinValue, long.MinValue));
 }
+

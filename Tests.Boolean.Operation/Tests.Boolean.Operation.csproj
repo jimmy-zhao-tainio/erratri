@@ -16,7 +16,8 @@
     <ProjectReference Include="..\\Boolean.Operation\\Boolean.Operation.csproj" />
     <ProjectReference Include="..\\Boolean.MeshInterop\\Boolean.MeshInterop.csproj" />
     <ProjectReference Include="..\\Geometry\\Geometry.csproj" />
-    <ProjectReference Include="..\\Topology\\Topology.csproj" />
+    <ProjectReference Include="..\\Geometry.Topology\\Geometry.Topology.csproj" />
     <ProjectReference Include="..\\World\\World.csproj" />
   </ItemGroup>
 </Project>
+

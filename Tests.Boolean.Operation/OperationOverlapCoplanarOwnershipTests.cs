@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Geometry;
-using Topology;
+using Geometry.Topology;
 using Xunit;
 using WTetrahedron = World.Tetrahedron;
 
@@ -47,4 +47,5 @@ public class OperationOverlapCoplanarOwnershipTests
         }
     }
 }
+
 

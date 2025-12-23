@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\\Boolean.Intersection.Pair\\Boolean.Intersection.Pair.csproj" />
     <ProjectReference Include="..\\Geometry\\Geometry.csproj" />
-    <ProjectReference Include="..\\Topology\\Topology.csproj" />
+    <ProjectReference Include="..\\Geometry.Topology\\Geometry.Topology.csproj" />
   </ItemGroup>
 </Project>
+

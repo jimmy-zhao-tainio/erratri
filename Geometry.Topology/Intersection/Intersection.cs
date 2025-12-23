@@ -1,6 +1,9 @@
 using Geometry;
 using Geometry.Predicates;
 
+namespace Geometry.Topology;
+
+
 public static class IntersectionTypes
 {
     public static IntersectionType Classify(in Triangle a, in Triangle b)
@@ -33,3 +36,4 @@ public static class IntersectionTypes
         return Classify(in a, in b) != IntersectionType.None;
     }
 }
+

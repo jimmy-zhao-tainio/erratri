@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Geometry;
 using Geometry.Predicates.Internal;
-using Topology;
+using Geometry.Topology;
 using Xunit;
 
 namespace Tests.Geometry;
@@ -109,4 +109,5 @@ public class PairIntersectionMathTests
         }
     }
 }
+
 

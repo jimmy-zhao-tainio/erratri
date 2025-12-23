@@ -1,3 +1,5 @@
+namespace Geometry.Topology;
+
 // Classifies the intersection of two closed, nondegenerate triangles in 3D.
 // Triangles are treated as closed convex sets (including edges and vertices).
 // Each pair of triangles falls into exactly one case.
@@ -18,3 +20,4 @@ public enum IntersectionType
     // This includes partial overlap, containment, and equality.
     Area = 3
 }
+

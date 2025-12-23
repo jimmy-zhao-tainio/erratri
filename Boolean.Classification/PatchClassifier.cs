@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Geometry;
-using Topology;
+using Geometry.Topology;
 
 namespace Boolean;
 
@@ -77,3 +77,4 @@ public static class PatchClassifier
     }
 
 }
+
