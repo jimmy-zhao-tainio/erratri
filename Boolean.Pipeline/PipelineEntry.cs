@@ -18,10 +18,10 @@ public static class PipelineEntry
 
         var set = Intersection.PairEntry.Run(meshA.Triangles, meshB.Triangles);
         var graph = Intersection.GraphEntry.Run(set);
-        var index = TriangleIntersectionIndex.Build(graph);
-        var topoA = MeshATopology.Build(graph, index);
-        var topoB = MeshBTopology.Build(graph, index);
-        var patches = TrianglePatchSet.Build(graph, index, topoA, topoB);
+        var index = TriangleIntersectionIndex.Run(graph);
+        var topoA = MeshATopology.Run(graph, index);
+        var topoB = MeshBTopology.Run(graph, index);
+        var patches = TrianglePatchSet.Run(graph, index, topoA, topoB);
 
         var classification = PatchClassifier.Classify(set, patches);
         var selected = BooleanPatchClassifier.Select(op, classification);

@@ -151,7 +151,7 @@ public class GraphTests
         var trianglesB = new List<Triangle> { triB };
         var set = new IntersectionSet(trianglesA, trianglesB);
         var graph = IntersectionGraph.FromIntersectionSet(set);
-        var index = TriangleIntersectionIndex.Build(graph);
+        var index = TriangleIntersectionIndex.Run(graph);
         Assert.Single(index.TrianglesA);
         Assert.Single(index.TrianglesB);
         var vertsA = index.TrianglesA[0];
@@ -191,7 +191,7 @@ public class GraphTests
         var trianglesB = new List<Triangle> { b0, b0 };
         var set = new IntersectionSet(trianglesA, trianglesB);
         var graph = IntersectionGraph.FromIntersectionSet(set);
-        var index = TriangleIntersectionIndex.Build(graph);
+        var index = TriangleIntersectionIndex.Run(graph);
         Assert.Single(graph.Vertices);
         var sharedId = graph.Vertices[0].Id;
         Assert.Equal(2, index.TrianglesA.Count);
@@ -220,7 +220,7 @@ public class GraphTests
             sphereA.Mesh.Triangles,
             sphereB.Mesh.Triangles);
         var graph = IntersectionGraph.FromIntersectionSet(set);
-        var index = TriangleIntersectionIndex.Build(graph);
+        var index = TriangleIntersectionIndex.Run(graph);
         var trianglesA = set.TrianglesA;
         var trianglesB = set.TrianglesB;
         // Triangles marked as intersecting in the set.
@@ -294,8 +294,8 @@ public class GraphTests
         }
         // Build mesh-local topologies (per-triangle edges, vertex adjacency, loops),
         // then run the intersection curve regularizer on mesh A and mesh B.
-        var meshATopology = MeshATopology.Build(graph, index);
-        var meshBTopology = MeshBTopology.Build(graph, index);
+        var meshATopology = MeshATopology.Run(graph, index);
+        var meshBTopology = MeshBTopology.Run(graph, index);
         var regularizationA = IntersectionCurveRegularizer.RegularizeMeshA(graph, meshATopology);
         // For the sphere-sphere case we expect at least one regularized
         // intersection curve on each mesh whose vertices form a closed cycle

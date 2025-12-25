@@ -15,10 +15,10 @@ public class AssemblyTests
     {
         var set = new IntersectionSet(a.Mesh.Triangles, b.Mesh.Triangles);
         var graph = IntersectionGraph.FromIntersectionSet(set);
-        var index = TriangleIntersectionIndex.Build(graph);
-        var topoA = MeshATopology.Build(graph, index);
-        var topoB = MeshBTopology.Build(graph, index);
-        var patches = TrianglePatchSet.Build(graph, index, topoA, topoB);
+        var index = TriangleIntersectionIndex.Run(graph);
+        var topoA = MeshATopology.Run(graph, index);
+        var topoB = MeshBTopology.Run(graph, index);
+        var patches = TrianglePatchSet.Run(graph, index, topoA, topoB);
         var classification = PatchClassifier.Classify(set, patches);
         var selected = BooleanPatchClassifier.Select(op, classification);
         return BooleanMeshAssembler.Assemble(selected);

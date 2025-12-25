@@ -29,7 +29,7 @@ public sealed class TrianglePatchSet
         TrianglesB = trianglesB ?? throw new ArgumentNullException(nameof(trianglesB));
     }
 
-    public static TrianglePatchSet Build(
+    public static TrianglePatchSet Run(
         IntersectionGraph graph,
         TriangleIntersectionIndex index,
         MeshATopology topologyA,

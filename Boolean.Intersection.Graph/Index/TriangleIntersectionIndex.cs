@@ -43,7 +43,7 @@ public sealed class TriangleIntersectionIndex
         TrianglesB = trianglesB ?? throw new ArgumentNullException(nameof(trianglesB));
     }
 
-    public static TriangleIntersectionIndex Build(IntersectionGraph graph)
+    public static TriangleIntersectionIndex Run(IntersectionGraph graph)
     {
         if (graph is null) throw new ArgumentNullException(nameof(graph));
 
