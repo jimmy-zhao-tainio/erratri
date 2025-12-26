@@ -8,9 +8,9 @@ using Boolean.Intersection.Indexing;
 
 using Boolean.Intersection.Topology;
 
-namespace Tests.Boolean.Patching;
+namespace Tests.Boolean.TrianglePatches;
 
-public class PatchingTests
+public class TrianglePatchesTests
 {
     [Fact]
     public void Build_NoIntersections_ReturnsOriginalPatches()
@@ -30,7 +30,7 @@ public class PatchingTests
         var index = IntersectionIndex.Run(graph);
         var topoA = MeshA.Run(graph, index);
         var topoB = MeshB.Run(graph, index);
-        var patches = global::Boolean.Patching.Run(graph, index, topoA, topoB);
+        var patches = global::Boolean.TrianglePatching.Run(graph, index, topoA, topoB);
         var aPatches = Assert.Single(patches.TrianglesA);
         var bPatches = Assert.Single(patches.TrianglesB);
         Assert.Single(aPatches);
@@ -57,7 +57,7 @@ public class PatchingTests
         var index = IntersectionIndex.Run(graph);
         var topoA = MeshA.Run(graph, index);
         var topoB = MeshB.Run(graph, index);
-        var patches = global::Boolean.Patching.Run(graph, index, topoA, topoB);
+        var patches = global::Boolean.TrianglePatching.Run(graph, index, topoA, topoB);
         var aPatches = Assert.Single(patches.TrianglesA);
         var bPatches = Assert.Single(patches.TrianglesB);
         Assert.True(aPatches.Count > 1, "Triangle A should be cut into multiple patches.");

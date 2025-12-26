@@ -290,7 +290,7 @@ public abstract class MeshTopology
                     continue;
                 }
                 // Avoid attaching edges whose endpoints are not attached as vertices on the triangle
-                // (Patching would otherwise fail when converting edge endpoints to point indices).
+                // (TrianglePatches would otherwise fail when converting edge endpoints to point indices).
                 if (ContainsVertex(perTriangleVertices[t0], endpoints.Start) &&
                     ContainsVertex(perTriangleVertices[t0], endpoints.End) &&
                     !ContainsEdge(triangleEdgeLists[t0], edgeValue))

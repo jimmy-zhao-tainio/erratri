@@ -7,30 +7,11 @@ using Boolean.Intersection.Topology;
 
 namespace Boolean;
 
-// Per-mesh triangle patches obtained by cutting each triangle along the
-// intersection segments that lie on it. This is the mesh-level wrapper
-// around TriangleSubdivision.
-public sealed class Patching
+internal static class TrianglePatchingCore
 {
     private static bool s_dumpWritten = false;
 
-    // Patches for each triangle in IntersectionSet.TrianglesA.
-    // Index i corresponds to triangle i in mesh A.
-    public IReadOnlyList<IReadOnlyList<RealTriangle>> TrianglesA { get; }
-
-    // Patches for each triangle in IntersectionSet.TrianglesB.
-    // Index j corresponds to triangle j in mesh B.
-    public IReadOnlyList<IReadOnlyList<RealTriangle>> TrianglesB { get; }
-
-    private Patching(
-        IReadOnlyList<IReadOnlyList<RealTriangle>> trianglesA,
-        IReadOnlyList<IReadOnlyList<RealTriangle>> trianglesB)
-    {
-        TrianglesA = trianglesA ?? throw new ArgumentNullException(nameof(trianglesA));
-        TrianglesB = trianglesB ?? throw new ArgumentNullException(nameof(trianglesB));
-    }
-
-    public static Patching Run(
+    internal static TrianglePatches Run(
         IntersectionGraph graph,
         IntersectionIndex index,
         MeshA topologyA,
@@ -60,7 +41,7 @@ public sealed class Patching
             topologyB.TriangleEdges,
             edgeLookup);
 
-        return new Patching(patchesA, patchesB);
+        return new TrianglePatches(patchesA, patchesB);
     }
 
     private static Dictionary<int, (IntersectionVertexId Start, IntersectionVertexId End)> BuildEdgeLookup(IntersectionGraph graph)
@@ -261,7 +242,7 @@ public sealed class Patching
                 continue;
             }
 
-            var closest = Lerp(in start, in end, t);
+            var closest = LinearInterpolation(in start, in end, t);
             if (p.DistanceSquared(in closest) > mergeDistanceEpsilonSquared)
             {
                 continue;
@@ -273,7 +254,7 @@ public sealed class Patching
         return interiorPoints.Count > 0;
     }
 
-    private static RealPoint Lerp(in RealPoint a, in RealPoint b, double t)
+    private static RealPoint LinearInterpolation(in RealPoint a, in RealPoint b, double t)
     {
         return new RealPoint(
             a.X + (b.X - a.X) * t,
@@ -331,7 +312,7 @@ public sealed class Patching
                     interiorPoints))
             {
                 System.Diagnostics.Debug.Fail(
-                    $"Patching: segment passes through another point (tri={triangleIndex} seg={segment.StartIndex}->{segment.EndIndex} via={interiorPoints[0].Index}).");
+                    $"TrianglePatches: segment passes through another point (tri={triangleIndex} seg={segment.StartIndex}->{segment.EndIndex} via={interiorPoints[0].Index}).");
                 return;
             }
         }
@@ -382,5 +363,3 @@ public sealed class Patching
         }
     }
 }
-
-

@@ -56,7 +56,7 @@ public class ClassificationTests
         var index = IntersectionIndex.Run(graph);
         var topoA = MeshA.Run(graph, index);
         var topoB = MeshB.Run(graph, index);
-        var patches = global::Boolean.Patching.Run(graph, index, topoA, topoB);
+        var patches = global::Boolean.TrianglePatching.Run(graph, index, topoA, topoB);
         return global::Boolean.Classification.Run(set, patches);
     }
 }

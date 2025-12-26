@@ -4,20 +4,20 @@
 public static class BooleanDebugCapture
 {
     public static BooleanPatchSet? LastPatchSet { get; private set; }
-    public static Patching? LastPatching { get; private set; }
+    public static TrianglePatches? LastTrianglePatches { get; private set; }
     public static PatchClassification? LastClassification { get; private set; }
     public static IntersectionSet? LastIntersectionSet { get; private set; }
     public static BooleanOperationType LastOperation { get; private set; }
 
     public static void Capture(
         BooleanPatchSet patchSet,
-        Patching trianglePatches,
+        TrianglePatches trianglePatches,
         PatchClassification classification,
         IntersectionSet set,
         BooleanOperationType operation)
     {
         LastPatchSet = patchSet;
-        LastPatching = trianglePatches;
+        LastTrianglePatches = trianglePatches;
         LastClassification = classification;
         LastIntersectionSet = set;
         LastOperation = operation;
@@ -26,7 +26,7 @@ public static class BooleanDebugCapture
     public static void Clear()
     {
         LastPatchSet = null;
-        LastPatching = null;
+        LastTrianglePatches = null;
         LastClassification = null;
         LastIntersectionSet = null;
     }

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
@@ -15,7 +15,7 @@
     <ProjectReference Include="..\IO\IO.csproj" />
     <ProjectReference Include="..\Boolean.Intersection.Pair\Boolean.Intersection.Pair.csproj" />
     <ProjectReference Include="..\Boolean.Intersection.Graph\Boolean.Intersection.Graph.csproj" />
-    <ProjectReference Include="..\Boolean.Patching\Boolean.Patching.csproj" />
+    <ProjectReference Include="..\Boolean.TrianglePatches\\Boolean.TrianglePatches.csproj" />
     <ProjectReference Include="..\Boolean.Triangulation\Boolean.Triangulation.csproj" />
   </ItemGroup>
 </Project>

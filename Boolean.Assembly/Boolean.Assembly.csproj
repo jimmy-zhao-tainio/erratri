@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -9,7 +9,7 @@
     <ProjectReference Include="..\\Geometry.Topology\\Geometry.Topology.csproj" />
     <ProjectReference Include="..\Boolean.Intersection.Pair\Boolean.Intersection.Pair.csproj" />
     <ProjectReference Include="..\Boolean.Intersection.Graph\Boolean.Intersection.Graph.csproj" />
-    <ProjectReference Include="..\Boolean.Patching\Boolean.Patching.csproj" />
+    <ProjectReference Include="..\Boolean.TrianglePatches\\Boolean.TrianglePatches.csproj" />
     <ProjectReference Include="..\Boolean.Classification\Boolean.Classification.csproj" />
     <ProjectReference Include="..\Boolean.Selection\Boolean.Selection.csproj" />
   </ItemGroup>

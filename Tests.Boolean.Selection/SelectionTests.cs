@@ -19,7 +19,7 @@ public class SelectionTests
         var index = IntersectionIndex.Run(graph);
         var topoA = MeshA.Run(graph, index);
         var topoB = MeshB.Run(graph, index);
-        var patches = Patching.Run(graph, index, topoA, topoB);
+        var patches = TrianglePatching.Run(graph, index, topoA, topoB);
         return Classification.Run(set, patches);
     }
 

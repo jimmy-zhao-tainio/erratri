@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <AssemblyName>Tests.Boolean.Patching</AssemblyName>
-    <RootNamespace>Tests.Boolean.Patching</RootNamespace>
+    <AssemblyName>Tests.Boolean.TrianglePatches</AssemblyName>
+    <RootNamespace>Tests.Boolean.TrianglePatches</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
@@ -13,7 +13,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\\Boolean.Patching\\Boolean.Patching.csproj" />
+    <ProjectReference Include="..\\Boolean.TrianglePatches\\Boolean.TrianglePatches.csproj" />
     <ProjectReference Include="..\\Boolean.Intersection.Graph\\Boolean.Intersection.Graph.csproj" />
     <ProjectReference Include="..\\Boolean.Intersection.Index\\Boolean.Intersection.Index.csproj" />
     <ProjectReference Include="..\\Boolean.Intersection.Topology\\Boolean.Intersection.Topology.csproj" />

@@ -20,7 +20,7 @@ public class AssemblyTests
         var index = IntersectionIndex.Run(graph);
         var topoA = MeshA.Run(graph, index);
         var topoB = MeshB.Run(graph, index);
-        var patches = Patching.Run(graph, index, topoA, topoB);
+        var patches = TrianglePatching.Run(graph, index, topoA, topoB);
         var classification = Classification.Run(set, patches);
         var selected = PatchSelector.Select(op, classification);
         return BooleanMeshAssembler.Assemble(selected);

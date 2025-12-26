@@ -20,7 +20,7 @@ public static class PipelineEntry
         var index = Intersection.Index.Run(graph);
         var topoA = Intersection.Topology.MeshA.Run(graph, index);
         var topoB = Intersection.Topology.MeshB.Run(graph, index);
-        var patches = Patching.Run(graph, index, topoA, topoB);
+        var patches = TrianglePatching.Run(graph, index, topoA, topoB);
 
         var classification = Classification.Run(set, patches);
         var selected = Selection.Run(op, classification);
