@@ -53,11 +53,11 @@ public class ClassificationTests
     {
         var set = new IntersectionSet(a.Mesh.Triangles, b.Mesh.Triangles);
         var graph = IntersectionGraph.FromIntersectionSet(set);
-        var index = TriangleIntersectionIndex.Run(graph);
+        var index = IntersectionIndex.Run(graph);
         var topoA = MeshA.Run(graph, index);
         var topoB = MeshB.Run(graph, index);
-        var patches = TrianglePatchSet.Run(graph, index, topoA, topoB);
-        return PatchClassifier.Classify(set, patches);
+        var patches = global::Boolean.Patching.Run(graph, index, topoA, topoB);
+        return global::Boolean.Classification.Run(set, patches);
     }
 }
 

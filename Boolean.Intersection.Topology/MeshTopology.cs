@@ -37,7 +37,7 @@ public abstract class MeshTopology
     }
 // Core builder shared between MeshA and MeshB. The caller
     // supplies the per-triangle intersection vertices coming from the
-    // TriangleIntersectionIndex for its side (A or B).
+    // IntersectionIndex for its side (A or B).
     protected static (
         IntersectionEdgeId[][] TriangleEdges,
         IntersectionEdgeId[] Edges,
@@ -107,7 +107,7 @@ public abstract class MeshTopology
             for (int i = 0; i < localVertices.Count; i++)
             {
                 var v = localVertices[i];
-                // Prefer A-side reconstruction; fall back to B-side if needed (mirrors TriangleIntersectionIndex).
+                // Prefer A-side reconstruction; fall back to B-side if needed (mirrors IntersectionIndex).
                 var baryA = v.OnTriangleA;
                 var worldA = Barycentric.ToRealPointOnTriangle(in triangleA, in baryA);
                 if (!globalVertexLookup.TryGetValue(Quantize(worldA, invEpsilon), out var globalId))
@@ -290,7 +290,7 @@ public abstract class MeshTopology
                     continue;
                 }
                 // Avoid attaching edges whose endpoints are not attached as vertices on the triangle
-                // (TrianglePatchSet would otherwise fail when converting edge endpoints to point indices).
+                // (Patching would otherwise fail when converting edge endpoints to point indices).
                 if (ContainsVertex(perTriangleVertices[t0], endpoints.Start) &&
                     ContainsVertex(perTriangleVertices[t0], endpoints.End) &&
                     !ContainsEdge(triangleEdgeLists[t0], edgeValue))

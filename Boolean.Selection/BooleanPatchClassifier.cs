@@ -6,7 +6,7 @@ namespace Boolean;
 
 // Selects which patches to keep for a given boolean operation using
 // patch-level inside/outside classification.
-public static class BooleanPatchClassifier
+public static class BooleanClassification
 {
     public static BooleanPatchSet Select(BooleanOperationType operation, PatchClassification classification)
     {

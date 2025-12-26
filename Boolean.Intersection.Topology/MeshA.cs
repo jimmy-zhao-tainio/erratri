@@ -22,7 +22,7 @@ public sealed class MeshA : MeshTopology
     {
     }
 
-    public static MeshA Run(IntersectionGraph graph, TriangleIntersectionIndex index)
+    public static MeshA Run(IntersectionGraph graph, IntersectionIndex index)
     {
         if (graph is null) throw new ArgumentNullException(nameof(graph));
         if (index is null) throw new ArgumentNullException(nameof(index));
@@ -33,7 +33,7 @@ public sealed class MeshA : MeshTopology
         var perTriangleVertices = index.TrianglesA;
         if (trianglesA.Count != perTriangleVertices.Count)
         {
-            throw new InvalidOperationException("Triangle count mismatch between IntersectionSet and TriangleIntersectionIndex for mesh A.");
+            throw new InvalidOperationException("Triangle count mismatch between IntersectionSet and IntersectionIndex for mesh A.");
         }
 
         var data = BuildCore(graph, perTriangleVertices, meshA: true);

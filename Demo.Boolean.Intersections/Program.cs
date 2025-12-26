@@ -20,7 +20,7 @@ internal static class Program
 
     private static void Main()
     {
-        SaveTrianglePatchSetSegmentCase();
+        SavePatchingSegmentCase();
         SaveNoneExample();
         SavePointExample();
         SaveSegmentExample();
@@ -29,9 +29,9 @@ internal static class Program
         SaveTetraPeekExample();
     }
 
-    private static void SaveTrianglePatchSetSegmentCase()
+    private static void SavePatchingSegmentCase()
     {
-        // Matches TrianglePatchSetTests.Build_SegmentIntersection_CutsBothTriangles:
+        // Matches PatchingTests.Build_SegmentIntersection_CutsBothTriangles:
         // two non-coplanar triangles intersecting along a segment that cuts both.
         var triA = new Triangle(
             new Point(0, 0, 0),

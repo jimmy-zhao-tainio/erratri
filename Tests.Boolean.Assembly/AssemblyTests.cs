@@ -17,12 +17,12 @@ public class AssemblyTests
     {
         var set = new IntersectionSet(a.Mesh.Triangles, b.Mesh.Triangles);
         var graph = IntersectionGraph.FromIntersectionSet(set);
-        var index = TriangleIntersectionIndex.Run(graph);
+        var index = IntersectionIndex.Run(graph);
         var topoA = MeshA.Run(graph, index);
         var topoB = MeshB.Run(graph, index);
-        var patches = TrianglePatchSet.Run(graph, index, topoA, topoB);
-        var classification = PatchClassifier.Classify(set, patches);
-        var selected = BooleanPatchClassifier.Select(op, classification);
+        var patches = Patching.Run(graph, index, topoA, topoB);
+        var classification = Classification.Run(set, patches);
+        var selected = BooleanClassification.Select(op, classification);
         return BooleanMeshAssembler.Assemble(selected);
     }
 

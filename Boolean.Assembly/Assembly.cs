@@ -9,7 +9,7 @@ public sealed class AssemblyInput
 {
     public AssemblyInput(
         IntersectionGraph graph,
-        TrianglePatchSet patches,
+        Patching patches,
         BooleanPatchSet selected)
     {
         Graph = graph ?? throw new ArgumentNullException(nameof(graph));
@@ -18,7 +18,7 @@ public sealed class AssemblyInput
     }
 
     public IntersectionGraph Graph { get; }
-    public TrianglePatchSet Patches { get; }
+    public Patching Patches { get; }
     public BooleanPatchSet Selected { get; }
 }
 

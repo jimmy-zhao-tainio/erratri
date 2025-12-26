@@ -25,7 +25,7 @@ public readonly struct TriangleIntersectionVertex
 // For each triangle in IntersectionSet.TrianglesA and TrianglesB we store
 // the list of global intersection vertices that lie on it together with
 // their barycentric coordinates on that triangle.
-public sealed class TriangleIntersectionIndex
+public sealed class IntersectionIndex
 {
     // TrianglesA[i] lists all intersection vertices lying on
     // IntersectionSet.TrianglesA[i].
@@ -35,7 +35,7 @@ public sealed class TriangleIntersectionIndex
     // IntersectionSet.TrianglesB[j].
     public IReadOnlyList<TriangleIntersectionVertex[]> TrianglesB { get; }
 
-    private TriangleIntersectionIndex(
+    private IntersectionIndex(
         TriangleIntersectionVertex[][] trianglesA,
         TriangleIntersectionVertex[][] trianglesB)
     {
@@ -43,7 +43,7 @@ public sealed class TriangleIntersectionIndex
         TrianglesB = trianglesB ?? throw new ArgumentNullException(nameof(trianglesB));
     }
 
-    public static TriangleIntersectionIndex Run(IntersectionGraph graph)
+    public static IntersectionIndex Run(IntersectionGraph graph)
     {
         if (graph is null) throw new ArgumentNullException(nameof(graph));
 
@@ -164,7 +164,7 @@ public sealed class TriangleIntersectionIndex
             resultB[i] = list.Count == 0 ? Array.Empty<TriangleIntersectionVertex>() : list.ToArray();
         }
 
-        return new TriangleIntersectionIndex(resultA, resultB);
+        return new IntersectionIndex(resultA, resultB);
     }
 
     private static void PropagateEdgeVertices(

@@ -137,7 +137,7 @@ public class GraphTests
     }
 
     [Fact]
-    public void TriangleIntersectionIndex_SegmentCase_BuildsPerTriangleVertices()
+    public void IntersectionIndex_SegmentCase_BuildsPerTriangleVertices()
     {
         var triA = new Triangle(
             new Point(0, -1, 0),
@@ -153,7 +153,7 @@ public class GraphTests
         var trianglesB = new List<Triangle> { triB };
         var set = new IntersectionSet(trianglesA, trianglesB);
         var graph = IntersectionGraph.FromIntersectionSet(set);
-        var index = TriangleIntersectionIndex.Run(graph);
+        var index = IntersectionIndex.Run(graph);
         Assert.Single(index.TrianglesA);
         Assert.Single(index.TrianglesB);
         var vertsA = index.TrianglesA[0];
@@ -177,7 +177,7 @@ public class GraphTests
     }
 
     [Fact]
-    public void TriangleIntersectionIndex_DeduplicatesSharedPointAcrossTriangles()
+    public void IntersectionIndex_DeduplicatesSharedPointAcrossTriangles()
     {
         var a0 = new Triangle(
             new Point(0, 0, 0),
@@ -193,7 +193,7 @@ public class GraphTests
         var trianglesB = new List<Triangle> { b0, b0 };
         var set = new IntersectionSet(trianglesA, trianglesB);
         var graph = IntersectionGraph.FromIntersectionSet(set);
-        var index = TriangleIntersectionIndex.Run(graph);
+        var index = IntersectionIndex.Run(graph);
         Assert.Single(graph.Vertices);
         var sharedId = graph.Vertices[0].Id;
         Assert.Equal(2, index.TrianglesA.Count);
@@ -211,7 +211,7 @@ public class GraphTests
     }
 
     [Fact]
-    public void TriangleIntersectionIndex_SphereIntersection_AgreesWithIntersectionSet()
+    public void IntersectionIndex_SphereIntersection_AgreesWithIntersectionSet()
     {
         long r = 200;
         var aCenter = new Point(0, 0, 0);
@@ -222,7 +222,7 @@ public class GraphTests
             sphereA.Mesh.Triangles,
             sphereB.Mesh.Triangles);
         var graph = IntersectionGraph.FromIntersectionSet(set);
-        var index = TriangleIntersectionIndex.Run(graph);
+        var index = IntersectionIndex.Run(graph);
         var trianglesA = set.TrianglesA;
         var trianglesB = set.TrianglesB;
         // Triangles marked as intersecting in the set.
