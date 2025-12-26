@@ -37,19 +37,19 @@ public class SelectionTests
             new Point(0, 10, 0),
             new Point(0, 0, 10));
         var classification = BuildClassification(inner, outer);
-        var intersection = BooleanClassification.Select(BooleanOperationType.Intersection, classification);
+        var intersection = PatchSelector.Select(BooleanOperationType.Intersection, classification);
         Assert.True(intersection.FromMeshA.Count > 0); // inner surface retained
         Assert.Empty(intersection.FromMeshB);          // outer outside A
-        var union = BooleanClassification.Select(BooleanOperationType.Union, classification);
+        var union = PatchSelector.Select(BooleanOperationType.Union, classification);
         Assert.Empty(union.FromMeshA);                // inner hidden inside outer
         Assert.True(union.FromMeshB.Count > 0);       // outer kept
-        var diffAB = BooleanClassification.Select(BooleanOperationType.DifferenceAB, classification);
+        var diffAB = PatchSelector.Select(BooleanOperationType.DifferenceAB, classification);
         Assert.Empty(diffAB.FromMeshA);               // inner entirely removed
         Assert.Empty(diffAB.FromMeshB);               // outer not part of A\B
-        var diffBA = BooleanClassification.Select(BooleanOperationType.DifferenceBA, classification);
+        var diffBA = PatchSelector.Select(BooleanOperationType.DifferenceBA, classification);
         Assert.True(diffBA.FromMeshA.Count > 0);      // inner kept to cap hole
         Assert.True(diffBA.FromMeshB.Count > 0);      // outer shell kept
-        var xor = BooleanClassification.Select(BooleanOperationType.SymmetricDifference, classification);
+        var xor = PatchSelector.Select(BooleanOperationType.SymmetricDifference, classification);
         Assert.Empty(xor.FromMeshA);                  // inner not part of xor since enclosed
         Assert.True(xor.FromMeshB.Count > 0);         // outer shell remains
     }
@@ -68,10 +68,10 @@ public class SelectionTests
             new Point(100, 102, 100),
             new Point(100, 100, 102));
         var classification = BuildClassification(a, b);
-        var union = BooleanClassification.Select(BooleanOperationType.Union, classification);
+        var union = PatchSelector.Select(BooleanOperationType.Union, classification);
         Assert.True(union.FromMeshA.Count > 0);
         Assert.True(union.FromMeshB.Count > 0);
-        var intersection = BooleanClassification.Select(BooleanOperationType.Intersection, classification);
+        var intersection = PatchSelector.Select(BooleanOperationType.Intersection, classification);
         Assert.Empty(intersection.FromMeshA);
         Assert.Empty(intersection.FromMeshB);
     }

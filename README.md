@@ -59,7 +59,7 @@ The boolean mesher lives in `Kernel` and is deliberately layered:
 
 - **Intersection graph + topology**: `IntersectionSet`, `IntersectionGraph`, `Intersection.Index.IntersectionIndex`, and `MeshA` / `MeshB` capture where two closed meshes intersect and how triangles are connected.
 - **Per-triangle PSLG subdivision**: `TriangleSubdivision` and `PslgBuilder` build a local planar straight-line graph in barycentric UV space for each intersected triangle, then triangulate interior faces back to 3D.
-- **Patch classification and selection**: `Patching`, `Classification`, and `BooleanClassification` group subdivided triangles into patches, classify them as inside/outside the other solid, and pick which patches to keep for each boolean operation.
+- **Patch classification and selection**: `Patching`, `Classification`, and `PatchSelector` group subdivided triangles into patches, classify them as inside/outside the other solid, and pick which patches to keep for each boolean operation.
 - **Assembly and validation**: `BooleanMeshAssembler` merges vertices, assembles triangles into a `BooleanMesh`, and runs strict manifold and degeneracy checks. `BooleanOps` is a small faÃ§ade that ties these layers together for `ClosedSurface` inputs.
 
 The boolean gallery in `Demo.Boolean.Mesh/Program.cs` showcases four basic CSG operations on two spheres:

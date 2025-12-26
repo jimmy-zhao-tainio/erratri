@@ -22,7 +22,7 @@ public class AssemblyTests
         var topoB = MeshB.Run(graph, index);
         var patches = Patching.Run(graph, index, topoA, topoB);
         var classification = Classification.Run(set, patches);
-        var selected = BooleanClassification.Select(op, classification);
+        var selected = PatchSelector.Select(op, classification);
         return BooleanMeshAssembler.Assemble(selected);
     }
 
