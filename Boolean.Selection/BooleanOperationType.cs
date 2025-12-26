@@ -1,4 +1,4 @@
-namespace Boolean;
+﻿namespace Boolean;
 
 public enum BooleanOperationType
 {

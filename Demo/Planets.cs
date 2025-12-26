@@ -1,4 +1,4 @@
-namespace Demo;
+﻿namespace Demo;
 
 // Quick data-only lookup for sizes, orbits, and basic orbital parameters.
 // No references to Seaharp geometry or world types.

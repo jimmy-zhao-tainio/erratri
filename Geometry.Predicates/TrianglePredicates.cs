@@ -1,4 +1,4 @@
-using Geometry.Predicates.Internal;
+﻿using Geometry.Predicates.Internal;
 
 namespace Geometry.Predicates;
 

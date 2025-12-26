@@ -1,4 +1,4 @@
-using Geometry.Predicates;
+﻿using Geometry.Predicates;
 using Xunit;
 
 namespace Tests.Geometry.Predicates;

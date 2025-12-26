@@ -1,4 +1,4 @@
-using Geometry.Topology;
+﻿using Geometry.Topology;
 using Geometry;
 
 namespace World;
@@ -91,7 +91,7 @@ public sealed class Cylinder : Shape
             double a0 = (2.0 * Math.PI * i) / Segments;
             double a1 = (2.0 * Math.PI * ((i + 1) % Segments)) / Segments;
 
-            // Round XY to grid; duplicates can occur for small delta angles —
+            // Round XY to grid; duplicates can occur for small delta angles â€”
             // we guard by skipping degenerate tetrahedra below.
             long i0x = (long)Math.Round(InnerRadius * Math.Cos(a0), MidpointRounding.AwayFromZero);
             long i0y = (long)Math.Round(InnerRadius * Math.Sin(a0), MidpointRounding.AwayFromZero);

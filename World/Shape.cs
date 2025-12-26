@@ -1,4 +1,4 @@
-using Geometry; // for Triangle
+﻿using Geometry; // for Triangle
 using Geometry.Topology; // for Mesh
 
 namespace World;

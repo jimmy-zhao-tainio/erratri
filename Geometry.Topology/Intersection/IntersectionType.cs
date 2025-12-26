@@ -1,4 +1,4 @@
-namespace Geometry.Topology;
+﻿namespace Geometry.Topology;
 
 // Classifies the intersection of two closed, nondegenerate triangles in 3D.
 // Triangles are treated as closed convex sets (including edges and vertices).

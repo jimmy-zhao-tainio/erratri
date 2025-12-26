@@ -1,4 +1,4 @@
-namespace Geometry;
+﻿namespace Geometry;
 
 // 2D point in real (double) coordinates, used for projected
 // geometry in the XY-like planes. Mirrors the simple X/Y layout

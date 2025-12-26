@@ -1,11 +1,13 @@
-using System.Linq;
+﻿using System.Linq;
 using Geometry;
 using Boolean;
 using Geometry.Topology;
 using World;
 using Xunit;
 using WTetrahedron = World.Tetrahedron;
-using Boolean.Intersection.Graph.Index;
+using Boolean.Intersection.Indexing;
+
+using Boolean.Intersection.Topology;
 
 namespace Tests.Boolean.Assembly;
 
@@ -16,8 +18,8 @@ public class AssemblyTests
         var set = new IntersectionSet(a.Mesh.Triangles, b.Mesh.Triangles);
         var graph = IntersectionGraph.FromIntersectionSet(set);
         var index = TriangleIntersectionIndex.Run(graph);
-        var topoA = MeshATopology.Run(graph, index);
-        var topoB = MeshBTopology.Run(graph, index);
+        var topoA = MeshA.Run(graph, index);
+        var topoB = MeshB.Run(graph, index);
         var patches = TrianglePatchSet.Run(graph, index, topoA, topoB);
         var classification = PatchClassifier.Classify(set, patches);
         var selected = BooleanPatchClassifier.Select(op, classification);
@@ -80,5 +82,6 @@ public class AssemblyTests
         Assert.NotEmpty(mesh.Triangles);
     }
 }
+
 
 

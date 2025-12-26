@@ -1,4 +1,4 @@
-namespace Geometry.Predicates;
+﻿namespace Geometry.Predicates;
 
 public static class TetrahedronPredicates
 {

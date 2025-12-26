@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Boolean.Pipeline;
 using Geometry.Topology;
 

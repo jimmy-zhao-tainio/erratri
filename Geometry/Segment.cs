@@ -1,4 +1,4 @@
-namespace Geometry;
+﻿namespace Geometry;
 
 /// <summary>
 /// Simple line segment represented by two grid points.

@@ -1,4 +1,4 @@
-using Geometry.Topology;
+﻿using Geometry.Topology;
 using Geometry;
 
 namespace World;
@@ -98,7 +98,7 @@ public sealed class Sphere : Shape
     private static void BuildIcosahedron(out List<DVec> verts, out List<(int a, int b, int c)> faces)
     {
         // Icosahedron vertices from golden ratio
-        double phi = (1.0 + Math.Sqrt(5.0)) * 0.5; // φ
+        double phi = (1.0 + Math.Sqrt(5.0)) * 0.5; // Ï†
         verts = new List<DVec>
         {
             new DVec(-1,  phi, 0), new DVec(1,  phi, 0), new DVec(-1, -phi, 0), new DVec(1, -phi, 0),

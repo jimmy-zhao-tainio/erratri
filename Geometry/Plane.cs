@@ -1,4 +1,4 @@
-namespace Geometry;
+﻿namespace Geometry;
 
 // Lightweight plane representation built from a triangle.
 // Uses the triangle's outward unit normal and a reference point on the plane.

@@ -1,4 +1,4 @@
-using Geometry.Topology;
+﻿using Geometry.Topology;
 
 namespace World;
 

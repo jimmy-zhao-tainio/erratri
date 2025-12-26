@@ -1,4 +1,4 @@
-namespace World;
+﻿namespace World;
 
 public sealed partial class World
 {

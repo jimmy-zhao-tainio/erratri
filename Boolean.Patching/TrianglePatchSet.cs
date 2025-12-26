@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using Geometry;
-using Boolean.Intersection.Graph.Index;
+using Boolean.Intersection.Indexing;
+using Boolean.Intersection.Topology;
 
 namespace Boolean;
 
@@ -32,8 +33,8 @@ public sealed class TrianglePatchSet
     public static TrianglePatchSet Run(
         IntersectionGraph graph,
         TriangleIntersectionIndex index,
-        MeshATopology topologyA,
-        MeshBTopology topologyB)
+        MeshA topologyA,
+        MeshB topologyB)
     {
         if (graph is null) throw new ArgumentNullException(nameof(graph));
         if (index is null) throw new ArgumentNullException(nameof(index));
@@ -381,3 +382,5 @@ public sealed class TrianglePatchSet
         }
     }
 }
+
+

@@ -1,4 +1,4 @@
-namespace Geometry.Topology;
+﻿namespace Geometry.Topology;
 
 public static class MeshPredicates
 {

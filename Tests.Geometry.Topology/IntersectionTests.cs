@@ -1,4 +1,4 @@
-using Geometry;
+﻿using Geometry;
 using Geometry.Predicates;
 using Geometry.Topology;
 using Xunit;

@@ -1,10 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Geometry;
 using Boolean;
 using Xunit;
-using Boolean.Intersection.Graph.Index;
+using Boolean.Intersection.Indexing;
+
+using Boolean.Intersection.Topology;
 
 namespace Tests.Boolean.Patching;
 
@@ -26,8 +28,8 @@ public class PatchingTests
         var set = new IntersectionSet(new[] { triA }, new[] { triB });
         var graph = IntersectionGraph.FromIntersectionSet(set);
         var index = TriangleIntersectionIndex.Run(graph);
-        var topoA = MeshATopology.Run(graph, index);
-        var topoB = MeshBTopology.Run(graph, index);
+        var topoA = MeshA.Run(graph, index);
+        var topoB = MeshB.Run(graph, index);
         var patches = TrianglePatchSet.Run(graph, index, topoA, topoB);
         var aPatches = Assert.Single(patches.TrianglesA);
         var bPatches = Assert.Single(patches.TrianglesB);
@@ -53,13 +55,13 @@ public class PatchingTests
         var set = new IntersectionSet(new[] { triA }, new[] { triB });
         var graph = IntersectionGraph.FromIntersectionSet(set);
         var index = TriangleIntersectionIndex.Run(graph);
-        var topoA = MeshATopology.Run(graph, index);
-        var topoB = MeshBTopology.Run(graph, index);
+        var topoA = MeshA.Run(graph, index);
+        var topoB = MeshB.Run(graph, index);
         var patches = TrianglePatchSet.Run(graph, index, topoA, topoB);
         var aPatches = Assert.Single(patches.TrianglesA);
         var bPatches = Assert.Single(patches.TrianglesB);
         Assert.True(aPatches.Count > 1, "Triangle A should be cut into multiple patches.");
-        // For triangle B this intersection is boundary→interior, which does not form a closed PSLG face,
+        // For triangle B this intersection is boundaryâ†’interior, which does not form a closed PSLG face,
         // so B legitimately remains a single patch.
         Assert.Single(bPatches);
         AssertAreaEqual(triA, aPatches);
@@ -78,4 +80,5 @@ public class PatchingTests
         Assert.True(diff <= Tolerances.EpsArea || diff <= relTol, $"Patch area {patchArea} differs from triangle area {triArea} by {diff}.");
     }
 }
+
 

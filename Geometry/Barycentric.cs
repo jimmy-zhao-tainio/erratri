@@ -1,4 +1,4 @@
-namespace Geometry;
+﻿namespace Geometry;
 
 // Barycentric coordinates (U, V, W) for points on a triangle.
 // Used only for parametrization; robust predicates and intersection

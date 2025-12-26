@@ -1,18 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using Boolean;
+using Boolean.Intersection.Indexing;
 using Geometry;
-using Boolean.Intersection.Graph.Index;
 
-namespace Boolean;
+namespace Boolean.Intersection.Topology;
 
 // Mesh-local intersection topology for mesh B.
 //
 // This describes which global intersection edges lie on which triangles
 // of mesh B, how those edges are incident to global vertices, and the
 // resulting closed intersection loops traced on mesh B.
-public sealed class MeshBTopology : MeshTopology
+public sealed class MeshB : MeshTopology
 {
-    private MeshBTopology(
+    private MeshB(
         IntersectionEdgeId[][] triangleEdges,
         IntersectionEdgeId[] edges,
         Dictionary<IntersectionVertexId, IReadOnlyList<IntersectionEdgeId>> vertexEdges,
@@ -21,7 +22,7 @@ public sealed class MeshBTopology : MeshTopology
     {
     }
 
-    public static MeshBTopology Run(IntersectionGraph graph, TriangleIntersectionIndex index)
+    public static MeshB Run(IntersectionGraph graph, TriangleIntersectionIndex index)
     {
         if (graph is null) throw new ArgumentNullException(nameof(graph));
         if (index is null) throw new ArgumentNullException(nameof(index));
@@ -36,7 +37,7 @@ public sealed class MeshBTopology : MeshTopology
         }
 
         var data = BuildCore(graph, perTriangleVertices, meshA: false);
-        return new MeshBTopology(
+        return new MeshB(
             data.TriangleEdges,
             data.Edges,
             data.VertexEdges,

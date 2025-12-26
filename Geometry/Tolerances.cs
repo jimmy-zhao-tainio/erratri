@@ -1,4 +1,4 @@
-namespace Geometry;
+﻿namespace Geometry;
 
 // Centralized numerical tolerances for double-based BooleanOperation.
 public static class Tolerances

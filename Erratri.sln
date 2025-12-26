@@ -69,6 +69,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Geometry.Topology", "Geomet
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.Geometry.Topology", "Tests.Geometry.Topology\Tests.Geometry.Topology.csproj", "{8DED7B7F-65ED-462F-BDA6-BE3E1311AA87}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boolean.Intersection.Index", "Boolean.Intersection.Index\Boolean.Intersection.Index.csproj", "{52658837-BAFB-4113-AE90-EE924FB153A4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boolean.Intersection.Topology", "Boolean.Intersection.Topology\Boolean.Intersection.Topology.csproj", "{146512AC-F994-4A9E-B8DF-A4F33E8A24DE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -207,6 +211,14 @@ Global
 		{8DED7B7F-65ED-462F-BDA6-BE3E1311AA87}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8DED7B7F-65ED-462F-BDA6-BE3E1311AA87}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8DED7B7F-65ED-462F-BDA6-BE3E1311AA87}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52658837-BAFB-4113-AE90-EE924FB153A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52658837-BAFB-4113-AE90-EE924FB153A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52658837-BAFB-4113-AE90-EE924FB153A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52658837-BAFB-4113-AE90-EE924FB153A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{146512AC-F994-4A9E-B8DF-A4F33E8A24DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{146512AC-F994-4A9E-B8DF-A4F33E8A24DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{146512AC-F994-4A9E-B8DF-A4F33E8A24DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{146512AC-F994-4A9E-B8DF-A4F33E8A24DE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

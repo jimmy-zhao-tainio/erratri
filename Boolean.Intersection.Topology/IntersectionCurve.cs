@@ -1,7 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Immutable;
+using Boolean;
 
-namespace Boolean;
+namespace Boolean.Intersection.Topology;
 
 public sealed class IntersectionCurve
 {
@@ -45,4 +46,3 @@ public sealed class IntersectionCurve
         TotalLength = totalLength;
     }
 }
-

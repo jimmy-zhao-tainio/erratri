@@ -1,4 +1,4 @@
-namespace Pslg;
+﻿namespace Pslg;
 
 public readonly struct PslgSegment
 {

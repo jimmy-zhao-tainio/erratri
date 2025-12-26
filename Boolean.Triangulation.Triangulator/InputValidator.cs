@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Geometry;
 
 namespace ConstrainedTriangulator
@@ -67,7 +67,7 @@ namespace ConstrainedTriangulator
                     throw new ArgumentException("Segment has identical endpoints.", nameof(input));
             }
 
-            // PSLG check: no segment–segment intersections except shared endpoints
+            // PSLG check: no segmentâ€“segment intersections except shared endpoints
             for (int i = 0; i < segments.Count; i++)
             {
                 var (a1, b1) = segments[i];

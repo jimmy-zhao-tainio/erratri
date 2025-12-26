@@ -1,7 +1,6 @@
-using System;
+﻿using System;
 using Geometry;
-using Boolean;
-using Boolean.Intersection.Graph.Index;
+
 using Geometry.Topology;
 
 namespace Boolean.Pipeline;
@@ -16,17 +15,17 @@ public static class PipelineEntry
         var meshA = left;
         var meshB = right;
 
-        var set = Intersection.PairEntry.Run(meshA.Triangles, meshB.Triangles);
-        var graph = Intersection.GraphEntry.Run(set);
-        var index = TriangleIntersectionIndex.Run(graph);
-        var topoA = MeshATopology.Run(graph, index);
-        var topoB = MeshBTopology.Run(graph, index);
-        var patches = TrianglePatchSet.Run(graph, index, topoA, topoB);
+        var set = Intersection.Pair.Run(meshA.Triangles, meshB.Triangles);
+        var graph = Intersection.Graph.Run(set);
+        var index = Intersection.Index.Run(graph);
+        var topoA = Intersection.Topology.MeshA.Run(graph, index);
+        var topoB = Intersection.Topology.MeshB.Run(graph, index);
+        var patches = Patching.Run(graph, index, topoA, topoB);
 
-        var classification = PatchClassifier.Classify(set, patches);
-        var selected = BooleanPatchClassifier.Select(op, classification);
+        var classification = Classification.Run(set, patches);
+        var selected = Selection.Run(op, classification);
 
-        var assemblyOutput = AssemblyEntry.Run(new AssemblyInput(graph, patches, selected));
+        var assemblyOutput = Assembly.Run(new AssemblyInput(graph, patches, selected));
         return assemblyOutput.Mesh;
     }
 }

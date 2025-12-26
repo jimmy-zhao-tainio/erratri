@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Geometry;
 using Boolean;
 
-namespace Boolean.Intersection.Graph.Index;
+namespace Boolean.Intersection.Indexing;
 
 // One intersection vertex attached to a specific triangle, expressed in
 // barycentric coordinates on that triangle plus the shared global vertex id.
@@ -256,14 +256,32 @@ public sealed class TriangleIntersectionIndex
 
     private static Barycentric ComputeBarycentricOnTriangle(Triangle triangle, in RealPoint point)
     {
-        var realTriangle = new RealTriangle(triangle);
-        var barycentric = realTriangle.ComputeBarycentric(in point, out double denom);
+        var p0 = new RealVector(triangle.P0.X, triangle.P0.Y, triangle.P0.Z);
+        var p1 = new RealVector(triangle.P1.X, triangle.P1.Y, triangle.P1.Z);
+        var p2 = new RealVector(triangle.P2.X, triangle.P2.Y, triangle.P2.Z);
+
+        var v0 = p1 - p0;
+        var v1 = p2 - p0;
+        var pointVector = new RealVector(point.X, point.Y, point.Z);
+        var v2 = pointVector - p0;
+
+        double d00 = v0.Dot(v0);
+        double d01 = v0.Dot(v1);
+        double d11 = v1.Dot(v1);
+        double d20 = v2.Dot(v0);
+        double d21 = v2.Dot(v1);
+
+        double denom = d00 * d11 - d01 * d01;
         if (denom == 0.0)
         {
             return new Barycentric(0.0, 0.0, 0.0);
         }
 
-        return barycentric;
+        double invDenom = 1.0 / denom;
+        double v = (d11 * d20 - d01 * d21) * invDenom;
+        double w = (d00 * d21 - d01 * d20) * invDenom;
+        double u = 1.0 - v - w;
+        return new Barycentric(u, v, w);
     }
 
     private static int GetEdgeMask(in Barycentric b, double eps)

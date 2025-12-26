@@ -1,4 +1,4 @@
-using Geometry;
+﻿using Geometry;
 
 namespace Geometry.Topology;
 

@@ -1,4 +1,4 @@
-namespace Boolean;
+﻿namespace Boolean;
 
 // Minimal debug capture for the last patch set assembled, gated by a debug flag.
 public static class BooleanDebugCapture

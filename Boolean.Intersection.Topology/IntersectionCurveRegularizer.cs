@@ -1,9 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using Boolean;
 using Geometry;
 
-namespace Boolean;
+namespace Boolean.Intersection.Topology;
 
 // Higher-level helper for extracting reasonably clean closed intersection
 // curves on a single mesh (A or B) from the raw IntersectionGraph /
@@ -85,7 +86,7 @@ public static class IntersectionCurveRegularizer
         }
     }
 
-    public static Result RegularizeMeshA(IntersectionGraph graph, MeshATopology topology)
+    public static Result RegularizeMeshA(IntersectionGraph graph, MeshA topology)
     {
         if (graph is null) throw new ArgumentNullException(nameof(graph));
         if (topology is null) throw new ArgumentNullException(nameof(topology));
@@ -93,7 +94,7 @@ public static class IntersectionCurveRegularizer
         return RegularizeInternal(graph, topology.VertexEdges, topology.Edges);
     }
 
-    public static Result RegularizeMeshB(IntersectionGraph graph, MeshBTopology topology)
+    public static Result RegularizeMeshB(IntersectionGraph graph, MeshB topology)
     {
         if (graph is null) throw new ArgumentNullException(nameof(graph));
         if (topology is null) throw new ArgumentNullException(nameof(topology));

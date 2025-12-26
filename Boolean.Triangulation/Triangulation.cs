@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Geometry;
 using Pslg;
@@ -25,9 +25,9 @@ public static class Triangulation
     // which oriented edge it lies on (if any). The numbering matches the
     // TRIANGLESUBDIVISION roadmap:
     //
-    //   - Edge0: edge V0 -> V1  (w ≈ 0)
-    //   - Edge1: edge V1 -> V2  (u ≈ 0)
-    //   - Edge2: edge V2 -> V0  (v ≈ 0)
+    //   - Edge0: edge V0 -> V1  (w â‰ˆ 0)
+    //   - Edge1: edge V1 -> V2  (u â‰ˆ 0)
+    //   - Edge2: edge V2 -> V0  (v â‰ˆ 0)
     //   - Interior: strictly inside or numerically away from all edges.
     public enum EdgeLocation
     {

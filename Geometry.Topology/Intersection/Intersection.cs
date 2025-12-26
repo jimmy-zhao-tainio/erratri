@@ -1,4 +1,4 @@
-using Geometry;
+﻿using Geometry;
 using Geometry.Predicates;
 
 namespace Geometry.Topology;
@@ -11,7 +11,7 @@ public static class IntersectionTypes
         // First: coplanar vs non-coplanar.
         if (TrianglePredicates.IsCoplanar(in a, in b))
         {
-            // Coplanar: area → segment → point → none.
+            // Coplanar: area â†’ segment â†’ point â†’ none.
             if (TrianglePredicates.HasAreaIntersectionCoplanar(in a, in b))
                 return IntersectionType.Area;
             if (TrianglePredicates.HasSegmentIntersectionCoplanar(in a, in b))

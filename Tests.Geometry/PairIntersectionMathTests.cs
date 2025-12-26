@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Geometry;
 using Geometry.Predicates.Internal;
 using Geometry.Topology;

@@ -1,7 +1,6 @@
 {
     "workbench.tree.indent": 24,
     "files.exclude": {
-        "**/*.csproj": true,
         "**/bin": true,
         "**/obj": true,
         "**/.*": true

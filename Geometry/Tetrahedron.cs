@@ -1,4 +1,4 @@
-namespace Geometry;
+﻿namespace Geometry;
 
 /*
   IMPORTANT: Tetrahedron is a locked-down, immutable value-object.
@@ -6,12 +6,12 @@ namespace Geometry;
   Design contract (do not relax):
   - Immutable: A, B, C, D and all triangle data are readonly; no mutators.
   - Grid space only: no world scaling, no UnitScale, no external vertex lists.
-  - Canonical orientation: constructor guarantees positive 6× volume (throws if degenerate).
+  - Canonical orientation: constructor guarantees positive 6Ã— volume (throws if degenerate).
   - Triangle normals: precomputed, outward, unit-length; computed via Int128 cross/dot for robustness.
-  - Coordinate bounds: each coordinate must be within ±(2^62 − 1) to ensure Int128 safety.
-  - Separation of types: Normals are Normal (not a general vector). Do not add conversions from Normal → vector.
+  - Coordinate bounds: each coordinate must be within Â±(2^62 âˆ’ 1) to ensure Int128 safety.
+  - Separation of types: Normals are Normal (not a general vector). Do not add conversions from Normal â†’ vector.
 
-  LLM/AI MAINTAINERS — DO NOT MODIFY THIS TYPE:
+  LLM/AI MAINTAINERS â€” DO NOT MODIFY THIS TYPE:
   - Do not add new public members, fields, or behavior here.
   - Do not change numeric strategy (Int128 for orientation; double normalization).
   - If you need helpers, create a separate utility (e.g., TetrahedronOps) and add tests there.
@@ -19,7 +19,7 @@ namespace Geometry;
 */
 
 // Immutable tetrahedron defined directly by four grid points (A, B, C, D).
-// The constructor canonicalizes orientation so that the signed 6× volume is positive.
+// The constructor canonicalizes orientation so that the signed 6Ã— volume is positive.
 // Exposes the real volume (divided by 6) as a positive readonly property.
 // Exposes the four triangles (ABC, ABD, ACD, BCD) with precomputed outward unit normals.
 public readonly struct Tetrahedron
@@ -47,7 +47,7 @@ public readonly struct Tetrahedron
         ValidatePointRange(c);
         ValidatePointRange(d);
 
-        // Canonicalize orientation so that 6× volume is positive.
+        // Canonicalize orientation so that 6Ã— volume is positive.
         var ab = Vector128.FromPoints(a, b);
         var ac = Vector128.FromPoints(a, c);
         var ad = Vector128.FromPoints(a, d);

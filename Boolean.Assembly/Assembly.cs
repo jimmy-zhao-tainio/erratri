@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Geometry;
 using Geometry.Topology;
@@ -32,14 +32,13 @@ public sealed class AssemblyOutput
     public RealMesh Mesh { get; }
 }
 
-public static class AssemblyEntry
+public static class Assembly
 {
     public static AssemblyOutput Run(AssemblyInput input)
     {
         if (input is null) throw new ArgumentNullException(nameof(input));
 
         var graph = input.Graph;
-        var patches = input.Patches;
         var selected = input.Selected;
 
         ValidateSelectedBoundaryEdgesMatchGraph(graph, selected);
@@ -173,7 +172,7 @@ public static class AssemblyEntry
                 : string.Empty;
 
             throw new InvalidOperationException(
-                $"Pre-assembly invariant violated: selected boundary edge connects intersection vertices that are not adjacent in the intersection graph. " +
+                "Pre-assembly invariant violated: selected boundary edge connects intersection vertices that are not adjacent in the intersection graph. " +
                 $"edge=({key.Min},{key.Max}) A=({pa.X},{pa.Y},{pa.Z}) B=({pb.X},{pb.Y},{pb.Z}) graph=({ga.Value},{gb.Value}).{triInfo}");
         }
     }

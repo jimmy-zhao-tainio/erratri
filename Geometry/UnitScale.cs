@@ -1,4 +1,4 @@
-namespace Geometry;
+﻿namespace Geometry;
 
 public enum UnitScale
 {
@@ -24,7 +24,7 @@ public static class UnitScaleExtensions
 
     public static string Abbreviation(this UnitScale unit) => unit switch
     {
-        UnitScale.Micrometer => "µm",
+        UnitScale.Micrometer => "Âµm",
         UnitScale.Millimeter => "mm",
         _ => throw new ArgumentOutOfRangeException(nameof(unit), unit, "Unsupported unit scale.")
     };

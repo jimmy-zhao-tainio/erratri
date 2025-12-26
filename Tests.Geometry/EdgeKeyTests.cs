@@ -1,4 +1,4 @@
-using Xunit;
+﻿using Xunit;
 using Geometry.Topology;
 
 namespace Tests.Geometry;

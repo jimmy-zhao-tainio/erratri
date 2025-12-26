@@ -1,4 +1,4 @@
-namespace Geometry;
+﻿namespace Geometry;
 
 // Standalone triangle with outward unit normal in grid space.
 // Mirrors the former nested Tetrahedron.Triangle semantics.

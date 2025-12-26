@@ -1,9 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Geometry;
 using Boolean;
 using Xunit;
+
+using Boolean.Intersection.Topology;
 
 namespace Tests.Boolean.Intersection.Graph;
 
@@ -89,7 +91,7 @@ public class GraphCurveRegularizerTests
         Assert.Empty(result.Curves);
     }
 
-    private static (IntersectionGraph graph, MeshATopology topology) CreateSyntheticGraphWithPureLoop()
+    private static (IntersectionGraph graph, MeshA topology) CreateSyntheticGraphWithPureLoop()
     {
         // Square loop in the XY plane: 0-1-2-3-0, unit edge lengths.
         var vertices = new (int id, double x, double y, double z)[]
@@ -111,7 +113,7 @@ public class GraphCurveRegularizerTests
         return CreateSyntheticGraph(vertices, edges);
     }
 
-    private static (IntersectionGraph graph, MeshATopology topology) CreateSyntheticGraphWithLoopAndTinyChain()
+    private static (IntersectionGraph graph, MeshA topology) CreateSyntheticGraphWithLoopAndTinyChain()
     {
         // Same square loop as above plus a short chain (4-5-6) disconnected
         // from the loop. The chain should be classified as "tiny noise" and
@@ -144,7 +146,7 @@ public class GraphCurveRegularizerTests
         return CreateSyntheticGraph(vertices, edges);
     }
 
-    private static (IntersectionGraph graph, MeshATopology topology) CreateSyntheticGraphWithPureChain()
+    private static (IntersectionGraph graph, MeshA topology) CreateSyntheticGraphWithPureChain()
     {
         // Simple three-vertex chain: 0-1-2.
         var vertices = new (int id, double x, double y, double z)[]
@@ -163,7 +165,7 @@ public class GraphCurveRegularizerTests
         return CreateSyntheticGraph(vertices, edges);
     }
 
-    private static (IntersectionGraph graph, MeshATopology topology) CreateSyntheticGraph(
+    private static (IntersectionGraph graph, MeshA topology) CreateSyntheticGraph(
         (int id, double x, double y, double z)[] vertices,
         (int id, int start, int end)[] edges)
     {
@@ -210,7 +212,7 @@ public class GraphCurveRegularizerTests
             Array.Empty<PairFeatures>()
         });
 
-        // Build a minimal MeshATopology that exposes the same vertices and
+        // Build a minimal MeshA that exposes the same vertices and
         // edges on mesh A via VertexEdges / Edges. TriangleEdges and Loops
         // are unused by the regularizer, so we can provide simple placeholders.
         var triangleEdges = new[]
@@ -251,7 +253,7 @@ public class GraphCurveRegularizerTests
 
         var loops = Array.Empty<IntersectionVertexId[]>();
 
-        var meshCtor = typeof(MeshATopology).GetConstructor(
+        var meshCtor = typeof(MeshA).GetConstructor(
             BindingFlags.NonPublic | BindingFlags.Instance,
             binder: null,
             new[]
@@ -265,10 +267,10 @@ public class GraphCurveRegularizerTests
 
         if (meshCtor == null)
         {
-            throw new InvalidOperationException("MeshATopology constructor not found.");
+            throw new InvalidOperationException("MeshA constructor not found.");
         }
 
-        var topology = (MeshATopology)meshCtor.Invoke(new object[]
+        var topology = (MeshA)meshCtor.Invoke(new object[]
         {
             triangleEdges,
             meshEdges,
@@ -290,6 +292,7 @@ public class GraphCurveRegularizerTests
         return result;
     }
 }
+
 
 
 

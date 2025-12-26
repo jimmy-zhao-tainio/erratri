@@ -1,10 +1,12 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Geometry;
 using Boolean;
 using Geometry.Topology;
 using World;
 using Xunit;
-using Boolean.Intersection.Graph.Index;
+using Boolean.Intersection.Indexing;
+
+using Boolean.Intersection.Topology;
 
 namespace Tests.Boolean.Intersection.Graph;
 
@@ -294,9 +296,9 @@ public class GraphTests
         }
         // Build mesh-local topologies (per-triangle edges, vertex adjacency, loops),
         // then run the intersection curve regularizer on mesh A and mesh B.
-        var meshATopology = MeshATopology.Run(graph, index);
-        var meshBTopology = MeshBTopology.Run(graph, index);
-        var regularizationA = IntersectionCurveRegularizer.RegularizeMeshA(graph, meshATopology);
+        var meshA = MeshA.Run(graph, index);
+        var meshB = MeshB.Run(graph, index);
+        var regularizationA = IntersectionCurveRegularizer.RegularizeMeshA(graph, meshA);
         // For the sphere-sphere case we expect at least one regularized
         // intersection curve on each mesh whose vertices form a closed cycle
         // with internal degree 2.
@@ -316,7 +318,7 @@ public class GraphTests
             }
         }
         Assert.True(foundValidCurve);
-        var regularizationB = IntersectionCurveRegularizer.RegularizeMeshB(graph, meshBTopology);
+        var regularizationB = IntersectionCurveRegularizer.RegularizeMeshB(graph, meshB);
         Assert.NotEmpty(regularizationB.Curves);
         foundValidCurve = false;
         double longestLengthB = 0.0;
@@ -372,5 +374,6 @@ public class GraphTests
         return true;
     }
 }
+
 
 

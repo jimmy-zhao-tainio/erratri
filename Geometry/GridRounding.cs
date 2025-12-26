@@ -1,4 +1,4 @@
-namespace Geometry;
+﻿namespace Geometry;
 
 // Utility for snapping real-valued coordinates back to the integer
 // grid used by Point. All conversions between real space (double)
