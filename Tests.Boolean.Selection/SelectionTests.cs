@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Geometry;
 using Boolean;
 using World;
@@ -15,8 +15,8 @@ public class SelectionTests
     private static PatchClassification BuildClassification(WTetrahedron a, WTetrahedron b)
     {
         var set = new IntersectionSet(a.Mesh.Triangles, b.Mesh.Triangles);
-        var graph = IntersectionGraph.FromIntersectionSet(set);
-        var index = IntersectionIndex.Run(graph);
+        var graph = Intersection.Graph.Run(set);
+        var index = Intersection.Index.Run(graph);
         var topoA = MeshA.Run(graph, index);
         var topoB = MeshB.Run(graph, index);
         var patches = TrianglePatching.Run(graph, index, topoA, topoB);
@@ -76,5 +76,6 @@ public class SelectionTests
         Assert.Empty(intersection.FromMeshB);
     }
 }
+
 
 

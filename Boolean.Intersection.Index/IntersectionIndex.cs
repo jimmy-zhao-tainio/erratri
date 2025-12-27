@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Geometry;
 using Boolean;
@@ -69,7 +69,7 @@ public sealed class IntersectionIndex
 
         // Build a lookup from quantized world-space position to global
         // IntersectionVertexId using the same quantization scheme as
-        // IntersectionGraph.FromIntersectionSet.
+        // Intersection.Graph.Run.
         var globalVertexLookup = new Dictionary<(long X, long Y, long Z), IntersectionVertexId>();
         double invEpsilon = 1.0 / Tolerances.TrianglePredicateEpsilon;
 
@@ -395,3 +395,4 @@ public sealed class IntersectionIndex
         return false;
     }
 }
+

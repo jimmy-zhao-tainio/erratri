@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Geometry;
@@ -26,11 +26,11 @@ public class TrianglePatchesTests
             new Point(4, 2, 0),
             new Point(0, 0, 1));
         var set = new IntersectionSet(new[] { triA }, new[] { triB });
-        var graph = IntersectionGraph.FromIntersectionSet(set);
-        var index = IntersectionIndex.Run(graph);
+        var graph = Intersection.Graph.Run(set);
+        var index = Intersection.Index.Run(graph);
         var topoA = MeshA.Run(graph, index);
         var topoB = MeshB.Run(graph, index);
-        var patches = global::Boolean.TrianglePatching.Run(graph, index, topoA, topoB);
+        var patches = TrianglePatching.Run(graph, index, topoA, topoB);
         var aPatches = Assert.Single(patches.TrianglesA);
         var bPatches = Assert.Single(patches.TrianglesB);
         Assert.Single(aPatches);
@@ -53,15 +53,15 @@ public class TrianglePatchesTests
             new Point(1, 2, 0),
             new Point(2, 0, 0));
         var set = new IntersectionSet(new[] { triA }, new[] { triB });
-        var graph = IntersectionGraph.FromIntersectionSet(set);
-        var index = IntersectionIndex.Run(graph);
+        var graph = Intersection.Graph.Run(set);
+        var index = Intersection.Index.Run(graph);
         var topoA = MeshA.Run(graph, index);
         var topoB = MeshB.Run(graph, index);
-        var patches = global::Boolean.TrianglePatching.Run(graph, index, topoA, topoB);
+        var patches = TrianglePatching.Run(graph, index, topoA, topoB);
         var aPatches = Assert.Single(patches.TrianglesA);
         var bPatches = Assert.Single(patches.TrianglesB);
         Assert.True(aPatches.Count > 1, "Triangle A should be cut into multiple patches.");
-        // For triangle B this intersection is boundaryâ†’interior, which does not form a closed PSLG face,
+        // For triangle B this intersection is boundary→interior, which does not form a closed PSLG face,
         // so B legitimately remains a single patch.
         Assert.Single(bPatches);
         AssertAreaEqual(triA, aPatches);
@@ -80,5 +80,6 @@ public class TrianglePatchesTests
         Assert.True(diff <= Tolerances.EpsArea || diff <= relTol, $"Patch area {patchArea} differs from triangle area {triArea} by {diff}.");
     }
 }
+
 
 

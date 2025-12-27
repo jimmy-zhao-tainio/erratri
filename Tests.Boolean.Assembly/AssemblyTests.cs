@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Geometry;
 using Boolean;
 using Geometry.Topology;
@@ -16,8 +16,8 @@ public class AssemblyTests
     private static RealMesh Build(BooleanOperationType op, WTetrahedron a, WTetrahedron b)
     {
         var set = new IntersectionSet(a.Mesh.Triangles, b.Mesh.Triangles);
-        var graph = IntersectionGraph.FromIntersectionSet(set);
-        var index = IntersectionIndex.Run(graph);
+        var graph = Intersection.Graph.Run(set);
+        var index = Intersection.Index.Run(graph);
         var topoA = MeshA.Run(graph, index);
         var topoB = MeshB.Run(graph, index);
         var patches = TrianglePatching.Run(graph, index, topoA, topoB);
@@ -82,6 +82,7 @@ public class AssemblyTests
         Assert.NotEmpty(mesh.Triangles);
     }
 }
+
 
 
 

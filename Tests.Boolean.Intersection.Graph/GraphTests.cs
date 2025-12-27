@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Geometry;
 using Boolean;
 using Geometry.Topology;
@@ -28,7 +28,7 @@ public class GraphTests
         var trianglesA = new List<Triangle> { a0 };
         var trianglesB = new List<Triangle> { b0 };
         var set = new IntersectionSet(trianglesA, trianglesB);
-        var graph = IntersectionGraph.FromIntersectionSet(set);
+        var graph = Intersection.Graph.Run(set);
         Assert.Same(set.TrianglesA, graph.IntersectionSet.TrianglesA);
         Assert.Same(set.TrianglesB, graph.IntersectionSet.TrianglesB);
         Assert.Equal(set.Intersections.Count, graph.IntersectionSet.Intersections.Count);
@@ -71,7 +71,7 @@ public class GraphTests
         var trianglesA = new List<Triangle> { a0, a1 };
         var trianglesB = new List<Triangle> { b0, b1, b2 };
         var set = new IntersectionSet(trianglesA, trianglesB);
-        var graph = IntersectionGraph.FromIntersectionSet(set);
+        var graph = Intersection.Graph.Run(set);
         Assert.Equal(set.Intersections.Count, graph.Pairs.Count);
         for (int i = 0; i < set.Intersections.Count; i++)
         {
@@ -101,7 +101,7 @@ public class GraphTests
         var set = new IntersectionSet(trianglesA, trianglesB);
         Assert.Single(set.Intersections);
         Assert.Equal(IntersectionType.Segment, set.Intersections[0].Type);
-        var graph = IntersectionGraph.FromIntersectionSet(set);
+        var graph = Intersection.Graph.Run(set);
         Assert.Single(graph.Pairs);
         Assert.Equal(IntersectionType.Segment, graph.Pairs[0].Intersection.Type);
         Assert.Equal(2, graph.Vertices.Count);
@@ -131,7 +131,7 @@ public class GraphTests
         {
             Assert.Equal(IntersectionType.Point, intersection.Type);
         }
-        var graph = IntersectionGraph.FromIntersectionSet(set);
+        var graph = Intersection.Graph.Run(set);
         Assert.Single(graph.Vertices);
         Assert.Empty(graph.Edges);
     }
@@ -152,8 +152,8 @@ public class GraphTests
         var trianglesA = new List<Triangle> { triA };
         var trianglesB = new List<Triangle> { triB };
         var set = new IntersectionSet(trianglesA, trianglesB);
-        var graph = IntersectionGraph.FromIntersectionSet(set);
-        var index = IntersectionIndex.Run(graph);
+        var graph = Intersection.Graph.Run(set);
+        var index = Intersection.Index.Run(graph);
         Assert.Single(index.TrianglesA);
         Assert.Single(index.TrianglesB);
         var vertsA = index.TrianglesA[0];
@@ -192,8 +192,8 @@ public class GraphTests
         var trianglesA = new List<Triangle> { a0, a0 };
         var trianglesB = new List<Triangle> { b0, b0 };
         var set = new IntersectionSet(trianglesA, trianglesB);
-        var graph = IntersectionGraph.FromIntersectionSet(set);
-        var index = IntersectionIndex.Run(graph);
+        var graph = Intersection.Graph.Run(set);
+        var index = Intersection.Index.Run(graph);
         Assert.Single(graph.Vertices);
         var sharedId = graph.Vertices[0].Id;
         Assert.Equal(2, index.TrianglesA.Count);
@@ -221,8 +221,8 @@ public class GraphTests
         var set = new IntersectionSet(
             sphereA.Mesh.Triangles,
             sphereB.Mesh.Triangles);
-        var graph = IntersectionGraph.FromIntersectionSet(set);
-        var index = IntersectionIndex.Run(graph);
+        var graph = Intersection.Graph.Run(set);
+        var index = Intersection.Index.Run(graph);
         var trianglesA = set.TrianglesA;
         var trianglesB = set.TrianglesB;
         // Triangles marked as intersecting in the set.
@@ -374,6 +374,7 @@ public class GraphTests
         return true;
     }
 }
+
 
 
 
