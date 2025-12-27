@@ -13,7 +13,7 @@ public class GraphFromIntersectionSetTests
     public void FromIntersectionSet_NullTrianglesA_Throws()
     {
         var set = default(IntersectionSet);
-        Assert.Throws<ArgumentNullException>(() => Intersection.Graph.Run(set));
+        Assert.Throws<ArgumentNullException>(() => global::Boolean.Intersection.Graph.Run(set));
     }
 
     [Fact]
@@ -22,7 +22,7 @@ public class GraphFromIntersectionSetTests
         var trianglesA = new List<Triangle>();
         var trianglesB = new List<Triangle>();
         var set = new IntersectionSet(trianglesA, trianglesB);
-        var graph = Intersection.Graph.Run(set);
+        var graph = global::Boolean.Intersection.Graph.Run(set);
         Assert.Same(set.TrianglesA, graph.IntersectionSet.TrianglesA);
         Assert.Same(set.TrianglesB, graph.IntersectionSet.TrianglesB);
         Assert.Equal(set.Intersections.Count, graph.IntersectionSet.Intersections.Count);
@@ -47,12 +47,14 @@ public class GraphFromIntersectionSetTests
         var trianglesA = new List<Triangle> { a0 };
         var trianglesB = new List<Triangle> { b0 };
         var set = new IntersectionSet(trianglesA, trianglesB);
-        var graph = Intersection.Graph.Run(set);
+        var graph = global::Boolean.Intersection.Graph.Run(set);
         Assert.Same(set.TrianglesA, graph.IntersectionSet.TrianglesA);
         Assert.Same(set.TrianglesB, graph.IntersectionSet.TrianglesB);
         Assert.Equal(set.Intersections.Count, graph.IntersectionSet.Intersections.Count);
     }
 }
+
+
 
 
 

@@ -52,14 +52,16 @@ public class ClassificationTests
     private static PatchClassification BuildClassification(WTetrahedron a, WTetrahedron b)
     {
         var set = new IntersectionSet(a.Mesh.Triangles, b.Mesh.Triangles);
-        var graph = Intersection.Graph.Run(set);
-        var index = Intersection.Index.Run(graph);
+        var graph = global::Boolean.Intersection.Graph.Run(set);
+        var index = global::Boolean.Intersection.Index.Run(graph);
         var topoA = MeshA.Run(graph, index);
         var topoB = MeshB.Run(graph, index);
         var patches = global::Boolean.TrianglePatching.Run(graph, index, topoA, topoB);
         return global::Boolean.Classification.Run(set, patches);
     }
 }
+
+
 
 
 

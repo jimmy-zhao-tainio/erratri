@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Geometry;
 
 using Geometry.Topology;
@@ -16,8 +16,8 @@ public static class PipelineEntry
         var meshB = right;
 
         var set = Intersection.Pair.Run(meshA.Triangles, meshB.Triangles);
-        var graph = Intersection.Graph.Run(set);
-        var index = Intersection.Index.Run(graph);
+        var graph = global::Boolean.Intersection.Graph.Run(set);
+        var index = global::Boolean.Intersection.Index.Run(graph);
         var topoA = Intersection.Topology.MeshA.Run(graph, index);
         var topoB = Intersection.Topology.MeshB.Run(graph, index);
         var patches = TrianglePatching.Run(graph, index, topoA, topoB);
@@ -29,3 +29,5 @@ public static class PipelineEntry
         return assemblyOutput.Mesh;
     }
 }
+
+

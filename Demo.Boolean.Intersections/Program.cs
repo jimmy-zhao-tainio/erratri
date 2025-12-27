@@ -189,7 +189,7 @@ internal static class Program
         Console.WriteLine("Tetra peek example:");
         Console.WriteLine($"  intersecting pairs = {set.Intersections.Count} ({string.Join(", ", counts)})");
 
-        var graph = Intersection.Graph.Run(set);
+        var graph = global::Boolean.Intersection.Graph.Run(set);
         Console.WriteLine($"  graph vertices = {graph.Vertices.Count}, edges = {graph.Edges.Count}");
 
         RunTriangleSubdivisionCheck(set, graph);
@@ -357,6 +357,8 @@ internal static class Program
         acc.Segments.Add(new IntersectionSegment(a, b));
     }
 }
+
+
 
 
 

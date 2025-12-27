@@ -123,20 +123,8 @@ internal static class TrianglePatchingCore
 
             segments = SplitSegmentsPassingThroughPoints(points, segments);
 
-#if DEBUG
-            DebugAssertNoSegmentPassesThroughPoint(i, points, segments);
-#endif
-
             IReadOnlyList<RealTriangle> patches;
-            try
-            {
-                patches = Triangulation.Run(in triangle, points, segments);
-            }
-            catch (Exception ex)
-            {
-                TryDumpFailure(i, triangle, points, segments, ex);
-                throw;
-            }
+            patches = Triangulation.Run(in triangle, points, segments);
 
             var stored = patches is List<RealTriangle> list ? list : new List<RealTriangle>(patches);
             result[i] = stored.ToArray();
@@ -280,87 +268,6 @@ internal static class TrianglePatchingCore
         }
 
         segments.Add(new IntersectionSegment(a, b));
-    }
-
-#if DEBUG
-    private static void DebugAssertNoSegmentPassesThroughPoint(
-        int triangleIndex,
-        IReadOnlyList<IntersectionPoint> points,
-        IReadOnlyList<IntersectionSegment> segments)
-    {
-        double interiorTEpsilon = Tolerances.FeatureBarycentricEpsilon;
-        double mergeDistanceEpsilon = 10.0 * Tolerances.MergeEpsilon;
-        double mergeDistanceEpsilonSquared = mergeDistanceEpsilon * mergeDistanceEpsilon;
-
-        var interiorPoints = new List<(double T, int Index)>();
-        for (int segmentIndex = 0; segmentIndex < segments.Count; segmentIndex++)
-        {
-            var segment = segments[segmentIndex];
-            if ((uint)segment.StartIndex >= (uint)points.Count ||
-                (uint)segment.EndIndex >= (uint)points.Count ||
-                segment.StartIndex == segment.EndIndex)
-            {
-                continue;
-            }
-
-            if (TryCollectInteriorPointsOnSegment(
-                    points,
-                    segment.StartIndex,
-                    segment.EndIndex,
-                    interiorTEpsilon,
-                    mergeDistanceEpsilonSquared,
-                    interiorPoints))
-            {
-                System.Diagnostics.Debug.Fail(
-                    $"TrianglePatches: segment passes through another point (tri={triangleIndex} seg={segment.StartIndex}->{segment.EndIndex} via={interiorPoints[0].Index}).");
-                return;
-            }
-        }
-    }
-#endif
-
-    private static void TryDumpFailure(
-        int triangleIndex,
-        Triangle triangle,
-        IReadOnlyList<IntersectionPoint> points,
-        IReadOnlyList<IntersectionSegment> segments,
-        Exception ex)
-    {
-        if (s_dumpWritten)
-        {
-            return;
-        }
-
-        s_dumpWritten = true;
-        var path = "triangle_subdivision_fail_dump.txt";
-
-        try
-        {
-            using var sw = new StreamWriter(path, append: false);
-            sw.WriteLine($"triangleIndex={triangleIndex}");
-            sw.WriteLine($"triangle=P0=({triangle.P0.X},{triangle.P0.Y},{triangle.P0.Z}) P1=({triangle.P1.X},{triangle.P1.Y},{triangle.P1.Z}) P2=({triangle.P2.X},{triangle.P2.Y},{triangle.P2.Z})");
-            sw.WriteLine("points:");
-
-            for (int i = 0; i < points.Count; i++)
-            {
-                var p = points[i];
-                sw.WriteLine($"  {i}: bary=({p.Barycentric.U},{p.Barycentric.V},{p.Barycentric.W}) world=({p.Position.X},{p.Position.Y},{p.Position.Z})");
-            }
-
-            sw.WriteLine("segments:");
-            for (int i = 0; i < segments.Count; i++)
-            {
-                var s = segments[i];
-                sw.WriteLine($"  {i}: {s.StartIndex} -> {s.EndIndex}");
-            }
-
-            sw.WriteLine($"exception={ex.GetType().Name}: {ex.Message}");
-            Console.WriteLine($"TriangleSubdivision failure captured to {path}");
-        }
-        catch
-        {
-            // ignore secondary dump failures
-        }
     }
 }
 
