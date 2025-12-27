@@ -27,8 +27,8 @@ public class ClassificationTests
             new Point(0, 10, 0),
             new Point(0, 0, 10));
         var result = BuildClassification(inner, outer);
-        Assert.All(result.MeshA.SelectMany(p => p), pi => Assert.True(pi.IsInsideOtherMesh));
-        Assert.All(result.MeshB.SelectMany(p => p), pi => Assert.False(pi.IsInsideOtherMesh));
+        Assert.All(result.MeshA.SelectMany(p => p), pi => Assert.Equal(Containment.Inside, pi.Containment));
+        Assert.All(result.MeshB.SelectMany(p => p), pi => Assert.Equal(Containment.Outside, pi.Containment));
     }
 
     [Fact]
@@ -45,8 +45,8 @@ public class ClassificationTests
             new Point(100, 102, 100),
             new Point(100, 100, 102));
         var result = BuildClassification(a, b);
-        Assert.All(result.MeshA.SelectMany(p => p), pi => Assert.False(pi.IsInsideOtherMesh));
-        Assert.All(result.MeshB.SelectMany(p => p), pi => Assert.False(pi.IsInsideOtherMesh));
+        Assert.All(result.MeshA.SelectMany(p => p), pi => Assert.Equal(Containment.Outside, pi.Containment));
+        Assert.All(result.MeshB.SelectMany(p => p), pi => Assert.Equal(Containment.Outside, pi.Containment));
     }
 
     private static PatchClassification BuildClassification(WTetrahedron a, WTetrahedron b)

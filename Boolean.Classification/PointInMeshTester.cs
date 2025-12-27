@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Geometry;
+using Geometry.Predicates;
 using Geometry.Topology;
 
 namespace Boolean;
@@ -24,11 +25,29 @@ internal sealed class PointInMeshTester
         maxRayLength = bounds.MaximumRayLength;
     }
 
-    public bool Contains(in RealPoint point)
+    public Containment Classify(in RealPoint point)
     {
         if (triangles.Count == 0 || bounds.IsEmpty)
         {
-            return false;
+            return Containment.Outside;
+        }
+
+        double epsDist = Tolerances.PlaneSideEpsilon;
+        double epsBary = Tolerances.BarycentricInsideEpsilon;
+
+        var min = new RealPoint(point.X - epsDist, point.Y - epsDist, point.Z - epsDist);
+        var max = new RealPoint(point.X + epsDist, point.Y + epsDist, point.Z + epsDist);
+        var onBox = BoundingBox.FromPoints(in min, in max);
+        var onCandidates = new List<int>();
+        tree.Query(onBox, onCandidates);
+
+        for (int i = 0; i < onCandidates.Count; i++)
+        {
+            var tri = new RealTriangle(triangles[onCandidates[i]]);
+            if (RealTrianglePredicates.IsOnTriangle(tri, point, epsDist, epsBary))
+            {
+                return Containment.On;
+            }
         }
 
         var end = new RealPoint(
@@ -51,7 +70,10 @@ internal sealed class PointInMeshTester
             }
         }
 
-        return (crossings & 1) == 1;
+        return (crossings & 1) == 1 ? Containment.Inside : Containment.Outside;
     }
+
+    public bool Contains(in RealPoint point)
+        => Classify(in point) == Containment.Inside;
 }
 

@@ -37,8 +37,8 @@ internal static class ClassificationCore
             {
                 var patch = patches[p];
                 var sample = patch.Centroid;
-                bool inside = tester.Contains(sample);
-                classified[p] = new PatchInfo(patch, inside);
+                var containment = tester.Classify(in sample);
+                classified[p] = new PatchInfo(patch, containment);
             }
 
             result[i] = classified;

@@ -19,7 +19,7 @@ public static class PatchSelector
         {
             foreach (var patch in classification.MeshA[i])
             {
-                if (ShouldKeepFromA(operation, patch.IsInsideOtherMesh))
+                if (ShouldKeepFromA(operation, patch.Containment))
                 {
                     keptA.Add(patch.Patch);
                 }
@@ -30,7 +30,7 @@ public static class PatchSelector
         {
             foreach (var patch in classification.MeshB[i])
             {
-                if (ShouldKeepFromB(operation, patch.IsInsideOtherMesh))
+                if (ShouldKeepFromB(operation, patch.Containment))
                 {
                     keptB.Add(patch.Patch);
                 }
@@ -40,23 +40,23 @@ public static class PatchSelector
         return new BooleanPatchSet(keptA, keptB);
     }
 
-    private static bool ShouldKeepFromA(BooleanOperationType op, bool isInsideB) => op switch
+    private static bool ShouldKeepFromA(BooleanOperationType op, Containment containment) => op switch
     {
-        BooleanOperationType.Intersection => isInsideB,
-        BooleanOperationType.Union => !isInsideB,
-        BooleanOperationType.DifferenceAB => !isInsideB,
-        BooleanOperationType.DifferenceBA => isInsideB,
-        BooleanOperationType.SymmetricDifference => !isInsideB,
+        BooleanOperationType.Intersection => containment == Containment.Inside,
+        BooleanOperationType.Union => containment == Containment.Outside,
+        BooleanOperationType.DifferenceAB => containment == Containment.Outside,
+        BooleanOperationType.DifferenceBA => containment == Containment.Inside,
+        BooleanOperationType.SymmetricDifference => containment == Containment.Outside,
         _ => throw new ArgumentOutOfRangeException(nameof(op), op, "Unsupported boolean operation.")
     };
 
-    private static bool ShouldKeepFromB(BooleanOperationType op, bool isInsideA) => op switch
+    private static bool ShouldKeepFromB(BooleanOperationType op, Containment containment) => op switch
     {
-        BooleanOperationType.Intersection => isInsideA,
-        BooleanOperationType.Union => !isInsideA,
-        BooleanOperationType.DifferenceAB => isInsideA,
-        BooleanOperationType.DifferenceBA => !isInsideA,
-        BooleanOperationType.SymmetricDifference => !isInsideA,
+        BooleanOperationType.Intersection => containment == Containment.Inside,
+        BooleanOperationType.Union => containment == Containment.Outside,
+        BooleanOperationType.DifferenceAB => containment == Containment.Inside,
+        BooleanOperationType.DifferenceBA => containment == Containment.Outside,
+        BooleanOperationType.SymmetricDifference => containment == Containment.Outside,
         _ => throw new ArgumentOutOfRangeException(nameof(op), op, "Unsupported boolean operation.")
     };
 }

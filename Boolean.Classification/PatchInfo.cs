@@ -5,11 +5,11 @@ namespace Boolean;
 public readonly struct PatchInfo
 {
     public RealTriangle Patch { get; }
-    public bool IsInsideOtherMesh { get; }
+    public Containment Containment { get; }
 
-    public PatchInfo(RealTriangle patch, bool isInsideOtherMesh)
+    public PatchInfo(RealTriangle patch, Containment containment)
     {
         Patch = patch;
-        IsInsideOtherMesh = isInsideOtherMesh;
+        Containment = containment;
     }
 }
