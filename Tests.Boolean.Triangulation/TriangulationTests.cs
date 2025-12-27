@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Geometry;
 using Boolean;
@@ -17,9 +17,9 @@ public class TriangulationTests
         var v2 = new Point(0, 10, 0);
         var missing = new Point(0, 0, 1);
         var tri = new Triangle(v0, v1, v2, missing);
-        var points = new List<TriangulationLib.IntersectionPoint>();
-        var segments = new List<TriangulationLib.IntersectionSegment>();
-        var patches = TriangulationLib.Subdivide(in tri, points, segments);
+        var points = new List<IntersectionPoint>();
+        var segments = new List<IntersectionSegment>();
+        var patches = TriangulationLib.Run(in tri, points, segments);
         var single = Assert.Single(patches);
         Assert.Equal(tri.P0.X, single.P0.X);
         Assert.Equal(tri.P0.Y, single.P0.Y);
@@ -40,17 +40,17 @@ public class TriangulationTests
         var v2 = new Point(0, 10, 0);
         var missing = new Point(0, 0, 1);
         var tri = new Triangle(v0, v1, v2, missing);
-        var points = new List<TriangulationLib.IntersectionPoint>
+        var points = new List<IntersectionPoint>
         {
-            new TriangulationLib.IntersectionPoint(
+            new IntersectionPoint(
                 new Barycentric(0.5, 0.5, 0.0),
                 new RealPoint(5.0, 5.0, 0.0))
         };
-        var segments = new List<TriangulationLib.IntersectionSegment>
+        var segments = new List<IntersectionSegment>
         {
-            new TriangulationLib.IntersectionSegment(0, 0)
+            new IntersectionSegment(0, 0)
         };
-        var patches = TriangulationLib.Subdivide(in tri, points, segments);
+        var patches = TriangulationLib.Run(in tri, points, segments);
         var single = Assert.Single(patches);
         Assert.Equal(tri.P0.X, single.P0.X);
         Assert.Equal(tri.P0.Y, single.P0.Y);
@@ -78,16 +78,16 @@ public class TriangulationTests
         // Q on edge V1-V2 (Edge1).
         var baryQ = new Barycentric(0.0, 0.7, 0.3);
         var posQ = Barycentric.ToRealPointOnTriangle(in tri, in baryQ);
-        var points = new List<TriangulationLib.IntersectionPoint>
+        var points = new List<IntersectionPoint>
         {
-            new TriangulationLib.IntersectionPoint(baryP, posP),
-            new TriangulationLib.IntersectionPoint(baryQ, posQ)
+            new IntersectionPoint(baryP, posP),
+            new IntersectionPoint(baryQ, posQ)
         };
-        var segments = new List<TriangulationLib.IntersectionSegment>
+        var segments = new List<IntersectionSegment>
         {
-            new TriangulationLib.IntersectionSegment(0, 1)
+            new IntersectionSegment(0, 1)
         };
-        var patches = TriangulationLib.Subdivide(in tri, points, segments);
+        var patches = TriangulationLib.Run(in tri, points, segments);
         Assert.Equal(3, patches.Count);
         var originalArea = TriangleArea(
             new RealPoint(v0),
@@ -127,16 +127,16 @@ public class TriangulationTests
         // Q on edge V1-V2 (Edge1), away from vertices.
         var baryQ = new Barycentric(0.0, 0.4, 0.6);
         var posQ = Barycentric.ToRealPointOnTriangle(in tri, in baryQ);
-        var points = new List<TriangulationLib.IntersectionPoint>
+        var points = new List<IntersectionPoint>
         {
-            new TriangulationLib.IntersectionPoint(baryP, posP),
-            new TriangulationLib.IntersectionPoint(baryQ, posQ)
+            new IntersectionPoint(baryP, posP),
+            new IntersectionPoint(baryQ, posQ)
         };
-        var segments = new List<TriangulationLib.IntersectionSegment>
+        var segments = new List<IntersectionSegment>
         {
-            new TriangulationLib.IntersectionSegment(0, 1)
+            new IntersectionSegment(0, 1)
         };
-        var patches = TriangulationLib.Subdivide(in tri, points, segments);
+        var patches = TriangulationLib.Run(in tri, points, segments);
         Assert.NotEmpty(patches);
     }
 
@@ -192,53 +192,53 @@ public class TriangulationTests
         var onEdge0 = new Barycentric(0.5, 0.5, 0.0); // w = 0
         var onEdge1 = new Barycentric(0.0, 0.5, 0.5); // u = 0
         var onEdge2 = new Barycentric(0.5, 0.0, 0.5); // v = 0
-        Assert.Equal(TriangulationLib.EdgeLocation.Edge0, TriangulationLib.ClassifyEdge(onEdge0));
-        Assert.Equal(TriangulationLib.EdgeLocation.Edge1, TriangulationLib.ClassifyEdge(onEdge1));
-        Assert.Equal(TriangulationLib.EdgeLocation.Edge2, TriangulationLib.ClassifyEdge(onEdge2));
+        Assert.Equal(EdgeLocation.Edge0, TriangulationLib.ClassifyEdge(onEdge0));
+        Assert.Equal(EdgeLocation.Edge1, TriangulationLib.ClassifyEdge(onEdge1));
+        Assert.Equal(EdgeLocation.Edge2, TriangulationLib.ClassifyEdge(onEdge2));
         // Interior point.
         var interior = new Barycentric(0.2, 0.3, 0.5);
-        Assert.Equal(TriangulationLib.EdgeLocation.Interior, TriangulationLib.ClassifyEdge(interior));
+        Assert.Equal(EdgeLocation.Interior, TriangulationLib.ClassifyEdge(interior));
     }
 
     [Fact]
     public void ClassifyPattern_NoneAndSingleEdgeToEdge()
     {
-        var points = new List<TriangulationLib.IntersectionPoint>();
-        var segments = new List<TriangulationLib.IntersectionSegment>();
+        var points = new List<IntersectionPoint>();
+        var segments = new List<IntersectionSegment>();
         // No segments -> None.
         var pattern = TriangulationLib.ClassifyPattern(points, segments);
-        Assert.Equal(TriangulationLib.PatternKind.None, pattern);
+        Assert.Equal(PatternKind.None, pattern);
         // Single edge-to-edge segment: endpoints on distinct edges.
-        points.Add(new TriangulationLib.IntersectionPoint(
+        points.Add(new IntersectionPoint(
             new Barycentric(0.5, 0.5, 0.0), new RealPoint(5.0, 5.0, 0.0))); // Edge0
-        points.Add(new TriangulationLib.IntersectionPoint(
+        points.Add(new IntersectionPoint(
             new Barycentric(0.0, 0.5, 0.5), new RealPoint(5.0, 5.0, 0.0))); // Edge1
-        segments.Add(new TriangulationLib.IntersectionSegment(0, 1));
+        segments.Add(new IntersectionSegment(0, 1));
         pattern = TriangulationLib.ClassifyPattern(points, segments);
-        Assert.Equal(TriangulationLib.PatternKind.SingleEdgeToEdge, pattern);
+        Assert.Equal(PatternKind.SingleEdgeToEdge, pattern);
     }
 
     [Fact]
     public void ClassifyPattern_InteriorOrMultipleSegments_IsOther()
     {
-        var points = new List<TriangulationLib.IntersectionPoint>
+        var points = new List<IntersectionPoint>
         {
-            new TriangulationLib.IntersectionPoint(
+            new IntersectionPoint(
                 new Barycentric(0.2, 0.3, 0.5), new RealPoint(2.0, 3.0, 0.0)), // interior
-            new TriangulationLib.IntersectionPoint(
+            new IntersectionPoint(
                 new Barycentric(0.5, 0.5, 0.0), new RealPoint(5.0, 5.0, 0.0))  // edge0
         };
         // Single segment with an interior endpoint -> Other.
-        var segments = new List<TriangulationLib.IntersectionSegment>
+        var segments = new List<IntersectionSegment>
         {
-            new TriangulationLib.IntersectionSegment(0, 1)
+            new IntersectionSegment(0, 1)
         };
         var pattern = TriangulationLib.ClassifyPattern(points, segments);
-        Assert.Equal(TriangulationLib.PatternKind.Other, pattern);
+        Assert.Equal(PatternKind.Other, pattern);
         // Multiple segments -> Other.
-        segments.Add(new TriangulationLib.IntersectionSegment(1, 1));
+        segments.Add(new IntersectionSegment(1, 1));
         pattern = TriangulationLib.ClassifyPattern(points, segments);
-        Assert.Equal(TriangulationLib.PatternKind.Other, pattern);
+        Assert.Equal(PatternKind.Other, pattern);
     }
     // Same geometric pattern as the base triangle A0 in the TetraPeek example:
     // a single triangle with three interior intersection points connected in a
@@ -258,19 +258,19 @@ public class TriangulationTests
         var p0 = Barycentric.ToRealPointOnTriangle(in tri, in bary0);
         var p1 = Barycentric.ToRealPointOnTriangle(in tri, in bary1);
         var p2 = Barycentric.ToRealPointOnTriangle(in tri, in bary2);
-        var points = new List<TriangulationLib.IntersectionPoint>
+        var points = new List<IntersectionPoint>
         {
-            new TriangulationLib.IntersectionPoint(bary0, p0),
-            new TriangulationLib.IntersectionPoint(bary1, p1),
-            new TriangulationLib.IntersectionPoint(bary2, p2)
+            new IntersectionPoint(bary0, p0),
+            new IntersectionPoint(bary1, p1),
+            new IntersectionPoint(bary2, p2)
         };
-        var segments = new List<TriangulationLib.IntersectionSegment>
+        var segments = new List<IntersectionSegment>
         {
-            new TriangulationLib.IntersectionSegment(0, 1),
-            new TriangulationLib.IntersectionSegment(1, 2),
-            new TriangulationLib.IntersectionSegment(2, 0)
+            new IntersectionSegment(0, 1),
+            new IntersectionSegment(1, 2),
+            new IntersectionSegment(2, 0)
         };
-        var patches = TriangulationLib.Subdivide(in tri, points, segments);
+        var patches = TriangulationLib.Run(in tri, points, segments);
         // Must actually subdivide: inner loop should split the triangle.
         Assert.True(patches.Count > 1);
         var triArea = TriangleArea(
@@ -289,4 +289,8 @@ public class TriangulationTests
             $"Patch area {patchArea} differs from triangle area {triArea} by {diff}.");
     }
 }
+
+
+
+
 

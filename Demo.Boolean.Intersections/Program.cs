@@ -1,4 +1,4 @@
-﻿using Geometry;
+using Geometry;
 using System;
 using System.Linq;
 using World;
@@ -220,8 +220,8 @@ internal static class Program
     private sealed class TriAccum
     {
         public Triangle Triangle { get; }
-        public List<Triangulation.IntersectionPoint> Points { get; } = new();
-        public List<Triangulation.IntersectionSegment> Segments { get; } = new();
+        public List<IntersectionPoint> Points { get; } = new();
+        public List<IntersectionSegment> Segments { get; } = new();
         public List<RealPoint> WorldPoints { get; } = new();
 
         public TriAccum(Triangle triangle)
@@ -297,7 +297,7 @@ internal static class Program
             var triVal = acc.Triangle;
             try
             {
-                var patches = Triangulation.Subdivide(in triVal, acc.Points, acc.Segments);
+                var patches = Triangulation.Run(in triVal, acc.Points, acc.Segments);
                 double triArea = Math.Abs(new RealTriangle(
                     new RealPoint(triVal.P0),
                     new RealPoint(triVal.P1),
@@ -336,7 +336,7 @@ internal static class Program
         }
 
         acc.WorldPoints.Add(pos);
-        acc.Points.Add(new Triangulation.IntersectionPoint(bary, pos));
+        acc.Points.Add(new IntersectionPoint(bary, pos));
         return acc.WorldPoints.Count - 1;
     }
 
@@ -354,7 +354,11 @@ internal static class Program
                 return;
             }
         }
-        acc.Segments.Add(new Triangulation.IntersectionSegment(a, b));
+        acc.Segments.Add(new IntersectionSegment(a, b));
     }
 }
+
+
+
+
 

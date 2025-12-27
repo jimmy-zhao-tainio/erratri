@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Geometry;
+using Boolean;
 using Xunit;
 using TriangulationLib = global::Boolean.Triangulation;
 
@@ -18,7 +19,7 @@ public class TriangulationPslgTests
             new Point(1, 0, 0),
             new Point(0, 1, 0));
 
-        var points = new List<TriangulationLib.IntersectionPoint>
+        var points = new List<IntersectionPoint>
         {
             MakeOnEdgePoint(triangle, 0.7233333333333334),
             MakeOnEdgePoint(triangle, 0.8333333333333334),
@@ -26,12 +27,12 @@ public class TriangulationPslgTests
         };
 
         // Force the PSLG path by adding a segment along that same edge.
-        var segments = new List<TriangulationLib.IntersectionSegment>
+        var segments = new List<IntersectionSegment>
         {
             new(startIndex: 0, endIndex: 2)
         };
 
-        var patches = TriangulationLib.Subdivide(in triangle, points, segments);
+        var patches = TriangulationLib.Run(in triangle, points, segments);
 
         Assert.NotEmpty(patches);
         AssertAreaEqual(triangle, patches);
@@ -49,7 +50,7 @@ public class TriangulationPslgTests
             new Point(2, 0, 0),
             new Point(0, 2, 0));
 
-        var points = new List<TriangulationLib.IntersectionPoint>
+        var points = new List<IntersectionPoint>
         {
             MakeOnEdgePoint(triangle, 0.2),
             MakeOnEdgePoint(triangle, 0.5),
@@ -57,26 +58,26 @@ public class TriangulationPslgTests
             MakeOnEdgePoint(triangle, 0.9)
         };
 
-        var segments = new List<TriangulationLib.IntersectionSegment>
+        var segments = new List<IntersectionSegment>
         {
             new(0, 1),
             new(1, 2),
             new(2, 3)
         };
 
-        var patches = TriangulationLib.Subdivide(in triangle, points, segments);
+        var patches = TriangulationLib.Run(in triangle, points, segments);
 
         Assert.NotEmpty(patches);
         AssertAreaEqual(triangle, patches);
     }
 
-    private static TriangulationLib.IntersectionPoint MakeOnEdgePoint(
+    private static IntersectionPoint MakeOnEdgePoint(
         Triangle triangle,
         double vOnEdge)
     {
         var bary = new Barycentric(0.0, vOnEdge, 1.0 - vOnEdge);
         var pos = Barycentric.ToRealPointOnTriangle(in triangle, in bary);
-        return new TriangulationLib.IntersectionPoint(bary, pos);
+        return new IntersectionPoint(bary, pos);
     }
 
     private static void AssertAreaEqual(Triangle tri, IReadOnlyList<RealTriangle> patches)
@@ -124,3 +125,7 @@ public class TriangulationPslgTests
         return d2 <= tol * tol;
     }
 }
+
+
+
+

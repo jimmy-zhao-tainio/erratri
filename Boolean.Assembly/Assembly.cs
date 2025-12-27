@@ -41,13 +41,14 @@ public static class Assembly
         var graph = input.Graph;
         var selected = input.Selected;
 
-        ValidateSelectedBoundaryEdgesMatchGraph(graph, selected);
+        Validate(graph, selected);
 
         var mesh = BooleanMeshAssembler.Assemble(selected);
         return new AssemblyOutput(mesh);
     }
 
-    private static void ValidateSelectedBoundaryEdgesMatchGraph(IntersectionGraph graph, BooleanPatchSet selected)
+    // Validates that selected boundary edges align with the intersection graph.
+    private static void Validate(IntersectionGraph graph, BooleanPatchSet selected)
     {
         var graphVertexByKey = new Dictionary<(long X, long Y, long Z), IntersectionVertexId>(graph.Vertices.Count);
         var ambiguousGraphKeys = new HashSet<(long X, long Y, long Z)>();

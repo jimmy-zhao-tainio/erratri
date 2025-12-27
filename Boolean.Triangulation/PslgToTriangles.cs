@@ -8,7 +8,7 @@ using Pslg;
 namespace Boolean;
 
 // Triangulate PSLG output and map triangles back to world-space patches.
-internal static class TriangulationTriangulator
+internal static class PslgToTriangles
 {
     internal static IReadOnlyList<RealTriangle> Triangulate(
         in Triangle triangle,
@@ -118,84 +118,6 @@ internal static class TriangulationTriangulator
         }
 
         return patches;
-    }
-
-    internal static List<(int A, int B, int C)> TriangulateSimple(
-        int[] polygon,
-        IReadOnlyList<PslgVertex> vertices,
-        double expectedArea)
-    {
-        if (polygon is null) throw new ArgumentNullException(nameof(polygon));
-        if (vertices is null) throw new ArgumentNullException(nameof(vertices));
-
-        var poly = NormalizeRing(polygon);
-        if (poly.Count < 3)
-        {
-            throw new InvalidOperationException("Polygon ring must have at least 3 vertices.");
-        }
-
-        var uvPoints = new List<RealPoint2D>(poly.Count);
-        for (int i = 0; i < poly.Count; i++)
-        {
-            int idx = poly[i];
-            uvPoints.Add(new RealPoint2D(vertices[idx].X, vertices[idx].Y));
-        }
-
-        var segments = new List<(int A, int B)>(poly.Count);
-        for (int i = 0; i < poly.Count; i++)
-        {
-            int a = i;
-            int b = (i + 1) % poly.Count;
-            segments.Add((a, b));
-        }
-
-        var ctInput = new Input(uvPoints, segments);
-        var ctResult = Triangulator.RunFast(in ctInput, validate: false);
-
-        if (ctResult.Points.Count != uvPoints.Count)
-        {
-            throw new InvalidOperationException(
-                "ConstrainedTriangulator produced Steiner points; Kernel PSLG mapping requires a 1:1 vertex correspondence.");
-        }
-
-        var oriented = OrientTrianglesCcw(ctResult.Triangles, ctResult.Points);
-
-        var faceCoords = new List<RealPoint>(poly.Count);
-        for (int i = 0; i < poly.Count; i++)
-        {
-            var p = uvPoints[i];
-            faceCoords.Add(new RealPoint(p.X, p.Y, 0.0));
-        }
-        var polygonUv = new RealPolygon(faceCoords);
-
-        var triangles = new List<(int A, int B, int C)>(oriented.Count);
-        double sumArea = 0.0;
-
-        for (int i = 0; i < oriented.Count; i++)
-        {
-            var t = oriented[i];
-            var centroid = TriangleCentroid(ctResult.Points[t.A], ctResult.Points[t.B], ctResult.Points[t.C]);
-
-            if (!RealPolygonPredicates.ContainsInclusive(polygonUv, centroid))
-            {
-                continue;
-            }
-
-            double area = TriangleSignedArea(ctResult.Points[t.A], ctResult.Points[t.B], ctResult.Points[t.C]);
-            sumArea += area;
-
-            triangles.Add((poly[t.A], poly[t.B], poly[t.C]));
-        }
-
-        double absExpected = Math.Abs(expectedArea);
-        double diffAbs = Math.Abs(sumArea - absExpected);
-        double rel = Tolerances.BarycentricInsideEpsilon * absExpected;
-        if (diffAbs > Tolerances.EpsArea && diffAbs > rel)
-        {
-            throw new InvalidOperationException("ConstrainedTriangulator area check failed for polygon ring.");
-        }
-
-        return triangles;
     }
 
     private static List<(int A, int B, int C)> OrientTrianglesCcw(

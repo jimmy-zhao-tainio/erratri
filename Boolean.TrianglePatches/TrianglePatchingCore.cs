@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Geometry;
@@ -78,7 +78,7 @@ internal static class TrianglePatchingCore
             var vertices = triangleVertices[i];
             var edges = triangleEdges[i];
 
-            var points = new List<Triangulation.IntersectionPoint>(vertices.Length);
+            var points = new List<IntersectionPoint>(vertices.Length);
             var pointIndexByVertexId = new Dictionary<int, int>(vertices.Length);
 
             for (int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++)
@@ -87,10 +87,10 @@ internal static class TrianglePatchingCore
                 var barycentric = vertex.Barycentric;
                 var world = Barycentric.ToRealPointOnTriangle(in triangle, in barycentric);
                 pointIndexByVertexId[vertex.VertexId.Value] = points.Count;
-                points.Add(new Triangulation.IntersectionPoint(vertex.Barycentric, world));
+                points.Add(new IntersectionPoint(vertex.Barycentric, world));
             }
 
-            var segments = new List<Triangulation.IntersectionSegment>(edges.Length);
+            var segments = new List<IntersectionSegment>(edges.Length);
             var seenSegments = new HashSet<(int, int)>();
 
             for (int e = 0; e < edges.Length; e++)
@@ -118,7 +118,7 @@ internal static class TrianglePatchingCore
                     continue; // dedup identical segments
                 }
 
-                segments.Add(new Triangulation.IntersectionSegment(startIdx, endIdx));
+                segments.Add(new IntersectionSegment(startIdx, endIdx));
             }
 
             segments = SplitSegmentsPassingThroughPoints(points, segments);
@@ -130,7 +130,7 @@ internal static class TrianglePatchingCore
             IReadOnlyList<RealTriangle> patches;
             try
             {
-                patches = Triangulation.Subdivide(in triangle, points, segments);
+                patches = Triangulation.Run(in triangle, points, segments);
             }
             catch (Exception ex)
             {
@@ -147,21 +147,21 @@ internal static class TrianglePatchingCore
 
     private static (int, int) Normalize(int a, int b) => a < b ? (a, b) : (b, a);
 
-    private static List<Triangulation.IntersectionSegment> SplitSegmentsPassingThroughPoints(
-        IReadOnlyList<Triangulation.IntersectionPoint> points,
-        IReadOnlyList<Triangulation.IntersectionSegment> segments)
+    private static List<IntersectionSegment> SplitSegmentsPassingThroughPoints(
+        IReadOnlyList<IntersectionPoint> points,
+        IReadOnlyList<IntersectionSegment> segments)
     {
         if (segments.Count == 0 || points.Count < 3)
         {
-            return segments as List<Triangulation.IntersectionSegment>
-                ?? new List<Triangulation.IntersectionSegment>(segments);
+            return segments as List<IntersectionSegment>
+                ?? new List<IntersectionSegment>(segments);
         }
 
         double interiorTEpsilon = Tolerances.FeatureBarycentricEpsilon;
         double mergeDistanceEpsilon = 10.0 * Tolerances.MergeEpsilon;
         double mergeDistanceEpsilonSquared = mergeDistanceEpsilon * mergeDistanceEpsilon;
 
-        var output = new List<Triangulation.IntersectionSegment>(segments.Count);
+        var output = new List<IntersectionSegment>(segments.Count);
         var seenSegments = new HashSet<(int, int)>();
         var interiorPoints = new List<(double T, int Index)>();
 
@@ -207,7 +207,7 @@ internal static class TrianglePatchingCore
     }
 
     private static bool TryCollectInteriorPointsOnSegment(
-        IReadOnlyList<Triangulation.IntersectionPoint> points,
+        IReadOnlyList<IntersectionPoint> points,
         int startIndex,
         int endIndex,
         double interiorTEpsilon,
@@ -263,7 +263,7 @@ internal static class TrianglePatchingCore
     }
 
     private static void AddSegmentDedup(
-        List<Triangulation.IntersectionSegment> segments,
+        List<IntersectionSegment> segments,
         HashSet<(int, int)> seenSegments,
         int a,
         int b)
@@ -279,14 +279,14 @@ internal static class TrianglePatchingCore
             return;
         }
 
-        segments.Add(new Triangulation.IntersectionSegment(a, b));
+        segments.Add(new IntersectionSegment(a, b));
     }
 
 #if DEBUG
     private static void DebugAssertNoSegmentPassesThroughPoint(
         int triangleIndex,
-        IReadOnlyList<Triangulation.IntersectionPoint> points,
-        IReadOnlyList<Triangulation.IntersectionSegment> segments)
+        IReadOnlyList<IntersectionPoint> points,
+        IReadOnlyList<IntersectionSegment> segments)
     {
         double interiorTEpsilon = Tolerances.FeatureBarycentricEpsilon;
         double mergeDistanceEpsilon = 10.0 * Tolerances.MergeEpsilon;
@@ -322,8 +322,8 @@ internal static class TrianglePatchingCore
     private static void TryDumpFailure(
         int triangleIndex,
         Triangle triangle,
-        IReadOnlyList<Triangulation.IntersectionPoint> points,
-        IReadOnlyList<Triangulation.IntersectionSegment> segments,
+        IReadOnlyList<IntersectionPoint> points,
+        IReadOnlyList<IntersectionSegment> segments,
         Exception ex)
     {
         if (s_dumpWritten)
@@ -363,3 +363,7 @@ internal static class TrianglePatchingCore
         }
     }
 }
+
+
+
+
