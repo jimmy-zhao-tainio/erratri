@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Geometry\Geometry.csproj" />
+    <ProjectReference Include="..\Geometry.Predicates\Geometry.Predicates.csproj" />
     <ProjectReference Include="..\Boolean.Intersection.Graph\Boolean.Intersection.Graph.csproj" />
     <ProjectReference Include="..\Boolean.Intersection.Index\Boolean.Intersection.Index.csproj" />
     <ProjectReference Include="..\Boolean.Intersection.Topology\Boolean.Intersection.Topology.csproj" />

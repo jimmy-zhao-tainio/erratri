@@ -32,7 +32,8 @@ public class TriangulationPslgTests
             new(startIndex: 0, endIndex: 2)
         };
 
-        var patches = TriangulationLib.Run(in triangle, points, segments);
+        var result = TriangulationLib.Run(in triangle, points, segments);
+        var patches = result.Triangles;
 
         Assert.NotEmpty(patches);
         AssertAreaEqual(triangle, patches);
@@ -65,7 +66,8 @@ public class TriangulationPslgTests
             new(2, 3)
         };
 
-        var patches = TriangulationLib.Run(in triangle, points, segments);
+        var result = TriangulationLib.Run(in triangle, points, segments);
+        var patches = result.Triangles;
 
         Assert.NotEmpty(patches);
         AssertAreaEqual(triangle, patches);

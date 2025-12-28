@@ -19,7 +19,8 @@ public class TriangulationTests
         var tri = new Triangle(v0, v1, v2, missing);
         var points = new List<IntersectionPoint>();
         var segments = new List<IntersectionSegment>();
-        var patches = TriangulationLib.Run(in tri, points, segments);
+        var result = TriangulationLib.Run(in tri, points, segments);
+        var patches = result.Triangles;
         var single = Assert.Single(patches);
         Assert.Equal(tri.P0.X, single.P0.X);
         Assert.Equal(tri.P0.Y, single.P0.Y);
@@ -50,7 +51,8 @@ public class TriangulationTests
         {
             new IntersectionSegment(0, 0)
         };
-        var patches = TriangulationLib.Run(in tri, points, segments);
+        var result = TriangulationLib.Run(in tri, points, segments);
+        var patches = result.Triangles;
         var single = Assert.Single(patches);
         Assert.Equal(tri.P0.X, single.P0.X);
         Assert.Equal(tri.P0.Y, single.P0.Y);
@@ -87,7 +89,8 @@ public class TriangulationTests
         {
             new IntersectionSegment(0, 1)
         };
-        var patches = TriangulationLib.Run(in tri, points, segments);
+        var result = TriangulationLib.Run(in tri, points, segments);
+        var patches = result.Triangles;
         Assert.Equal(3, patches.Count);
         var originalArea = TriangleArea(
             new RealPoint(v0),
@@ -136,7 +139,8 @@ public class TriangulationTests
         {
             new IntersectionSegment(0, 1)
         };
-        var patches = TriangulationLib.Run(in tri, points, segments);
+        var result = TriangulationLib.Run(in tri, points, segments);
+        var patches = result.Triangles;
         Assert.NotEmpty(patches);
     }
 
@@ -270,7 +274,8 @@ public class TriangulationTests
             new IntersectionSegment(1, 2),
             new IntersectionSegment(2, 0)
         };
-        var patches = TriangulationLib.Run(in tri, points, segments);
+        var result = TriangulationLib.Run(in tri, points, segments);
+        var patches = result.Triangles;
         // Must actually subdivide: inner loop should split the triangle.
         Assert.True(patches.Count > 1);
         var triArea = TriangleArea(

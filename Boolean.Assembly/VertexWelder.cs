@@ -39,8 +39,6 @@ internal static class VertexWelder
         int verticesBefore = vertices.Count;
         int trianglesBefore = triangles.Count;
 
-        double inv = 1.0 / epsilon;
-        double epsilonSquared = epsilon * epsilon;
         var voxelToNewIds = new Dictionary<(long X, long Y, long Z), List<int>>();
         var newVertices = new List<RealPoint>(vertices.Count);
         var remap = new int[vertices.Count];
@@ -48,7 +46,7 @@ internal static class VertexWelder
         for (int i = 0; i < vertices.Count; i++)
         {
             var p = vertices[i];
-            remap[i] = GetOrAddCanonicalId(p, inv, epsilonSquared, newVertices, voxelToNewIds);
+            remap[i] = VertexWeld.GetOrAddCanonicalId(p, epsilon, newVertices, voxelToNewIds);
         }
 
         var remappedTris = new List<(int A, int B, int C)>(triangles.Count);
@@ -90,6 +88,16 @@ internal static class VertexWelder
         List<string> provenance,
         double epsilon)
     {
+        return WeldInPlace(vertices, triangles, provenance, epsilon, out _);
+    }
+
+    public static VertexWeldStats WeldInPlace(
+        List<RealPoint> vertices,
+        List<(int A, int B, int C)> triangles,
+        List<string> provenance,
+        double epsilon,
+        out int[] remap)
+    {
         if (provenance is null) throw new ArgumentNullException(nameof(provenance));
         if (provenance.Count != triangles.Count)
         {
@@ -98,22 +106,22 @@ internal static class VertexWelder
 
         if (vertices.Count == 0 || triangles.Count == 0)
         {
+            remap = new int[vertices.Count];
+            for (int i = 0; i < remap.Length; i++) remap[i] = i;
             return new VertexWeldStats(vertices.Count, vertices.Count, triangles.Count, triangles.Count, 0);
         }
 
         int verticesBefore = vertices.Count;
         int trianglesBefore = triangles.Count;
 
-        double inv = 1.0 / epsilon;
-        double epsilonSquared = epsilon * epsilon;
         var voxelToNewIds = new Dictionary<(long X, long Y, long Z), List<int>>();
         var newVertices = new List<RealPoint>(vertices.Count);
-        var remap = new int[vertices.Count];
+        remap = new int[vertices.Count];
 
         for (int i = 0; i < vertices.Count; i++)
         {
             var p = vertices[i];
-            remap[i] = GetOrAddCanonicalId(p, inv, epsilonSquared, newVertices, voxelToNewIds);
+            remap[i] = VertexWeld.GetOrAddCanonicalId(p, epsilon, newVertices, voxelToNewIds);
         }
 
         var remappedTris = new List<(int A, int B, int C)>(triangles.Count);
@@ -161,44 +169,6 @@ internal static class VertexWelder
         List<RealPoint> idToPosition,
         Dictionary<(long X, long Y, long Z), List<int>> voxelToIds)
     {
-        long vx = (long)Math.Floor(p.X * inv);
-        long vy = (long)Math.Floor(p.Y * inv);
-        long vz = (long)Math.Floor(p.Z * inv);
-
-        for (long dx = -1; dx <= 1; dx++)
-        for (long dy = -1; dy <= 1; dy++)
-        for (long dz = -1; dz <= 1; dz++)
-        {
-            var key = (vx + dx, vy + dy, vz + dz);
-
-            if (!voxelToIds.TryGetValue(key, out var candidates))
-            {
-                continue;
-            }
-
-            for (int i = 0; i < candidates.Count; i++)
-            {
-                int id = candidates[i];
-                var c = idToPosition[id];
-
-                if (p.DistanceSquared(in c) <= epsilonSquared)
-                {
-                    return id;
-                }
-            }
-        }
-
-        int newId = idToPosition.Count;
-        idToPosition.Add(p);
-
-        var home = (vx, vy, vz);
-        if (!voxelToIds.TryGetValue(home, out var list))
-        {
-            list = new List<int>();
-            voxelToIds[home] = list;
-        }
-
-        list.Add(newId);
-        return newId;
+        return VertexWeld.GetOrAddCanonicalId(p, 1.0 / inv, idToPosition, voxelToIds);
     }
 }

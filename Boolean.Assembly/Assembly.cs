@@ -50,29 +50,6 @@ public static class Assembly
     // Validates that selected boundary edges align with the intersection graph.
     private static void Validate(IntersectionGraph graph, BooleanPatchSet selected)
     {
-        var graphVertexByKey = new Dictionary<(long X, long Y, long Z), IntersectionVertexId>(graph.Vertices.Count);
-        var ambiguousGraphKeys = new HashSet<(long X, long Y, long Z)>();
-        double inv = 1.0 / Tolerances.TrianglePredicateEpsilon;
-
-        for (int i = 0; i < graph.Vertices.Count; i++)
-        {
-            var v = graph.Vertices[i];
-            var key = Quantize(v.Position, inv);
-            if (ambiguousGraphKeys.Contains(key))
-            {
-                continue;
-            }
-
-            if (graphVertexByKey.TryGetValue(key, out var existing) && existing.Value != v.Id.Value)
-            {
-                graphVertexByKey.Remove(key);
-                ambiguousGraphKeys.Add(key);
-                continue;
-            }
-
-            graphVertexByKey[key] = v.Id;
-        }
-
         var graphEdges = new HashSet<(int Min, int Max)>(graph.Edges.Count);
         for (int i = 0; i < graph.Edges.Count; i++)
         {
@@ -83,21 +60,59 @@ public static class Assembly
             graphEdges.Add((a, b));
         }
 
+        var graphPositionById = new Dictionary<int, RealPoint>(graph.Vertices.Count);
+        for (int i = 0; i < graph.Vertices.Count; i++)
+        {
+            var v = graph.Vertices[i];
+            graphPositionById[v.Id.Value] = v.Position;
+        }
+
         var vertices = new List<RealPoint>();
         var triangles = new List<(int A, int B, int C)>();
-        var vertexMap = new Dictionary<(long X, long Y, long Z), int>();
+        var vertexMap = new Dictionary<QuantizedVertexKey, int>();
+        var vertexIntersectionIds = new List<int>();
         var provenance = new List<string>();
 
-        void AddTri(in RealTriangle tri, string prov)
+        int AddVertex(in RealPoint point)
+        {
+            int idx = VertexQuantizer.AddOrGet(vertices, vertexMap, point);
+            while (vertexIntersectionIds.Count < vertices.Count)
+            {
+                vertexIntersectionIds.Add(-1);
+            }
+            return idx;
+        }
+
+        void AssignIntersectionId(int vertexIndex, int id)
+        {
+            if (id < 0)
+            {
+                return;
+            }
+
+            int existing = vertexIntersectionIds[vertexIndex];
+            if (existing == -1)
+            {
+                vertexIntersectionIds[vertexIndex] = id;
+                return;
+            }
+
+            if (existing != id)
+            {
+                vertexIntersectionIds[vertexIndex] = -1;
+            }
+        }
+
+        void AddTri(in RealTriangle tri, TriangleVertexIds? vertexIds, string prov)
         {
             if (RealTriangle.HasZeroArea(tri.P0, tri.P1, tri.P2))
             {
                 return;
             }
 
-            int i0 = VertexQuantizer.AddOrGet(vertices, vertexMap, tri.P0);
-            int i1 = VertexQuantizer.AddOrGet(vertices, vertexMap, tri.P1);
-            int i2 = VertexQuantizer.AddOrGet(vertices, vertexMap, tri.P2);
+            int i0 = AddVertex(tri.P0);
+            int i1 = AddVertex(tri.P1);
+            int i2 = AddVertex(tri.P2);
 
             if (i0 == i1 || i1 == i2 || i2 == i0)
             {
@@ -106,12 +121,67 @@ public static class Assembly
 
             triangles.Add((i0, i1, i2));
             provenance.Add(prov);
+
+            if (vertexIds.HasValue)
+            {
+                var ids = vertexIds.Value;
+                AssignIntersectionId(i0, ids.V0);
+                AssignIntersectionId(i1, ids.V1);
+                AssignIntersectionId(i2, ids.V2);
+            }
         }
 
-        for (int i = 0; i < selected.FromMeshA.Count; i++) AddTri(selected.FromMeshA[i], $"A#{i}");
-        for (int i = 0; i < selected.FromMeshB.Count; i++) AddTri(selected.FromMeshB[i], $"B#{i}");
+        var idsA = selected.IntersectionVertexIdsFromMeshA;
+        if (idsA != null && idsA.Count != selected.FromMeshA.Count)
+        {
+            idsA = null;
+        }
 
-        _ = VertexWelder.WeldInPlace(vertices, triangles, provenance, Tolerances.MergeEpsilon);
+        var idsB = selected.IntersectionVertexIdsFromMeshB;
+        if (idsB != null && idsB.Count != selected.FromMeshB.Count)
+        {
+            idsB = null;
+        }
+
+        for (int i = 0; i < selected.FromMeshA.Count; i++)
+        {
+            var ids = idsA != null ? idsA[i] : (TriangleVertexIds?)null;
+            AddTri(selected.FromMeshA[i], ids, $"A#{i}");
+        }
+
+        for (int i = 0; i < selected.FromMeshB.Count; i++)
+        {
+            var ids = idsB != null ? idsB[i] : (TriangleVertexIds?)null;
+            AddTri(selected.FromMeshB[i], ids, $"B#{i}");
+        }
+
+        _ = VertexWelder.WeldInPlace(vertices, triangles, provenance, Tolerances.MergeEpsilon, out var remap);
+
+        var weldedIntersectionIds = new int[vertices.Count];
+        for (int i = 0; i < weldedIntersectionIds.Length; i++)
+        {
+            weldedIntersectionIds[i] = -1;
+        }
+
+        for (int i = 0; i < vertexIntersectionIds.Count; i++)
+        {
+            int id = vertexIntersectionIds[i];
+            if (id < 0)
+            {
+                continue;
+            }
+
+            int dst = remap[i];
+            int existing = weldedIntersectionIds[dst];
+            if (existing == -1)
+            {
+                weldedIntersectionIds[dst] = id;
+            }
+            else if (existing != id)
+            {
+                weldedIntersectionIds[dst] = -1;
+            }
+        }
         _ = TriangleCleanup.DeduplicateIgnoringWindingInPlace(triangles, provenance);
 
         var edgeUse = new Dictionary<(int Min, int Max), int>();
@@ -152,17 +222,24 @@ public static class Assembly
             var pa = vertices[key.Min];
             var pb = vertices[key.Max];
 
-            if (!graphVertexByKey.TryGetValue(Quantize(pa, inv), out var ga) ||
-                !graphVertexByKey.TryGetValue(Quantize(pb, inv), out var gb))
+            int ga = weldedIntersectionIds[key.Min];
+            int gb = weldedIntersectionIds[key.Max];
+
+            if (ga < 0 || gb < 0)
             {
                 continue;
             }
 
-            int ea = ga.Value;
-            int eb = gb.Value;
+            int ea = ga;
+            int eb = gb;
             if (eb < ea) (ea, eb) = (eb, ea);
 
             if (graphEdges.Contains((ea, eb)))
+            {
+                continue;
+            }
+
+            if (IsGraphEdgeChain(in pa, in pb, ga, gb, graphEdges, graphPositionById))
             {
                 continue;
             }
@@ -174,15 +251,111 @@ public static class Assembly
 
             throw new InvalidOperationException(
                 "Pre-assembly invariant violated: selected boundary edge connects intersection vertices that are not adjacent in the intersection graph. " +
-                $"edge=({key.Min},{key.Max}) A=({pa.X},{pa.Y},{pa.Z}) B=({pb.X},{pb.Y},{pb.Z}) graph=({ga.Value},{gb.Value}).{triInfo}");
+                $"edge=({key.Min},{key.Max}) A=({pa.X},{pa.Y},{pa.Z}) B=({pb.X},{pb.Y},{pb.Z}) graph=({ga},{gb}).{triInfo}");
         }
     }
 
-    private static (long X, long Y, long Z) Quantize(RealPoint p, double inv)
+    private static bool IsGraphEdgeChain(
+        in RealPoint pa,
+        in RealPoint pb,
+        int ga,
+        int gb,
+        HashSet<(int Min, int Max)> graphEdges,
+        Dictionary<int, RealPoint> graphPositionById)
     {
-        long qx = (long)Math.Round(p.X * inv);
-        long qy = (long)Math.Round(p.Y * inv);
-        long qz = (long)Math.Round(p.Z * inv);
-        return (qx, qy, qz);
+        if (ga == gb)
+        {
+            return true;
+        }
+
+        if (!graphPositionById.ContainsKey(ga) || !graphPositionById.ContainsKey(gb))
+        {
+            return false;
+        }
+
+        var ab = RealVector.FromPoints(in pa, in pb);
+        double abLenSq = ab.Dot(in ab);
+        if (abLenSq <= 0.0)
+        {
+            return false;
+        }
+
+        double eps = Tolerances.MergeEpsilon;
+        double epsSq = eps * eps;
+
+        var idToT = new Dictionary<int, double>();
+
+        foreach (var kvp in graphPositionById)
+        {
+            int id = kvp.Key;
+            var pos = kvp.Value;
+            var ap = RealVector.FromPoints(in pa, in pos);
+            double t = ap.Dot(in ab) / abLenSq;
+            if (t < 0.0 || t > 1.0)
+            {
+                continue;
+            }
+
+            var closest = new RealPoint(
+                pa.X + (pb.X - pa.X) * t,
+                pa.Y + (pb.Y - pa.Y) * t,
+                pa.Z + (pb.Z - pa.Z) * t);
+
+            if (pos.DistanceSquared(in closest) > epsSq)
+            {
+                continue;
+            }
+
+            if (!idToT.ContainsKey(id))
+            {
+                idToT.Add(id, t);
+            }
+        }
+
+        if (graphPositionById.TryGetValue(ga, out var posA) && !idToT.ContainsKey(ga))
+        {
+            var ap = RealVector.FromPoints(in pa, in posA);
+            double t = ap.Dot(in ab) / abLenSq;
+            idToT.Add(ga, t);
+        }
+
+        if (graphPositionById.TryGetValue(gb, out var posB) && !idToT.ContainsKey(gb))
+        {
+            var ap = RealVector.FromPoints(in pa, in posB);
+            double t = ap.Dot(in ab) / abLenSq;
+            idToT.Add(gb, t);
+        }
+
+        if (idToT.Count < 2)
+        {
+            return false;
+        }
+
+        var ordered = new List<(double T, int Id)>(idToT.Count);
+        foreach (var kvp in idToT)
+        {
+            ordered.Add((kvp.Value, kvp.Key));
+        }
+
+        ordered.Sort(static (a, b) => a.T.CompareTo(b.T));
+
+        for (int i = 0; i < ordered.Count - 1; i++)
+        {
+            int a = ordered[i].Id;
+            int b = ordered[i + 1].Id;
+            if (a == b)
+            {
+                continue;
+            }
+
+            if (b < a) (a, b) = (b, a);
+            if (!graphEdges.Contains((a, b)))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
+
 }

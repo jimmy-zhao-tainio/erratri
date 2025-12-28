@@ -297,7 +297,8 @@ internal static class Program
             var triVal = acc.Triangle;
             try
             {
-                var patches = Triangulation.Run(in triVal, acc.Points, acc.Segments);
+                var triangulation = Triangulation.Run(in triVal, acc.Points, acc.Segments);
+                var patches = triangulation.Triangles;
                 double triArea = Math.Abs(new RealTriangle(
                     new RealPoint(triVal.P0),
                     new RealPoint(triVal.P1),

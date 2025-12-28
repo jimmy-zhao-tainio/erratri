@@ -23,7 +23,7 @@ internal static class ClassificationCore
     }
 
     private static IReadOnlyList<IReadOnlyList<PatchInfo>> ClassifyMeshPatches(
-        IReadOnlyList<IReadOnlyList<RealTriangle>> meshPatches,
+        IReadOnlyList<IReadOnlyList<TrianglePatch>> meshPatches,
         PointInMeshTester tester)
     {
         var result = new IReadOnlyList<PatchInfo>[meshPatches.Count];
@@ -33,17 +33,113 @@ internal static class ClassificationCore
             var patches = meshPatches[i];
             var classified = new PatchInfo[patches.Count];
 
-            for (int p = 0; p < patches.Count; p++)
+            if (patches.Count > 0)
             {
-                var patch = patches[p];
-                var sample = patch.Centroid;
-                var containment = tester.Classify(in sample);
-                classified[p] = new PatchInfo(patch, containment);
+                var bestByFace = new Dictionary<int, int>(patches.Count);
+                var bestArea = new Dictionary<int, double>(patches.Count);
+
+                for (int p = 0; p < patches.Count; p++)
+                {
+                    var patch = patches[p];
+                    double area = patch.Triangle.SignedArea3D;
+
+                    if (!bestArea.TryGetValue(patch.FaceId, out var current) || area > current)
+                    {
+                        bestArea[patch.FaceId] = area;
+                        bestByFace[patch.FaceId] = p;
+                    }
+                }
+
+                var containmentByFace = new Dictionary<int, Containment>(bestByFace.Count);
+                foreach (var kvp in bestByFace)
+                {
+                    int faceId = kvp.Key;
+                    var tri = patches[kvp.Value].Triangle;
+                    var sample = tri.Centroid;
+                    var containment = ResolveCoplanarContainment(in tri, in sample, tester);
+
+                    containmentByFace[faceId] = containment;
+                }
+
+                for (int p = 0; p < patches.Count; p++)
+                {
+                    var patch = patches[p];
+                    var containment = containmentByFace[patch.FaceId];
+                    classified[p] = new PatchInfo(
+                        patch.Triangle,
+                        patch.FaceId,
+                        patch.VertexIds,
+                        patch.CoplanarOwner,
+                        containment);
+                }
             }
 
             result[i] = classified;
         }
 
         return result;
+    }
+
+    private static Containment ResolveCoplanarContainment(
+        in RealTriangle tri,
+        in RealPoint sample,
+        PointInMeshTester tester)
+    {
+        var p0 = tri.P0;
+        var p1 = tri.P1;
+        var p2 = tri.P2;
+        var edgeA = RealVector.FromPoints(in p0, in p1);
+        var edgeB = RealVector.FromPoints(in p0, in p2);
+        var normal = edgeA.Cross(in edgeB);
+        double len = normal.Length();
+        if (len <= 0.0)
+        {
+            return Containment.On;
+        }
+
+        double invLen = 1.0 / len;
+        var unit = new RealVector(normal.X * invLen, normal.Y * invLen, normal.Z * invLen);
+        double offset = Math.Max(Tolerances.PlaneSideEpsilon * 10.0, Tolerances.PslgVertexMergeEpsilon);
+
+        // Bias toward the inside of the source mesh (opposite the outward normal).
+        var inside = new RealPoint(
+            sample.X - unit.X * offset,
+            sample.Y - unit.Y * offset,
+            sample.Z - unit.Z * offset);
+
+        var outside = new RealPoint(
+            sample.X + unit.X * offset,
+            sample.Y + unit.Y * offset,
+            sample.Z + unit.Z * offset);
+
+        var insideResult = tester.Classify(in inside);
+        var outsideResult = tester.Classify(in outside);
+
+        if (insideResult == Containment.On && outsideResult == Containment.On)
+        {
+            return Containment.On;
+        }
+
+        if (insideResult == Containment.On)
+        {
+            insideResult = outsideResult;
+        }
+
+        if (outsideResult == Containment.On)
+        {
+            outsideResult = insideResult;
+        }
+
+        if (insideResult == Containment.Inside && outsideResult == Containment.Outside)
+        {
+            return Containment.Inside;
+        }
+
+        if (insideResult == Containment.Outside && outsideResult == Containment.Inside)
+        {
+            return Containment.On;
+        }
+
+        return insideResult;
     }
 }

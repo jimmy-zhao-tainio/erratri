@@ -14,6 +14,14 @@ internal static class PslgToTriangles
         in Triangle triangle,
         PslgOutput pslg)
     {
+        var result = TriangulateWithFaceIds(in triangle, pslg);
+        return result.Triangles;
+    }
+
+    internal static TriangulationResult TriangulateWithFaceIds(
+        in Triangle triangle,
+        PslgOutput pslg)
+    {
         if (pslg is null) throw new ArgumentNullException(nameof(pslg));
 
         var vertices = pslg.Vertices ?? throw new ArgumentNullException(nameof(pslg.Vertices));
@@ -66,6 +74,7 @@ internal static class PslgToTriangles
         }
 
         var patches = new List<RealTriangle>();
+        var faceIds = new List<int>();
 
         var triangleLocal = triangle;
 
@@ -114,10 +123,11 @@ internal static class PslgToTriangles
                 }
 
                 patches.Add(new RealTriangle(p0, p1, p2));
+                faceIds.Add(fi);
             }
         }
 
-        return patches;
+        return new TriangulationResult(patches, faceIds);
     }
 
     private static List<(int A, int B, int C)> OrientTrianglesCcw(

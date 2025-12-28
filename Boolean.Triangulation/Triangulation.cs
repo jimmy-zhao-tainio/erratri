@@ -7,7 +7,7 @@ namespace Boolean;
 
 public static partial class Triangulation
 {
-    public static IReadOnlyList<RealTriangle> Run(
+    public static TriangulationResult Run(
         in Triangle triangle,
         IReadOnlyList<IntersectionPoint> points,
         IReadOnlyList<IntersectionSegment> segments)
@@ -15,8 +15,6 @@ public static partial class Triangulation
         if (points is null) throw new ArgumentNullException(nameof(points));
         if (segments is null) throw new ArgumentNullException(nameof(segments));
 
-        // Filter out degenerate segments (same start/end); if nothing remains
-        // we treat this as the trivial no-segment case.
         var filteredSegments = new List<IntersectionSegment>(segments.Count);
         for (int i = 0; i < segments.Count; i++)
         {
@@ -29,13 +27,12 @@ public static partial class Triangulation
 
             if (seg.StartIndex == seg.EndIndex)
             {
-                continue; // ignore degenerate segment
+                continue;
             }
 
             filteredSegments.Add(seg);
         }
 
-        // Phase A: trivial case only.
         if (filteredSegments.Count == 0)
         {
             var patches = new List<RealTriangle>(capacity: 1)
@@ -46,10 +43,9 @@ public static partial class Triangulation
                     new RealPoint(triangle.P2))
             };
 
-            return patches;
+            return new TriangulationResult(patches, new[] { 0 });
         }
 
-        // Fast-lane patterns (Phase B) or general PSLG lane.
         var pattern = ClassifyPattern(points, filteredSegments);
 
         switch (pattern)
@@ -57,23 +53,19 @@ public static partial class Triangulation
             case PatternKind.SingleEdgeToEdge when !SegmentHasVertexEndpoint(points, filteredSegments[0]):
                 try
                 {
-                    return SingleEdgeToEdge.Triangulate(triangle, points, filteredSegments);
+                    var patches = SingleEdgeToEdge.Triangulate(triangle, points, filteredSegments);
+                    return new TriangulationResult(patches, new int[patches.Count]);
                 }
                 catch (InvalidOperationException ex) when (ex.Message.Contains("vertex endpoints", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Fall through to PSLG path below.
                 }
                 goto default;
 
             case PatternKind.None:
-                // Should not occur here because segments.Count > 0, but keep
-                // a defensive sanity check.
                 throw new InvalidOperationException(
                     "TriangleSubdivision.Subdivide: Pattern.None with non-empty segment list.");
 
             default:
-                // General PSLG-based subdivision path: run the full PSLG pipeline
-                // for this triangle and use the resulting patches.
                 var pslgPoints = new List<PslgPoint>(points.Count);
                 for (int i = 0; i < points.Count; i++)
                 {
@@ -89,7 +81,7 @@ public static partial class Triangulation
 
                 var pslgInput = new PslgInput(in triangle, pslgPoints, pslgSegments);
                 var pslgOutput = PslgBuilder.Run(in pslgInput);
-                return PslgToTriangles.Triangulate(in triangle, pslgOutput);
+                return PslgToTriangles.TriangulateWithFaceIds(in triangle, pslgOutput);
         }
     }
 

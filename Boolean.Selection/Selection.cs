@@ -2,8 +2,13 @@
 
 public static class Selection
 {
-    public static BooleanPatchSet Run(BooleanOperationType operation, PatchClassification classification)
+    public static BooleanPatchSet Run(
+        BooleanOperationType operation,
+        PatchClassification classification,
+        IntersectionGraph graph)
     {
-        return PatchSelector.Select(operation, classification);
+        var selected = PatchSelector.Select(operation, classification, graph);
+        SelectionDiagnostics.DumpIfEnabled(operation, classification, graph, selected);
+        return selected;
     }
 }

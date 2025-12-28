@@ -11,6 +11,9 @@ public sealed class BooleanPatchSet
     public IReadOnlyList<RealTriangle> FromMeshA { get; }
     public IReadOnlyList<RealTriangle> FromMeshB { get; }
 
+    public IReadOnlyList<TriangleVertexIds>? IntersectionVertexIdsFromMeshA { get; }
+    public IReadOnlyList<TriangleVertexIds>? IntersectionVertexIdsFromMeshB { get; }
+
     // Optional debug-only provenance (parallel to FromMeshA / FromMeshB).
     public IReadOnlyList<string>? ProvenanceFromMeshA { get; }
     public IReadOnlyList<string>? ProvenanceFromMeshB { get; }
@@ -21,6 +24,17 @@ public sealed class BooleanPatchSet
     {
         FromMeshA = fromMeshA ?? throw new ArgumentNullException(nameof(fromMeshA));
         FromMeshB = fromMeshB ?? throw new ArgumentNullException(nameof(fromMeshB));
+    }
+
+    public BooleanPatchSet(
+        IReadOnlyList<RealTriangle> fromMeshA,
+        IReadOnlyList<RealTriangle> fromMeshB,
+        IReadOnlyList<TriangleVertexIds> vertexIdsFromMeshA,
+        IReadOnlyList<TriangleVertexIds> vertexIdsFromMeshB)
+        : this(fromMeshA, fromMeshB)
+    {
+        IntersectionVertexIdsFromMeshA = vertexIdsFromMeshA ?? throw new ArgumentNullException(nameof(vertexIdsFromMeshA));
+        IntersectionVertexIdsFromMeshB = vertexIdsFromMeshB ?? throw new ArgumentNullException(nameof(vertexIdsFromMeshB));
     }
 
     public BooleanPatchSet(

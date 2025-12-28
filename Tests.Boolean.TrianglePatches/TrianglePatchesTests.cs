@@ -92,14 +92,14 @@ public class TrianglePatchesTests
         AssertAreaEqual(triB, b);
     }
 
-    private static void AssertTriSetEqual(string[] expectedKeys, IReadOnlyList<RealTriangle> actual)
+    private static void AssertTriSetEqual(string[] expectedKeys, IReadOnlyList<TrianglePatch> actual)
     {
         var expected = new HashSet<string>(expectedKeys);
         var got = new HashSet<string>();
 
         for (int i = 0; i < actual.Count; i++)
         {
-            var t = actual[i];
+            var t = actual[i].Triangle;
             got.Add(TriKey(t.P0, t.P1, t.P2));
         }
 
@@ -125,13 +125,13 @@ public class TrianglePatchesTests
         static string R(double v) => Math.Round(v, 9).ToString("G17");
     }
 
-    private static void AssertAreaEqual(Triangle tri, IReadOnlyList<RealTriangle> patches)
+    private static void AssertAreaEqual(Triangle tri, IReadOnlyList<TrianglePatch> patches)
     {
         double triArea = Math.Abs(new RealTriangle(
             new RealPoint(tri.P0),
             new RealPoint(tri.P1),
             new RealPoint(tri.P2)).SignedArea3D);
-        double patchArea = patches.Sum(p => Math.Abs(new RealTriangle(p.P0, p.P1, p.P2).SignedArea3D));
+        double patchArea = patches.Sum(p => Math.Abs(new RealTriangle(p.Triangle.P0, p.Triangle.P1, p.Triangle.P2).SignedArea3D));
         double diff = Math.Abs(patchArea - triArea);
         double relTol = Tolerances.BarycentricInsideEpsilon * triArea;
         Assert.True(diff <= Tolerances.EpsArea || diff <= relTol, $"Patch area {patchArea} differs from triangle area {triArea} by {diff}.");

@@ -14,7 +14,7 @@ public static class BooleanMeshAssembler
 
         var vertices = new List<RealPoint>();
         var triangles = new List<(int A, int B, int C)>();
-        var vertexMap = new Dictionary<(long X, long Y, long Z), int>();
+        var vertexMap = new Dictionary<QuantizedVertexKey, int>();
 
         void AddPatch(in RealTriangle tri)
         {

@@ -1,26 +1,23 @@
-﻿using Geometry;
+using Geometry;
 
 namespace Boolean;
 
-public readonly struct PatchInfo
+public readonly struct TrianglePatch
 {
-    public RealTriangle Patch { get; }
+    public RealTriangle Triangle { get; }
     public int FaceId { get; }
     public TriangleVertexIds VertexIds { get; }
     public CoplanarOwner CoplanarOwner { get; }
-    public Containment Containment { get; }
 
-    public PatchInfo(
-        RealTriangle patch,
+    public TrianglePatch(
+        RealTriangle triangle,
         int faceId,
         TriangleVertexIds vertexIds,
-        CoplanarOwner coplanarOwner,
-        Containment containment)
+        CoplanarOwner coplanarOwner)
     {
-        Patch = patch;
+        Triangle = triangle;
         FaceId = faceId;
         VertexIds = vertexIds;
         CoplanarOwner = coplanarOwner;
-        Containment = containment;
     }
 }

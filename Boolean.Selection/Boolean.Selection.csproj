@@ -7,6 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Geometry\Geometry.csproj" />
     <ProjectReference Include="..\Boolean.Classification\Boolean.Classification.csproj" />
+    <ProjectReference Include="..\Boolean.TrianglePatches\Boolean.TrianglePatches.csproj" />
   </ItemGroup>
 </Project>
 

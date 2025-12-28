@@ -36,12 +36,17 @@ internal static class ManifoldEdgeValidator
         }
 
         var bad = new List<((int A, int B) Edge, int Count)>();
+        var good = new List<(int A, int B)>();
 
         foreach (var kvp in edgeUse)
         {
             if (kvp.Value != 2)
             {
                 bad.Add((kvp.Key, kvp.Value));
+            }
+            else
+            {
+                good.Add(kvp.Key);
             }
         }
 
@@ -78,11 +83,29 @@ internal static class ManifoldEdgeValidator
                 $"{pb.Z.ToString("G17", CultureInfo.InvariantCulture)})");
         }
 
+        int goodShow = Math.Min(12, good.Count);
+        var goodParts = new List<string>(goodShow);
+        for (int i = 0; i < goodShow; i++)
+        {
+            var e = good[i];
+            var pa = vertices[e.A];
+            var pb = vertices[e.B];
+            goodParts.Add(
+                $"({e.A},{e.B})  " +
+                $"A=({pa.X.ToString("G17", CultureInfo.InvariantCulture)}," +
+                $"{pa.Y.ToString("G17", CultureInfo.InvariantCulture)}," +
+                $"{pa.Z.ToString("G17", CultureInfo.InvariantCulture)})  " +
+                $"B=({pb.X.ToString("G17", CultureInfo.InvariantCulture)}," +
+                $"{pb.Y.ToString("G17", CultureInfo.InvariantCulture)}," +
+                $"{pb.Z.ToString("G17", CultureInfo.InvariantCulture)})");
+        }
+
         string histStr = string.Join(", ", hist.OrderBy(k => k.Key).Select(k => $"{k.Key}ƒ+'{k.Value}"));
 
         throw new InvalidOperationException(
             $"Non-manifold edges detected in boolean mesh assembly ({bad.Count}). " +
             $"Edge-use histogram: {histStr}. " +
-            $"Top edges: {string.Join(" | ", parts)}");
+            $"Top edges: {string.Join(" | ", parts)}. " +
+            $"Good edges: {good.Count} (sample {goodShow}): {string.Join(" | ", goodParts)}");
     }
 }

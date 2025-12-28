@@ -23,7 +23,7 @@ public static class PipelineEntry
         var patches = TrianglePatching.Run(graph, index, topoA, topoB);
 
         var classification = Classification.Run(set, patches);
-        var selected = Selection.Run(op, classification);
+        var selected = Selection.Run(op, classification, graph);
 
         var assemblyOutput = Assembly.Run(new AssemblyInput(graph, patches, selected));
         return assemblyOutput.Mesh;

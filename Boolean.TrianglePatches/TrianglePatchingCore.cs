@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Geometry;
+using Geometry.Predicates;
 using Boolean.Intersection.Indexing;
 using Boolean.Intersection.Topology;
 
@@ -28,18 +29,23 @@ internal static class TrianglePatchingCore
             ?? throw new ArgumentNullException(nameof(graph.IntersectionSet.TrianglesB));
 
         var edgeLookup = BuildEdgeLookup(graph);
+        var (coplanarA, coplanarB) = BuildCoplanarPairs(graph, trianglesA, trianglesB);
 
         var patchesA = BuildMeshPatches(
             trianglesA,
+            trianglesB,
             index.TrianglesA,
             topologyA.TriangleEdges,
-            edgeLookup);
+            edgeLookup,
+            coplanarA);
 
         var patchesB = BuildMeshPatches(
             trianglesB,
+            trianglesA,
             index.TrianglesB,
             topologyB.TriangleEdges,
-            edgeLookup);
+            edgeLookup,
+            coplanarB);
 
         return new TrianglePatches(patchesA, patchesB);
     }
@@ -54,11 +60,13 @@ internal static class TrianglePatchingCore
         return lookup;
     }
 
-    private static IReadOnlyList<IReadOnlyList<RealTriangle>> BuildMeshPatches(
+    private static IReadOnlyList<IReadOnlyList<TrianglePatch>> BuildMeshPatches(
         IReadOnlyList<Triangle> triangles,
+        IReadOnlyList<Triangle> otherTriangles,
         IReadOnlyList<TriangleIntersectionVertex[]> triangleVertices,
         IReadOnlyList<IntersectionEdgeId[]> triangleEdges,
-        Dictionary<int, (IntersectionVertexId Start, IntersectionVertexId End)> edgeLookup)
+        Dictionary<int, (IntersectionVertexId Start, IntersectionVertexId End)> edgeLookup,
+        IReadOnlyList<List<CoplanarPair>?> coplanarPairs)
     {
         if (triangles is null) throw new ArgumentNullException(nameof(triangles));
         if (triangleVertices is null) throw new ArgumentNullException(nameof(triangleVertices));
@@ -70,7 +78,7 @@ internal static class TrianglePatchingCore
             throw new InvalidOperationException("Triangle counts do not match intersection index/topology.");
         }
 
-        var result = new IReadOnlyList<RealTriangle>[triangles.Count];
+        var result = new IReadOnlyList<TrianglePatch>[triangles.Count];
 
         for (int i = 0; i < triangles.Count; i++)
         {
@@ -80,6 +88,7 @@ internal static class TrianglePatchingCore
 
             var points = new List<IntersectionPoint>(vertices.Length);
             var pointIndexByVertexId = new Dictionary<int, int>(vertices.Length);
+            var pointVertexIds = new List<int>(vertices.Length);
 
             for (int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++)
             {
@@ -88,6 +97,7 @@ internal static class TrianglePatchingCore
                 var world = Barycentric.ToRealPointOnTriangle(in triangle, in barycentric);
                 pointIndexByVertexId[vertex.VertexId.Value] = points.Count;
                 points.Add(new IntersectionPoint(vertex.Barycentric, world));
+                pointVertexIds.Add(vertex.VertexId.Value);
             }
 
             var segments = new List<IntersectionSegment>(edges.Length);
@@ -123,14 +133,107 @@ internal static class TrianglePatchingCore
 
             segments = SplitSegmentsPassingThroughPoints(points, segments);
 
-            IReadOnlyList<RealTriangle> patches;
-            patches = Triangulation.Run(in triangle, points, segments);
+            var triangulation = Triangulation.Run(in triangle, points, segments);
 
-            var stored = patches is List<RealTriangle> list ? list : new List<RealTriangle>(patches);
-            result[i] = stored.ToArray();
+            var stored = new TrianglePatch[triangulation.Triangles.Count];
+            var pairs = coplanarPairs[i];
+            for (int p = 0; p < stored.Length; p++)
+            {
+                var patch = triangulation.Triangles[p];
+                int iv0 = GetIntersectionVertexId(in triangle, patch.P0, points, pointVertexIds);
+                int iv1 = GetIntersectionVertexId(in triangle, patch.P1, points, pointVertexIds);
+                int iv2 = GetIntersectionVertexId(in triangle, patch.P2, points, pointVertexIds);
+                var owner = ResolveCoplanarOwner(patch, pairs, otherTriangles);
+
+                stored[p] = new TrianglePatch(
+                    patch,
+                    triangulation.FaceIds[p],
+                    new TriangleVertexIds(iv0, iv1, iv2),
+                    owner);
+            }
+
+            result[i] = stored;
         }
 
         return result;
+    }
+
+    private static (IReadOnlyList<List<CoplanarPair>?> MeshA, IReadOnlyList<List<CoplanarPair>?> MeshB) BuildCoplanarPairs(
+        IntersectionGraph graph,
+        IReadOnlyList<Triangle> trianglesA,
+        IReadOnlyList<Triangle> trianglesB)
+    {
+        var coplanarA = new List<CoplanarPair>?[trianglesA.Count];
+        var coplanarB = new List<CoplanarPair>?[trianglesB.Count];
+
+        var pairs = graph.Pairs;
+        for (int i = 0; i < pairs.Count; i++)
+        {
+            var pair = pairs[i];
+            var intersection = pair.Intersection;
+
+            var triA = trianglesA[intersection.TriangleIndexA];
+            var triB = trianglesB[intersection.TriangleIndexB];
+
+            if (!TrianglePredicates.IsCoplanar(in triA, in triB))
+            {
+                continue;
+            }
+
+            double dot =
+                triA.Normal.X * triB.Normal.X +
+                triA.Normal.Y * triB.Normal.Y +
+                triA.Normal.Z * triB.Normal.Z;
+
+            var owner = dot >= 0.0 ? CoplanarOwner.MeshA : CoplanarOwner.MeshB;
+
+            coplanarA[intersection.TriangleIndexA] ??= new List<CoplanarPair>();
+            coplanarA[intersection.TriangleIndexA]!.Add(
+                new CoplanarPair(intersection.TriangleIndexB, owner));
+
+            coplanarB[intersection.TriangleIndexB] ??= new List<CoplanarPair>();
+            coplanarB[intersection.TriangleIndexB]!.Add(
+                new CoplanarPair(intersection.TriangleIndexA, owner));
+        }
+
+        return (coplanarA, coplanarB);
+    }
+
+    private static CoplanarOwner ResolveCoplanarOwner(
+        in RealTriangle patch,
+        List<CoplanarPair>? pairs,
+        IReadOnlyList<Triangle> otherTriangles)
+    {
+        if (pairs is null || pairs.Count == 0)
+        {
+            return CoplanarOwner.None;
+        }
+
+        var centroid = patch.Centroid;
+        for (int i = 0; i < pairs.Count; i++)
+        {
+            var pair = pairs[i];
+            var other = otherTriangles[pair.OtherTriangleIndex];
+            var otherReal = new RealTriangle(other);
+            if (RealTrianglePredicates.IsInsideStrict(otherReal, centroid))
+            {
+                return pair.Owner;
+            }
+        }
+
+        return CoplanarOwner.None;
+    }
+
+    private readonly struct CoplanarPair
+    {
+        public int OtherTriangleIndex { get; }
+        public CoplanarOwner Owner { get; }
+
+        public CoplanarPair(int otherTriangleIndex, CoplanarOwner owner)
+        {
+            OtherTriangleIndex = otherTriangleIndex;
+            Owner = owner;
+        }
     }
 
     private static (int, int) Normalize(int a, int b) => a < b ? (a, b) : (b, a);
@@ -269,8 +372,34 @@ internal static class TrianglePatchingCore
 
         segments.Add(new IntersectionSegment(a, b));
     }
+
+    private static int GetIntersectionVertexId(
+        in Triangle triangle,
+        in RealPoint point,
+        IReadOnlyList<IntersectionPoint> points,
+        IReadOnlyList<int> pointVertexIds)
+    {
+        var c0 = new RealPoint(triangle.P0);
+        var c1 = new RealPoint(triangle.P1);
+        var c2 = new RealPoint(triangle.P2);
+        double epsSq = Tolerances.MergeEpsilonSquared;
+
+        if (point.DistanceSquared(in c0) <= epsSq ||
+            point.DistanceSquared(in c1) <= epsSq ||
+            point.DistanceSquared(in c2) <= epsSq)
+        {
+            return -1;
+        }
+
+        for (int i = 0; i < points.Count; i++)
+        {
+            var pos = points[i].Position;
+            if (point.DistanceSquared(in pos) <= epsSq)
+            {
+                return pointVertexIds[i];
+            }
+        }
+
+        return -1;
+    }
 }
-
-
-
-
