@@ -92,8 +92,9 @@ internal static class PslgHalfEdgePhase
                 throw new InvalidOperationException("Twin half-edge not found in outgoing list.");
             }
 
-            // Next edge follows the left face: CCW successor of the twin at the destination vertex.
-            int nextIdx = (idxInList + 1) % list.Count;
+            // Keep the face on the left: take the clockwise predecessor of
+            // the returning twin in the CCW-sorted outgoing list.
+            int nextIdx = (idxInList + list.Count - 1) % list.Count;
             int nextEdge = list[nextIdx].edgeIndex;
 
             var temp = halfEdges[i];

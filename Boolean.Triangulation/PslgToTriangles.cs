@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using ConstrainedTriangulator;
 using Geometry;
@@ -40,16 +40,30 @@ internal static class PslgToTriangles
             segments.Add((edges[i].Start, edges[i].End));
         }
 
-        var ctInput = new Input(uvPoints, segments);
-        var ctResult = Triangulator.RunFast(in ctInput, validate: false);
-
-        if (ctResult.Points.Count != uvPoints.Count)
+        // Barycentric coordinates preserve incidence, but not angles or circles.
+        // Triangulate in an orthonormal chart on the physical source plane.
+        var origin = new RealPoint(triangle.P2);
+        var e = RealVector.FromPoints(origin, new RealPoint(triangle.P0));
+        var f = RealVector.FromPoints(origin, new RealPoint(triangle.P1));
+        double ex = e.Length();
+        var xAxis = e * (1.0 / ex);
+        var normal = e.Cross(f).Normalized();
+        var yAxis = normal.Cross(xAxis);
+        double fx = f.Dot(xAxis), fy = f.Dot(yAxis);
+        var planar = new List<RealPoint2D>(uvPoints.Count);
+        foreach (var uv in uvPoints)
+            planar.Add(new RealPoint2D(uv.X * ex + uv.Y * fx, uv.Y * fy));
+        var ctInput = new Input(planar, segments);
+        var ctResult = ConformingDelaunay.Run(in ctInput);
+        var mappedUv = new List<RealPoint2D>(ctResult.Points.Count);
+        for (int i = 0; i < ctResult.Points.Count; i++)
         {
-            throw new InvalidOperationException(
-                "ConstrainedTriangulator produced Steiner points; Kernel PSLG mapping requires a 1:1 vertex correspondence.");
+            if (i < uvPoints.Count) { mappedUv.Add(uvPoints[i]); continue; }
+            var p = ctResult.Points[i];
+            double v = p.Y / fy;
+            mappedUv.Add(new RealPoint2D((p.X - v * fx) / ex, v));
         }
-
-        var uvTriangles = OrientTrianglesCcw(ctResult.Triangles, ctResult.Points);
+        var uvTriangles = OrientTrianglesCcw(ctResult.Triangles, mappedUv);
 
         var faceRegions = BuildFaceUvRegions(interiorFaces, vertices);
         var trianglesByFace = new List<(int A, int B, int C)>[faceRegions.Count];
@@ -61,7 +75,7 @@ internal static class PslgToTriangles
         for (int ti = 0; ti < uvTriangles.Count; ti++)
         {
             var tri = uvTriangles[ti];
-            var centroid = TriangleCentroid(ctResult.Points[tri.A], ctResult.Points[tri.B], ctResult.Points[tri.C]);
+            var centroid = TriangleCentroid(mappedUv[tri.A], mappedUv[tri.B], mappedUv[tri.C]);
 
             for (int fi = 0; fi < faceRegions.Count; fi++)
             {
@@ -80,8 +94,8 @@ internal static class PslgToTriangles
 
         RealPoint MapVertex(int idx)
         {
-            double u = vertices[idx].X;
-            double v = vertices[idx].Y;
+            double u = mappedUv[idx].X;
+            double v = mappedUv[idx].Y;
             double w = 1.0 - u - v;
             var bary = new Barycentric(u, v, w);
             return Barycentric.ToRealPointOnTriangle(in triangleLocal, in bary);
@@ -96,7 +110,7 @@ internal static class PslgToTriangles
             for (int i = 0; i < tris.Count; i++)
             {
                 var t = tris[i];
-                uvTriSum += TriangleSignedArea(ctResult.Points[t.A], ctResult.Points[t.B], ctResult.Points[t.C]);
+                uvTriSum += TriangleSignedArea(mappedUv[t.A], mappedUv[t.B], mappedUv[t.C]);
             }
 
             double uvExpected = faceRegions[fi].ExpectedArea;

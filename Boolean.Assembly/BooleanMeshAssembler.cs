@@ -39,6 +39,7 @@ public static class BooleanMeshAssembler
         foreach (var tri in patchSet.FromMeshB) AddPatch(tri);
 
         _ = VertexWelder.WeldInPlace(vertices, triangles, Tolerances.MergeEpsilon);
+        MeshConformer.SplitEdges(vertices, triangles);
         TriangleCleanup.DeduplicateIgnoringWindingInPlace(triangles);
 
         ManifoldEdgeValidator.ValidateManifoldEdges(vertices, triangles);

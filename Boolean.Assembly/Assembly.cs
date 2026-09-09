@@ -156,6 +156,7 @@ public static class Assembly
         }
 
         _ = VertexWelder.WeldInPlace(vertices, triangles, provenance, Tolerances.MergeEpsilon, out var remap);
+        Geometry.Topology.MeshConformer.SplitEdges(vertices, triangles, provenance);
 
         var weldedIntersectionIds = new int[vertices.Count];
         for (int i = 0; i < weldedIntersectionIds.Length; i++)

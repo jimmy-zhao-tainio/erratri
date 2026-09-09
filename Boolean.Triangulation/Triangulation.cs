@@ -33,7 +33,7 @@ public static partial class Triangulation
             filteredSegments.Add(seg);
         }
 
-        if (filteredSegments.Count == 0)
+        if (filteredSegments.Count == 0 && points.Count == 0)
         {
             var patches = new List<RealTriangle>(capacity: 1)
             {
@@ -46,43 +46,13 @@ public static partial class Triangulation
             return new TriangulationResult(patches, new[] { 0 });
         }
 
-        var pattern = ClassifyPattern(points, filteredSegments);
-
-        switch (pattern)
-        {
-            case PatternKind.SingleEdgeToEdge when !SegmentHasVertexEndpoint(points, filteredSegments[0]):
-                try
-                {
-                    var patches = SingleEdgeToEdge.Triangulate(triangle, points, filteredSegments);
-                    return new TriangulationResult(patches, new int[patches.Count]);
-                }
-                catch (InvalidOperationException ex) when (ex.Message.Contains("vertex endpoints", StringComparison.OrdinalIgnoreCase))
-                {
-                }
-                goto default;
-
-            case PatternKind.None:
-                throw new InvalidOperationException(
-                    "TriangleSubdivision.Subdivide: Pattern.None with non-empty segment list.");
-
-            default:
-                var pslgPoints = new List<PslgPoint>(points.Count);
-                for (int i = 0; i < points.Count; i++)
-                {
-                    pslgPoints.Add(new PslgPoint(points[i].Barycentric));
-                }
-
-                var pslgSegments = new List<PslgSegment>(filteredSegments.Count);
-                for (int i = 0; i < filteredSegments.Count; i++)
-                {
-                    var seg = filteredSegments[i];
-                    pslgSegments.Add(new PslgSegment(seg.StartIndex, seg.EndIndex));
-                }
-
-                var pslgInput = new PslgInput(in triangle, pslgPoints, pslgSegments);
-                var pslgOutput = PslgBuilder.Run(in pslgInput);
-                return PslgToTriangles.TriangulateWithFaceIds(in triangle, pslgOutput);
-        }
+        var pslgPoints = new List<PslgPoint>(points.Count);
+        foreach (var point in points) pslgPoints.Add(new PslgPoint(point.Barycentric));
+        var pslgSegments = new List<PslgSegment>(filteredSegments.Count);
+        foreach (var segment in filteredSegments)
+            pslgSegments.Add(new PslgSegment(segment.StartIndex, segment.EndIndex));
+        var input = new PslgInput(in triangle, pslgPoints, pslgSegments);
+        return PslgToTriangles.TriangulateWithFaceIds(in triangle, PslgBuilder.Run(in input));
     }
 
     private static bool SegmentHasVertexEndpoint(

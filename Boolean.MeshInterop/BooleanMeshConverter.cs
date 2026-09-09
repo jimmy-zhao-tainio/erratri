@@ -31,6 +31,15 @@ public static class BooleanMeshConverter
             triangles.Add(Triangle.FromWinding(q0, q1, q2));
         }
 
+        // Snapping can flatten a thin triangle into an edge. Its neighboring
+        // faces must then agree on the subdivision of that edge as well.
+        var snapped = FromMesh(new Mesh(triangles));
+        var faces = new List<(int A, int B, int C)>(snapped.Triangles);
+        MeshConformer.SplitEdges(snapped.Vertices, faces);
+        triangles.Clear();
+        foreach (var (a, b, c) in faces)
+            triangles.Add(Triangle.FromWinding(GridRounding.Snap(snapped.Vertices[a]),
+                GridRounding.Snap(snapped.Vertices[b]), GridRounding.Snap(snapped.Vertices[c])));
         return new Mesh(triangles);
     }
 
@@ -66,4 +75,3 @@ public static class BooleanMeshConverter
         return idx;
     }
 }
-

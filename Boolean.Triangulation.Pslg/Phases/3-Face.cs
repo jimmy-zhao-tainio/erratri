@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Geometry;
@@ -107,107 +107,36 @@ internal static class PslgFacePhase
     {
         if (cycles.Count == 0) return new List<PslgFace>();
 
-        // Normalize orientation to CCW and positive area.
-        var norm = new List<RawCycle>(cycles.Count);
-        foreach (var c in cycles)
+        // With the next-clockwise half-edge rule, bounded face boundaries
+        // are CCW. A clockwise cycle is either the unbounded exterior or a
+        // hole of a containing face. Never erase this topological distinction.
+        var positive = cycles.Where(c => c.Area > Tolerances.EpsArea).ToArray();
+        var holes = positive.Select(_ => new List<int[]>()).ToArray();
+        foreach (var negative in cycles.Where(c => c.Area < -Tolerances.EpsArea))
         {
-            var verts = c.Vertices.ToArray();
-            double area = c.Area;
-            if (area < 0)
+            int owner = -1;
+            double bestArea = double.PositiveInfinity;
+            for (int i = 0; i < positive.Length; i++)
             {
-                Array.Reverse(verts);
-                area = -area;
+                var outer = positive[i];
+                if (outer.Area <= -negative.Area + Tolerances.EpsArea || outer.Area >= bestArea) continue;
+                var polygon = new RealPolygon(outer.Vertices.Select(id =>
+                    new RealPoint(vertices[id].X, vertices[id].Y, 0)).ToList());
+                if (!negative.Vertices.All(id => RealPolygonPredicates.ContainsInclusive(polygon,
+                    new RealPoint(vertices[id].X, vertices[id].Y, 0)))) continue;
+                owner = i;
+                bestArea = outer.Area;
             }
-            norm.Add(new RawCycle(verts, area, c.Sample));
+            if (owner >= 0) holes[owner].Add(negative.Vertices);
         }
-
-        int n = norm.Count;
-        var parent = Enumerable.Repeat(-1, n).ToArray();
-        var depth = new int[n];
-
-        // Point-in-polygon helper.
-        bool Contains(RawCycle outer, (double X, double Y) p)
-        {
-            var pts = new List<RealPoint>(outer.Vertices.Length);
-            foreach (var vi in outer.Vertices)
-            {
-                var v = vertices[vi];
-                pts.Add(new RealPoint(v.X, v.Y, 0.0));
-            }
-            return RealPolygonPredicates.ContainsInclusive(new RealPolygon(pts), new RealPoint(p.X, p.Y, 0.0));
-        }
-
-        // Assign parent: smallest-area cycle that strictly contains the sample.
-        for (int i = 0; i < n; i++)
-        {
-            double bestArea = double.MaxValue;
-            int best = -1;
-            for (int j = 0; j < n; j++)
-            {
-                if (i == j) continue;
-                var outer = norm[j];
-                if (outer.Area <= norm[i].Area) continue;
-                if (!Contains(outer, norm[i].Sample)) continue;
-                if (outer.Area < bestArea)
-                {
-                    bestArea = outer.Area;
-                    best = j;
-                }
-            }
-            parent[i] = best;
-            if (best >= 0)
-            {
-                depth[i] = depth[best] + 1;
-            }
-        }
-
-        var children = new List<int>[n];
-        for (int i = 0; i < n; i++)
-        {
-            int p = parent[i];
-            if (p >= 0)
-            {
-                children[p] ??= new List<int>();
-                children[p].Add(i);
-            }
-        }
-
         var faces = new List<PslgFace>();
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < positive.Length; i++)
         {
-            var innerCycles = new List<int[]>();
-            var innerCycleKeys = new HashSet<string>();
-            if (children[i] != null)
-            {
-                foreach (var ch in children[i])
-                {
-                    if (depth[ch] == depth[i] + 1)
-                    {
-                        var key = CanonicalFaceKey(norm[ch].Vertices);
-                        if (innerCycleKeys.Add(key))
-                        {
-                            innerCycles.Add(norm[ch].Vertices);
-                        }
-                    }
-                }
-            }
-
-            double innerCycleAreaSum = 0.0;
-            foreach (var innerCycle in innerCycles)
-            {
-                innerCycleAreaSum += CycleArea(vertices, innerCycle);
-            }
-
-            double signedArea = norm[i].Area - innerCycleAreaSum;
-            if (Math.Abs(signedArea) <= Tolerances.EpsArea)
-            {
-                continue;
-            }
-
-            faces.Add(new PslgFace(norm[i].Vertices, innerCycles, signedArea));
+            double area = positive[i].Area - holes[i].Sum(h => CycleArea(vertices, h));
+            if (area > Tolerances.EpsArea)
+                faces.Add(new PslgFace(positive[i].Vertices, holes[i], area));
         }
-
-        return DeduplicateFaces(faces);
+        return faces;
     }
 
     private static double CycleArea(IReadOnlyList<PslgVertex> vertices, int[] cycle)
@@ -222,66 +151,4 @@ internal static class PslgFacePhase
         return area < 0 ? -area : area;
     }
 
-    private static List<PslgFace> DeduplicateFaces(IReadOnlyList<PslgFace> faces)
-    {
-        var unique = new List<PslgFace>(faces.Count);
-        var seen = new HashSet<string>();
-
-        for (int i = 0; i < faces.Count; i++)
-        {
-            var face = faces[i];
-            var key = CanonicalFaceKey(face.OuterVertices);
-            if (seen.Add(key))
-            {
-                unique.Add(face);
-            }
-        }
-
-        return unique;
-    }
-
-    private static string CanonicalFaceKey(int[] vertices)
-    {
-        if (vertices is null || vertices.Length == 0)
-        {
-            return string.Empty;
-        }
-
-        int n = vertices.Length;
-        int bestStart = 0;
-
-        for (int start = 1; start < n; start++)
-        {
-            bool better = false;
-            for (int k = 0; k < n; k++)
-            {
-                int a = vertices[(start + k) % n];
-                int b = vertices[(bestStart + k) % n];
-                if (a == b)
-                {
-                    continue;
-                }
-
-                if (a < b)
-                {
-                    better = true;
-                }
-
-                break;
-            }
-
-            if (better)
-            {
-                bestStart = start;
-            }
-        }
-
-        var ordered = new int[n];
-        for (int i = 0; i < n; i++)
-        {
-            ordered[i] = vertices[(bestStart + i) % n];
-        }
-
-        return string.Join(",", ordered);
-    }
 }

@@ -21,12 +21,17 @@ namespace ConstrainedTriangulator
         /// </summary>
         public IReadOnlyList<(int A, int B, int C)> Triangles { get; }
 
+        /// <summary>Constraint subsegments, including Steiner subdivisions.</summary>
+        public IReadOnlyList<(int A, int B)> Segments { get; }
+
         public Result(
             IReadOnlyList<RealPoint2D> points,
-            IReadOnlyList<(int A, int B, int C)> triangles)
+            IReadOnlyList<(int A, int B, int C)> triangles,
+            IReadOnlyList<(int A, int B)>? segments = null)
         {
             Points = points ?? throw new ArgumentNullException(nameof(points));
             Triangles = triangles ?? throw new ArgumentNullException(nameof(triangles));
+            Segments = segments ?? Array.Empty<(int A, int B)>();
         }
     }
 }

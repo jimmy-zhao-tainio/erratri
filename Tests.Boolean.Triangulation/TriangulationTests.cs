@@ -34,7 +34,7 @@ public class TriangulationTests
     }
 
     [Fact]
-    public void Subdivide_DegenerateSegment_IsIgnoredAndReturnsOriginalTriangle()
+    public void Subdivide_DegenerateSegment_IsIgnoredButBoundaryVertexIsPreserved()
     {
         var v0 = new Point(0, 0, 0);
         var v1 = new Point(10, 0, 0);
@@ -53,16 +53,12 @@ public class TriangulationTests
         };
         var result = TriangulationLib.Run(in tri, points, segments);
         var patches = result.Triangles;
-        var single = Assert.Single(patches);
-        Assert.Equal(tri.P0.X, single.P0.X);
-        Assert.Equal(tri.P0.Y, single.P0.Y);
-        Assert.Equal(tri.P0.Z, single.P0.Z);
-        Assert.Equal(tri.P1.X, single.P1.X);
-        Assert.Equal(tri.P1.Y, single.P1.Y);
-        Assert.Equal(tri.P1.Z, single.P1.Z);
-        Assert.Equal(tri.P2.X, single.P2.X);
-        Assert.Equal(tri.P2.Y, single.P2.Y);
-        Assert.Equal(tri.P2.Z, single.P2.Z);
+        Assert.Equal(2, patches.Count);
+        double area = 0;
+        foreach (var patch in patches) area += patch.SignedArea3D;
+        Assert.Equal(50, area, 10);
+        Assert.Contains(patches, p => SamePoint(p.P0, new RealPoint(5, 0, 0), 1e-10) ||
+            SamePoint(p.P1, new RealPoint(5, 0, 0), 1e-10) || SamePoint(p.P2, new RealPoint(5, 0, 0), 1e-10));
     }
 
     [Fact]
@@ -294,8 +290,3 @@ public class TriangulationTests
             $"Patch area {patchArea} differs from triangle area {triArea} by {diff}.");
     }
 }
-
-
-
-
-

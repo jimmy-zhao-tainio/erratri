@@ -1,4 +1,4 @@
-﻿# Erratri
+# Erratri
 
 Erratri is a small geometry project that builds 3D shapes on the integer grid (Z^3) and exports binary STL. The demo renders a simple solar system with a sun, eight planets, their moons, and thin tilted orbit rings.
 
@@ -94,15 +94,19 @@ This produces the boolean gallery rendered in `boolean_mesh.png`.
 
 ![Boolean Mesh Gallery](boolean_mesh.png)
 
-All of this is still work in progress: the fast-path classifiers and PSLG triangulation are being iterated, and there are known regression tests (e.g., drilled boxes and "cheese" shapes) that currently fail until the kernel is tightened. The intent is to keep the layering clear and testable while gradually hardening the algorithms.
+The Cheese regression exercises all three tunnel cuts and all eight sphere cuts, checking closure, directed edge consistency, and decreasing positive volume after every integer-grid conversion. Run it with `dotnet test Tests.Boolean.Operation --filter FullCheese`. The executable demo is `dotnet run --project Demo.Boolean.Mesh.Cheese -c Release`.
 
 ## ConstrainedTriangulator â€” 2D constrained triangulation library
 
 ConstrainedTriangulator is a super simple 2D constrained triangulation library for planar straight-line graphs (PSLG). The input is a set of points together with optional constrained segments, and the output is a set of triangles that forms a complete triangulation of the domain while respecting all constraints.
 
-The library currently implements two algorithms that share the same legality rules: a slow exhaustive sweep over all edges and vertices, and a less slow adjacency-driven pass with a single global completion sweep. Both ensure that constrained segments are always honored, new edges do not cross existing segments, triangles containing interior points are rejected, and zero-area triangles are discarded. For each candidate edge, both sides are tested so that no admissible triangle is missed.
+`ConformingDelaunay.Run(input, maxSteinerPoints: 4096)` constructs a true Delaunay triangulation of the input PSLG's convex hull. It preserves input vertex indices, legalizes edges with filtered orientation/in-circle predicates and exact dyadic fallbacks, and subdivides missing constraints with Steiner vertices. `Result.Segments` contains the recovered constraint subsegments. Invalid inputs and refinement-budget exhaustion throw; no partial result is returned. This is a correctness-oriented implementation for small per-face PSLGs, not a minimum-angle meshing or large-point-cloud optimization API.
 
-Correctness is verified by `Validator.ValidateFullTriangulation`, which runs combinatorial checks (edge manifoldness, constraint usage) together with an Euler face count (outer boundary plus holes) to ensure that the result is a complete triangulation of the input PSLG. 
+The boolean pipeline triangulates in orthonormal physical-plane coordinates, maps Steiner vertices back to barycentric/world coordinates, and selects the bounded PSLG faces (including holes). Shared seam subdivisions are propagated at assembly and again after grid snapping. Delaunay's empty-circle guarantee applies to the planar triangulator result; integer snapping and subsequent seam subdivision can change triangle quality. No minimum-angle guarantee is claimed for the exported grid mesh.
+
+`Triangulator.Run` and `RunFast` remain available as the legacy edge-completion algorithms. Their combinatorial validator does not certify the Delaunay property.
+
+Mesh winding follows outward source normals, difference operations reverse cutter faces, and coplanar selection is local to a face. The intersection graph assigns vertex identity once and shares the pair-to-global mapping with indexing/topology. World-space welding uses `MergeEpsilon` (1e-9 grid units), independently of predicate tolerances.
 
 ![ConstrainedTriangulator fast orbit fill](constrained_triangulator_fast.png)
 

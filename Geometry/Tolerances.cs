@@ -1,4 +1,4 @@
-﻿namespace Geometry;
+namespace Geometry;
 
 // Centralized numerical tolerances for double-based BooleanOperation.
 public static class Tolerances
@@ -15,7 +15,9 @@ public static class Tolerances
     public const double DegenerateTriangleAreaEpsilonSquared = 1e-12;
 
     // Epsilon for world-space vertex merging in mesh assembly/auditing.
-    public const double MergeEpsilon = 1e-12;
+    // One billionth of a grid unit: world-space reconstruction errors from
+    // independent barycentric charts must not create different seam vertices.
+    public const double MergeEpsilon = 1e-9;
     public const double MergeEpsilonSquared = MergeEpsilon * MergeEpsilon;
 
     // Generic vertex-distance epsilon for 2D comparisons.

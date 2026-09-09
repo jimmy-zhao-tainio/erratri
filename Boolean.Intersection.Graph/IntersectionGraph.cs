@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Geometry;
 
@@ -22,6 +22,8 @@ public sealed class IntersectionGraph
     // Per-intersection feature boxes, one for each entry in
     // IntersectionSet.Intersections, in matching index order.
     public IReadOnlyList<PairFeatures> Pairs { get; }
+
+    public IReadOnlyDictionary<(int PairIndex, int LocalVertexId), IntersectionVertexId> PairVertexIds { get; private init; } = new Dictionary<(int, int), IntersectionVertexId>();
 
     internal IntersectionGraph(IntersectionSet intersectionSet,
                                IReadOnlyList<(IntersectionVertexId, RealPoint)> vertices,
@@ -64,11 +66,12 @@ public sealed class IntersectionGraph
 
         // Global vertex construction.
         // For each local PairVertex, compute its world-space position using
-        // barycentric coordinates on triangle A, then deduplicate by a
-        // quantized world key so that shared endpoints across pairs collapse
+        // barycentric coordinates on triangle A, then weld across neighboring
+        // spatial cells so shared endpoints across pairs collapse
         // to a single global IntersectionVertexId.
         var globalVertices = new List<(IntersectionVertexId Id, RealPoint Position)>();
-        var vertexLookup = new Dictionary<QuantizedPointKey, IntersectionVertexId>();
+        var positions = new List<RealPoint>();
+        var voxels = new Dictionary<(long X, long Y, long Z), List<int>>();
         var pairVertexToGlobal = new Dictionary<(int PairIndex, int LocalVertexId), IntersectionVertexId>();
 
         var trianglesA = intersectionSet.TrianglesA;
@@ -86,13 +89,9 @@ public sealed class IntersectionGraph
                 var barycentricOnA = v.OnTriangleA;
                 var world = Barycentric.ToRealPointOnTriangle(in triangleA, in barycentricOnA);
 
-                var key = QuantizedPointKey.FromRealPoint(world);
-                if (!vertexLookup.TryGetValue(key, out var globalId))
-                {
-                    globalId = new IntersectionVertexId(globalVertices.Count);
-                    globalVertices.Add((globalId, world));
-                    vertexLookup.Add(key, globalId);
-                }
+                int id = VertexWeld.GetOrAddCanonicalId(world, Tolerances.MergeEpsilon, positions, voxels);
+                var globalId = new IntersectionVertexId(id);
+                if (id == globalVertices.Count) globalVertices.Add((globalId, world));
 
                 pairVertexToGlobal[(pairIndex, v.VertexId.Value)] = globalId;
             }
@@ -143,7 +142,7 @@ public sealed class IntersectionGraph
         }
 
         var splitEdges = SplitEdgesPassingThroughVertices(globalVertices, globalEdges);
-        return new IntersectionGraph(intersectionSet, globalVertices, splitEdges, pairs);
+        return new IntersectionGraph(intersectionSet, globalVertices, splitEdges, pairs) { PairVertexIds = pairVertexToGlobal };
     }
 
     private static IReadOnlyList<(IntersectionEdgeId Id, IntersectionVertexId Start, IntersectionVertexId End)> SplitEdgesPassingThroughVertices(
@@ -261,32 +260,4 @@ public sealed class IntersectionGraph
             a.Z + (b.Z - a.Z) * t);
     }
 
-    private readonly struct QuantizedPointKey : IEquatable<QuantizedPointKey>
-    {
-        public readonly long X;
-        public readonly long Y;
-        public readonly long Z;
-
-        public QuantizedPointKey(long x, long y, long z)
-        {
-            X = x;
-            Y = y;
-            Z = z;
-        }
-
-        public static QuantizedPointKey FromRealPoint(RealPoint point)
-        {
-            double invEpsilon = 1.0 / Tolerances.TrianglePredicateEpsilon;
-            long qx = (long)Math.Round(point.X * invEpsilon);
-            long qy = (long)Math.Round(point.Y * invEpsilon);
-            long qz = (long)Math.Round(point.Z * invEpsilon);
-            return new QuantizedPointKey(qx, qy, qz);
-        }
-
-        public bool Equals(QuantizedPointKey other) => X == other.X && Y == other.Y && Z == other.Z;
-
-        public override bool Equals(object? obj) => obj is QuantizedPointKey other && Equals(other);
-
-        public override int GetHashCode() => HashCode.Combine(X, Y, Z);
-    }
 }

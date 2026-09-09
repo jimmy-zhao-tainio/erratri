@@ -67,21 +67,6 @@ public sealed class IntersectionIndex
             perTriangleB[i] = new List<TriangleIntersectionVertex>();
         }
 
-        // Build a lookup from quantized world-space position to global
-        // IntersectionVertexId using the same quantization scheme as
-        // global::Boolean.Intersection.Graph.Run.
-        var globalVertexLookup = new Dictionary<(long X, long Y, long Z), IntersectionVertexId>();
-        double invEpsilon = 1.0 / Tolerances.TrianglePredicateEpsilon;
-
-        foreach (var (id, position) in graph.Vertices)
-        {
-            var key = Quantize(position, invEpsilon);
-            if (!globalVertexLookup.ContainsKey(key))
-            {
-                globalVertexLookup.Add(key, id);
-            }
-        }
-
         var pairs = graph.Pairs;
 
         for (int pairIndex = 0; pairIndex < pairs.Count; pairIndex++)
@@ -98,29 +83,9 @@ public sealed class IntersectionIndex
             {
                 var v = localVertices[i];
 
-                // Use barycentric coordinates on triangle A to reconstruct
-                // the shared world-space point, then map back to the global
-                // IntersectionVertexId via the quantized lookup. If the A-side
-                // quantization misses (numerical asymmetry when one endpoint
-                // lies on B's edge/interior), fall back to B-side quantization
-                // so both triangles attach the shared vertex/edge.
-                var barycentricOnA = v.OnTriangleA;
-                var worldA = Barycentric.ToRealPointOnTriangle(in triangleA, in barycentricOnA);
-                var keyA = Quantize(worldA, invEpsilon);
-
-                IntersectionVertexId globalId;
-                if (!globalVertexLookup.TryGetValue(keyA, out globalId))
-                {
-                    var barycentricOnB = v.OnTriangleB;
-                    var worldB = Barycentric.ToRealPointOnTriangle(in triangleB, in barycentricOnB);
-                    var keyB = Quantize(worldB, invEpsilon);
-
-                    if (!globalVertexLookup.TryGetValue(keyB, out globalId))
-                    {
-                        System.Diagnostics.Debug.Fail("Global intersection vertex not found for PairVertex.");
-                        continue;
-                    }
-                }
+                // Identity is assigned once by the graph, not reconstructed
+                // independently in another floating-point chart.
+                var globalId = graph.PairVertexIds[(pairIndex, v.VertexId.Value)];
 
                 // Attach to triangle A if the barycentric is inside (inclusive).
                 if (v.OnTriangleA.IsInsideInclusive())
@@ -374,13 +339,7 @@ public sealed class IntersectionIndex
         return a.Z.CompareTo(b.Z);
     }
 
-    private static (long X, long Y, long Z) Quantize(RealPoint point, double invEpsilon)
-    {
-        long qx = (long)Math.Round(point.X * invEpsilon);
-        long qy = (long)Math.Round(point.Y * invEpsilon);
-        long qz = (long)Math.Round(point.Z * invEpsilon);
-        return (qx, qy, qz);
-    }
+
 
     private static bool ContainsVertex(List<TriangleIntersectionVertex> list, IntersectionVertexId vertexId)
     {
@@ -395,6 +354,3 @@ public sealed class IntersectionIndex
         return false;
     }
 }
-
-
-
