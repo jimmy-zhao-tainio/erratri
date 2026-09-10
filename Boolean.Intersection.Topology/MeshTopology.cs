@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Boolean;
 using Geometry;
@@ -35,7 +35,7 @@ public abstract class MeshTopology
         VertexEdges = vertexEdges ?? throw new ArgumentNullException(nameof(vertexEdges));
         Loops = loops ?? throw new ArgumentNullException(nameof(loops));
     }
-// Core builder shared between MeshA and MeshB. The caller
+    // Core builder shared between MeshA and MeshB. The caller
     // supplies the per-triangle intersection vertices coming from the
     // IntersectionIndex for its side (A or B).
     protected static (
@@ -78,13 +78,6 @@ public abstract class MeshTopology
             if (b < a) (a, b) = (b, a);
             edgeIdByEndpoints[(a, b)] = id;
         }
-        // Quantized world-space -> global vertex id lookup (mirrors IntersectionGraph quantization).
-        var globalVertexLookup = new Dictionary<(long X, long Y, long Z), IntersectionVertexId>(graph.Vertices.Count);
-        double invEpsilon = 1.0 / Tolerances.TrianglePredicateEpsilon;
-        foreach (var (id, position) in graph.Vertices)
-        {
-            globalVertexLookup[Quantize(position, invEpsilon)] = id;
-        }
         var vertexPositions = new RealPoint[graph.Vertices.Count];
         foreach (var (id, position) in graph.Vertices)
         {
@@ -96,33 +89,7 @@ public abstract class MeshTopology
         var trianglesA = graph.IntersectionSet.TrianglesA ?? throw new ArgumentNullException(nameof(graph.IntersectionSet.TrianglesA));
         var trianglesB = graph.IntersectionSet.TrianglesB ?? throw new ArgumentNullException(nameof(graph.IntersectionSet.TrianglesB));
         var pairs = graph.Pairs;
-        var localToGlobalVertex = new Dictionary<(int PairIndex, int LocalVertexId), IntersectionVertexId>();
-        for (int pairIndex = 0; pairIndex < pairs.Count; pairIndex++)
-        {
-            var pair = pairs[pairIndex];
-            var intersection = pair.Intersection;
-            var triangleA = trianglesA[intersection.TriangleIndexA];
-            var triangleB = trianglesB[intersection.TriangleIndexB];
-            var localVertices = pair.Vertices;
-            for (int i = 0; i < localVertices.Count; i++)
-            {
-                var v = localVertices[i];
-                // Prefer A-side reconstruction; fall back to B-side if needed (mirrors IntersectionIndex).
-                var baryA = v.OnTriangleA;
-                var worldA = Barycentric.ToRealPointOnTriangle(in triangleA, in baryA);
-                if (!globalVertexLookup.TryGetValue(Quantize(worldA, invEpsilon), out var globalId))
-                {
-                    var baryB = v.OnTriangleB;
-                    var worldB = Barycentric.ToRealPointOnTriangle(in triangleB, in baryB);
-                    if (!globalVertexLookup.TryGetValue(Quantize(worldB, invEpsilon), out globalId))
-                    {
-                        System.Diagnostics.Debug.Fail("Global intersection vertex not found for PairVertex.");
-                        continue;
-                    }
-                }
-                localToGlobalVertex[(pairIndex, v.VertexId.Value)] = globalId;
-            }
-        }
+        var localToGlobalVertex = graph.PairVertexIds;
         for (int pairIndex = 0; pairIndex < pairs.Count; pairIndex++)
         {
             var pair = pairs[pairIndex];
@@ -528,13 +495,7 @@ public abstract class MeshTopology
             a.Y + (b.Y - a.Y) * t,
             a.Z + (b.Z - a.Z) * t);
     }
-    private static (long X, long Y, long Z) Quantize(RealPoint point, double invEpsilon)
-    {
-        long qx = (long)Math.Round(point.X * invEpsilon);
-        long qy = (long)Math.Round(point.Y * invEpsilon);
-        long qz = (long)Math.Round(point.Z * invEpsilon);
-        return (qx, qy, qz);
-    }
+
     private static void AddEdgeToAdjacency(
         Dictionary<IntersectionVertexId, List<IntersectionEdgeId>> adjacency,
         IntersectionVertexId vertex,

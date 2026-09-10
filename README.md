@@ -1,4 +1,4 @@
-﻿# Erratri
+# Erratri
 
 Erratri is a small geometry project that builds 3D shapes on the integer grid (Z^3) and exports binary STL. The demo renders a simple solar system with a sun, eight planets, their moons, and thin tilted orbit rings.
 
@@ -94,15 +94,21 @@ This produces the boolean gallery rendered in `boolean_mesh.png`.
 
 ![Boolean Mesh Gallery](boolean_mesh.png)
 
-All of this is still work in progress: the fast-path classifiers and PSLG triangulation are being iterated, and there are known regression tests (e.g., drilled boxes and "cheese" shapes) that currently fail until the kernel is tightened. The intent is to keep the layering clear and testable while gradually hardening the algorithms.
+The Cheese regression exercises all three tunnel cuts and all eight sphere cuts, checking closure, directed edge consistency, decreasing positive volume, and exact coplanar Delaunay legality after every integer-grid conversion. Run it with `dotnet test Tests.Boolean.Operation --filter FullCheese`. The executable demo is `dotnet run --project Demo.Boolean.Mesh.Cheese -c Release`.
 
 ## ConstrainedTriangulator â€” 2D constrained triangulation library
 
 ConstrainedTriangulator is a super simple 2D constrained triangulation library for planar straight-line graphs (PSLG). The input is a set of points together with optional constrained segments, and the output is a set of triangles that forms a complete triangulation of the domain while respecting all constraints.
 
-The library currently implements two algorithms that share the same legality rules: a slow exhaustive sweep over all edges and vertices, and a less slow adjacency-driven pass with a single global completion sweep. Both ensure that constrained segments are always honored, new edges do not cross existing segments, triangles containing interior points are rejected, and zero-area triangles are discarded. For each candidate edge, both sides are tested so that no admissible triangle is missed.
+`IntegerConformingDelaunay.Run(points, segments, maxSteinerPoints: 4096)` accepts coplanar `Geometry.Point` vertices in Z³ and returns integer points, triangles, and recovered constraint subsegments. Input indices are preserved. Orientation, coplanarity, and physical in-circle decisions use `BigInteger`; no floating projection or rounding participates in this API. Missing constraints are split only at interior lattice points, chosen using the greatest common divisor of their coordinate differences. Cocircular diagonals are recovered without unnecessary refinement. Returned triangles satisfy the Delaunay criterion on the **returned integer vertices**.
 
-Correctness is verified by `Validator.ValidateFullTriangulation`, which runs combinatorial checks (edge manifoldness, constraint usage) together with an Euler face count (outer boundary plus holes) to ensure that the result is a complete triangulation of the input PSLG. 
+Integer refinement is not always possible. For example, the segment `(0,0)–(2,1)` has no interior lattice point and cannot be a Delaunay edge in the presence of `(1,0)` and `(1,1)`. This API throws on unrecoverable segments, invalid/nonplanar input, unsplit crossing constraints, or budget exhaustion; it never substitutes fractional vertices or returns a partial mesh. It triangulates the convex hull and does not promise minimum angles or optimal Steiner placement.
+
+The boolean pipeline still uses transient physical-plane construction (`ConformingDelaunay.Run`) for intersection patches. Its floating Steiner vertices are construction data. At `BooleanMeshConverter.ToMesh`, coordinates are rounded once, then seam incidence and coplanar edge legalization use exact integer predicates. `IntegerMeshDelaunay.ConformAndLegalize` neither adds nor moves vertices; boundaries, noncoplanar creases, and edges whose alternate diagonal already exists are protected. The final integer surface is checked for remaining flippable, locally non-Delaunay coplanar edges. This preserves the existing surface topology; it is a constrained surface guarantee, **not a claim of globally conforming Delaunay across creases**, and no minimum-angle guarantee is made. The standalone integer conforming API above has the stronger planar contract and explicit failure behavior.
+
+`Triangulator.Run` and `RunFast` remain available as the legacy edge-completion algorithms. Their combinatorial validator does not certify the Delaunay property.
+
+Mesh winding follows outward source normals, difference operations reverse cutter faces, and coplanar selection is local to a face. The intersection graph assigns vertex identity once and shares the pair-to-global mapping with indexing/topology. World-space welding uses `MergeEpsilon` (1e-9 grid units), independently of predicate tolerances.
 
 ![ConstrainedTriangulator fast orbit fill](constrained_triangulator_fast.png)
 

@@ -59,21 +59,6 @@ public readonly struct Triangle
     }
 
     internal static bool HasZeroArea(in Point p0, in Point p1, in Point p2)
-    {
-        long v0x = p1.X - p0.X;
-        long v0y = p1.Y - p0.Y;
-        long v0z = p1.Z - p0.Z;
-
-        long v1x = p2.X - p0.X;
-        long v1y = p2.Y - p0.Y;
-        long v1z = p2.Z - p0.Z;
-
-        long cx = v0y * v1z - v0z * v1y;
-        long cy = v0z * v1x - v0x * v1z;
-        long cz = v0x * v1y - v0y * v1x;
-
-        long lenSq = cx * cx + cy * cy + cz * cz;
-        return lenSq == 0;
-    }
+        => IntegerPlane.AreCollinear(p0, p1, p2);
 
 }

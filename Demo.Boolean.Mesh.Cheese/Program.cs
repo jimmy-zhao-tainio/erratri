@@ -16,19 +16,26 @@ internal static class Program
         Shape tunnelY = new Box(width: 200, depth: 600, height: 200).Position(-100, -300, -100);
         Shape tunnelZ = new Box(width: 200, depth: 200, height: 600).Position(-100, -100, -300);
 
-        Shape drilled = new DifferenceAB(new DifferenceAB(new DifferenceAB(cube, tunnelX), tunnelY), tunnelZ);
+        Shape Subtract(Shape source, Shape cutter, string stage)
+        {
+            Console.WriteLine($"Cheese: {stage} ({source.Mesh.Count} input triangles)");
+            return new DifferenceAB(source, cutter);
+        }
+        Shape drilled = Subtract(cube, tunnelX, "tunnel X");
+        drilled = Subtract(drilled, tunnelY, "tunnel Y");
+        drilled = Subtract(drilled, tunnelZ, "tunnel Z");
 
         long rCorner = 200;
         long rOffset = 220;
         Shape withCorners = drilled;
         foreach (var sx in new[] { -1, 1 })
-        foreach (var sy in new[] { -1, 1 })
-        foreach (var sz in new[] { -1, 1 })
-        {
-            var cornerCenter = new Point(sx * rOffset, sy * rOffset, sz * rOffset);
-            var cornerSphere = new Sphere(rCorner, subdivisions: 3, center: cornerCenter);
-            withCorners = new DifferenceAB(withCorners, cornerSphere);
-        }
+            foreach (var sy in new[] { -1, 1 })
+                foreach (var sz in new[] { -1, 1 })
+                {
+                    var cornerCenter = new Point(sx * rOffset, sy * rOffset, sz * rOffset);
+                    var cornerSphere = new Sphere(rCorner, subdivisions: 3, center: cornerCenter);
+                    withCorners = Subtract(withCorners, cornerSphere, $"corner ({sx},{sy},{sz})");
+                }
 
         var world = new World.World();
         world.Add(withCorners);

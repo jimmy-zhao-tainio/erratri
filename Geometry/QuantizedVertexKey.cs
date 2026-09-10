@@ -15,7 +15,7 @@ public readonly struct QuantizedVertexKey : System.IEquatable<QuantizedVertexKey
 
     public static QuantizedVertexKey FromRealPoint(in RealPoint point)
     {
-        double inv = 1.0 / Tolerances.TrianglePredicateEpsilon;
+        double inv = 1.0 / Tolerances.MergeEpsilon;
         long qx = (long)System.Math.Round(point.X * inv);
         long qy = (long)System.Math.Round(point.Y * inv);
         long qz = (long)System.Math.Round(point.Z * inv);

@@ -11,7 +11,20 @@ public sealed class Mesh
     public Mesh(IEnumerable<Triangle> triangles)
     {
         if (triangles is null) throw new ArgumentNullException(nameof(triangles));
-        this.triangles = new List<Triangle>(triangles);
+        this.triangles = new List<Triangle>();
+        foreach (var triangle in triangles)
+        {
+            // Tetrahedron faces carry outward normals independently of their
+            // vertex order. Meshes must encode that orientation in both forms.
+            var a = new RealPoint(triangle.P0);
+            var b = new RealPoint(triangle.P1);
+            var c = new RealPoint(triangle.P2);
+            var cross = RealVector.FromPoints(a, b).Cross(RealVector.FromPoints(a, c));
+            double alignment = cross.X * triangle.Normal.X + cross.Y * triangle.Normal.Y + cross.Z * triangle.Normal.Z;
+            this.triangles.Add(alignment < 0
+                ? Triangle.FromWinding(triangle.P0, triangle.P2, triangle.P1)
+                : triangle);
+        }
     }
 
     public int Count => triangles.Count;
@@ -45,4 +58,3 @@ public sealed class Mesh
         return new Mesh(boundary);
     }
 }
-

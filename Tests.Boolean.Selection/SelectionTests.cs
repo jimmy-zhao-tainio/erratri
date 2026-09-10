@@ -50,7 +50,8 @@ public class SelectionTests
         Assert.True(diffBA.FromMeshA.Count > 0);      // inner kept to cap hole
         Assert.True(diffBA.FromMeshB.Count > 0);      // outer shell kept
         var xor = PatchSelector.Select(BooleanOperationType.SymmetricDifference, classification, graph);
-        Assert.Empty(xor.FromMeshA);                  // inner not part of xor since enclosed
+        // XOR removes the inner volume, so its reversed cavity boundary remains.
+        Assert.Equal(diffBA.FromMeshA, xor.FromMeshA);
         Assert.True(xor.FromMeshB.Count > 0);         // outer shell remains
     }
 
@@ -76,8 +77,3 @@ public class SelectionTests
         Assert.Empty(intersection.FromMeshB);
     }
 }
-
-
-
-
-

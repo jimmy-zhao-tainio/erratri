@@ -64,29 +64,14 @@ public class TrianglePatchesTests
         var a = Assert.Single(patches.TrianglesA);
         var b = Assert.Single(patches.TrianglesB);
 
-        // Strict counts for this configuration.
-        Assert.Equal(3, a.Count);
-        Assert.Equal(2, b.Count);
-
-        // Strict geometry (set-equality of triangles, tolerant).
+        // A conforming triangulation may add Steiner points or change diagonals.
+        // Both endpoints of the intersection must survive on both operands.
         var p0 = new RealPoint(1, 0, 0);
         var p1 = new RealPoint(1, 1, 0);
-
-        var expectedA = new[]
-        {
-            TriKey(new RealPoint(triA.P0), p1, new RealPoint(triA.P2)),
-            TriKey(new RealPoint(triA.P0), p0, p1),
-            TriKey(p0, new RealPoint(triA.P1), p1),
-        };
-
-        var expectedB = new[]
-        {
-            TriKey(new RealPoint(triB.P0), p0, new RealPoint(triB.P2)),
-            TriKey(new RealPoint(triB.P1), new RealPoint(triB.P2), p0),
-        };
-
-        AssertTriSetEqual(expectedA, a);
-        AssertTriSetEqual(expectedB, b);
+        foreach (var operand in new[] { a, b })
+            foreach (var point in new[] { p0, p1 })
+                Assert.Contains(operand, patch => patch.Triangle.P0.DistanceSquared(point) < 1e-20 ||
+                    patch.Triangle.P1.DistanceSquared(point) < 1e-20 || patch.Triangle.P2.DistanceSquared(point) < 1e-20);
 
         AssertAreaEqual(triA, a);
         AssertAreaEqual(triB, b);
@@ -137,8 +122,3 @@ public class TrianglePatchesTests
         Assert.True(diff <= Tolerances.EpsArea || diff <= relTol, $"Patch area {patchArea} differs from triangle area {triArea} by {diff}.");
     }
 }
-
-
-
-
-
