@@ -31,15 +31,22 @@ public static class BooleanMeshConverter
             triangles.Add(Triangle.FromWinding(q0, q1, q2));
         }
 
-        // Snapping can flatten a thin triangle into an edge. Its neighboring
-        // faces must then agree on the subdivision of that edge as well.
-        var snapped = FromMesh(new Mesh(triangles));
-        var faces = new List<(int A, int B, int C)>(snapped.Triangles);
-        MeshConformer.SplitEdges(snapped.Vertices, faces);
+        // From this boundary onward, positions and geometry decisions stay on Z³.
+        var points = new List<Point>();
+        var indices = new Dictionary<Point, int>();
+        int Index(Point p)
+        {
+            if (!indices.TryGetValue(p, out int index))
+            { index = points.Count; points.Add(p); indices.Add(p, index); }
+            return index;
+        }
+        var faces = new List<(int A, int B, int C)>();
+        foreach (var triangle in triangles)
+            faces.Add((Index(triangle.P0), Index(triangle.P1), Index(triangle.P2)));
+        IntegerMeshDelaunay.ConformAndLegalize(points, faces);
         triangles.Clear();
         foreach (var (a, b, c) in faces)
-            triangles.Add(Triangle.FromWinding(GridRounding.Snap(snapped.Vertices[a]),
-                GridRounding.Snap(snapped.Vertices[b]), GridRounding.Snap(snapped.Vertices[c])));
+            triangles.Add(Triangle.FromWinding(points[a], points[b], points[c]));
         return new Mesh(triangles);
     }
 

@@ -58,6 +58,10 @@ public class OperationOrientationTests
             var result = global::Boolean.Operation.DifferenceAB(shape.Mesh, cutters[i].Mesh);
             AssertOriented(result);
             var grid = BooleanMeshConverter.ToMesh(result);
+            var gridPoints = grid.Triangles.SelectMany(t => new[] { t.P0, t.P1, t.P2 }).Distinct().ToArray();
+            var gridIds = gridPoints.Select((p, id) => (p, id)).ToDictionary(x => x.p, x => x.id);
+            var gridFaces = grid.Triangles.Select(t => (gridIds[t.P0], gridIds[t.P1], gridIds[t.P2])).ToArray();
+            Assert.Equal(0, IntegerMeshDelaunay.CountFlippableIllegalEdges(gridPoints, gridFaces));
             var snapped = BooleanMeshConverter.FromMesh(grid);
             try { AssertOriented(snapped); } catch (Exception e) { throw new Exception($"Grid conversion after cutter {i} failed", e); }
             double next = Volume(snapped);
