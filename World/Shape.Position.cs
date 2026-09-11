@@ -3,11 +3,14 @@ using Geometry.Topology;
 
 namespace World;
 
-// Positioning-related APIs for Shape (destructive)
+// Translation APIs modify the shape's mesh in place.
 public abstract partial class Shape
 {
-    // Translates all mesh vertices by the given delta and rebuilds the mesh.
-    public Shape Position(long dx, long dy, long dz)
+    /// <summary>Compatibility alias for Translate; offsets the current mesh, not an absolute position.</summary>
+    public Shape Position(long dx, long dy, long dz) => Translate(dx, dy, dz);
+
+    /// <summary>Offsets all mesh vertices by the given delta in place and returns this shape.</summary>
+    public Shape Translate(long dx, long dy, long dz)
     {
         if (Mesh is null || Mesh.Count == 0) return this;
 

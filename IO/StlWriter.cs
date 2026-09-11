@@ -10,8 +10,14 @@ public static class StlWriter
         => Write(surface.Triangles, path);
 
     public static void Write(IReadOnlyList<Triangle> triangles, string path)
+        => Write(triangles, path, 1.0);
+
+    /// <summary>Scales vertex coordinates at export; mesh coordinates remain on the integer grid.</summary>
+    public static void Write(IReadOnlyList<Triangle> triangles, string path, double coordinateScale)
     {
         if (triangles is null) throw new ArgumentNullException(nameof(triangles));
+        if (!double.IsFinite(coordinateScale) || coordinateScale <= 0)
+            throw new ArgumentOutOfRangeException(nameof(coordinateScale));
         using var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
         using var bw = new BinaryWriter(fs);
 
@@ -27,9 +33,9 @@ public static class StlWriter
             bw.Write((float)t.Normal.X);
             bw.Write((float)t.Normal.Y);
             bw.Write((float)t.Normal.Z);
-            bw.Write((float)t.P0.X); bw.Write((float)t.P0.Y); bw.Write((float)t.P0.Z);
-            bw.Write((float)t.P1.X); bw.Write((float)t.P1.Y); bw.Write((float)t.P1.Z);
-            bw.Write((float)t.P2.X); bw.Write((float)t.P2.Y); bw.Write((float)t.P2.Z);
+            bw.Write((float)(t.P0.X * coordinateScale)); bw.Write((float)(t.P0.Y * coordinateScale)); bw.Write((float)(t.P0.Z * coordinateScale));
+            bw.Write((float)(t.P1.X * coordinateScale)); bw.Write((float)(t.P1.Y * coordinateScale)); bw.Write((float)(t.P1.Z * coordinateScale));
+            bw.Write((float)(t.P2.X * coordinateScale)); bw.Write((float)(t.P2.Y * coordinateScale)); bw.Write((float)(t.P2.Z * coordinateScale));
             bw.Write((ushort)0);
         }
     }

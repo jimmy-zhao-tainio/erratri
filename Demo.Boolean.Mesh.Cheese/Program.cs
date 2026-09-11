@@ -1,4 +1,4 @@
-﻿using Geometry;
+using Geometry;
 using Boolean;
 using World;
 
@@ -9,12 +9,12 @@ internal static class Program
     private static void Main(string[] args)
     {
         // Swiss-cheese cube: box drilled by three orthogonal tunnels with scooped corners.
-        var cube = new Box(width: 400, depth: 400, height: 400).Position(-200, -200, -200);
+        var cube = new Box(width: 400, depth: 400, height: 400).Translate(-200, -200, -200);
 
         // Use rectangular prisms to drill robust tunnels along X, Y, Z.
-        Shape tunnelX = new Box(width: 600, depth: 200, height: 200).Position(-300, -100, -100);
-        Shape tunnelY = new Box(width: 200, depth: 600, height: 200).Position(-100, -300, -100);
-        Shape tunnelZ = new Box(width: 200, depth: 200, height: 600).Position(-100, -100, -300);
+        Shape tunnelX = new Box(width: 600, depth: 200, height: 200).Translate(-300, -100, -100);
+        Shape tunnelY = new Box(width: 200, depth: 600, height: 200).Translate(-100, -300, -100);
+        Shape tunnelZ = new Box(width: 200, depth: 200, height: 600).Translate(-100, -100, -300);
 
         Shape Subtract(Shape source, Shape cutter, string stage)
         {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Geometry;
 using IO;
@@ -20,10 +20,10 @@ internal static class Program
 
         // Build boolean shapes and lay them out in a grid.
         var spacing = 500;
-        var union = new Union(a, b).Position(0, 0, 0);
-        var intersection = new Intersection(a, b).Position(spacing, 0, 0);
-        var diffAB = new DifferenceAB(a, b).Position(2 * spacing, 0, 0);
-        var diffBA = new DifferenceBA(a, b).Position((int)(2.5 * spacing), 0, 0);
+        var union = new Union(a, b).Translate(0, 0, 0);
+        var intersection = new Intersection(a, b).Translate(spacing, 0, 0);
+        var diffAB = new DifferenceAB(a, b).Translate(2 * spacing, 0, 0);
+        var diffBA = new DifferenceBA(a, b).Translate((int)(2.5 * spacing), 0, 0);
 
         var world = new World.World();
         world.Add(union);

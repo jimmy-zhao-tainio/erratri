@@ -9,9 +9,10 @@ public abstract partial class Shape
     // Rotates all mesh vertices by Euler angles (degrees) around X, Y, Z (in that order)
     // using double-precision math and integer rounding. Throws if two distinct original
     // vertices collide to the same rounded grid point.
-    public void Rotate(double xDegrees = 0, double yDegrees = 0, double zDegrees = 0)
+    /// <summary>Rotates in place around the world origin, in X/Y/Z order, and returns this shape.</summary>
+    public Shape Rotate(double xDegrees = 0, double yDegrees = 0, double zDegrees = 0)
     {
-        if (Mesh is null || Mesh.Count == 0) return;
+        if (Mesh is null || Mesh.Count == 0) return this;
 
         // Precompute sines/cosines (radians)
         double rx = xDegrees * Math.PI / 180.0;
@@ -71,6 +72,7 @@ public abstract partial class Shape
         }
 
         Mesh = new Mesh(updated);
+        return this;
     }
 }
 
